@@ -28,5 +28,3 @@ export const UserSchema = UserCreateSchema.extend({
   id: z.string()
 })
 export type User = z.infer<typeof UserSchema>
-
-

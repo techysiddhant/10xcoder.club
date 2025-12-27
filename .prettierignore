@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+build
+out
+.turbo
+.vercel
+bun.lock
+**/*.zip
+**/*.tgz
+**/*.tar.gz
+**/*.bun
+server.js
+

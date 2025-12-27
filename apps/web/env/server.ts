@@ -5,5 +5,3 @@ const ServerEnvSchema = z.object({
 })
 
 export const serverEnv = ServerEnvSchema.parse(process.env)
-
-

@@ -34,11 +34,9 @@ new Elysia()
   })
   .listen(
     {
-      port,
+      port
     },
     ({ hostname, port }) => {
       console.log(`API listening on http://${hostname}:${port}`)
     }
   )
-
-

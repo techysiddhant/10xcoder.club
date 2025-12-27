@@ -14,11 +14,35 @@
     "build:api": "bun --cwd apps/api build",
     "build:web": "bun --cwd apps/web build",
     "typecheck": "bun --cwd packages/schemas typecheck && bun --cwd apps/api typecheck && bun --cwd apps/web typecheck",
-    "clean": "rm -rf apps/**/dist packages/**/dist"
+    "clean": "rm -rf apps/**/dist packages/**/dist",
+    "lint": "bun --cwd apps/api lint && bun --cwd apps/web lint && bun --cwd packages/ui lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky install"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@eslint/js": "^9.0.0",
+    "husky": "^9.1.7",
+    "eslint": "^9.0.0",
+    "lint-staged": "^16.2.0",
+    "prettier": "^3.6.2",
+    "typescript-eslint": "^8.39.0",
     "typescript": "^5.7.2"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,md,mdx,yml,yaml,css,scss,html}": [
+      "prettier --write"
+    ],
+    "apps/web/**/*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ],
+    "apps/api/**/*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ],
+    "packages/**/*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ]
   }
 }
-
-

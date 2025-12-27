@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun --hot src/server.ts",
+    "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "bun run build:binary",
     "build:binary": "bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server.js src/index.ts",

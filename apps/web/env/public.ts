@@ -7,5 +7,3 @@ const PublicEnvSchema = z.object({
 export const publicEnv = PublicEnvSchema.parse({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL
 })
-
-
