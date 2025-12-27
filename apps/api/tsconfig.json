@@ -4,7 +4,8 @@
     "types": ["bun-types"],
     "baseUrl": ".",
     "paths": {
-      "@workspace/schemas*": ["../../packages/schemas/src/index.ts"]
+      "@workspace/schemas*": ["../../packages/schemas/src/index.ts"],
+      "@/*": ["src/*"]
     }
   },
   "include": ["src"]
