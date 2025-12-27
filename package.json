@@ -1,0 +1,24 @@
+{
+  "name": "10xcoder-club",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run dev:api & bun run dev:web && wait",
+    "dev:api": "bun --cwd apps/api dev",
+    "dev:web": "bun --cwd apps/web dev",
+    "build": "bun run build:schemas && bun run build:api && bun run build:web",
+    "build:schemas": "bun --cwd packages/schemas build",
+    "build:api": "bun --cwd apps/api build",
+    "build:web": "bun --cwd apps/web build",
+    "typecheck": "bun --cwd packages/schemas typecheck && bun --cwd apps/api typecheck && bun --cwd apps/web typecheck",
+    "clean": "rm -rf apps/**/dist packages/**/dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
+
+
