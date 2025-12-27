@@ -36,13 +36,13 @@
       "prettier --write"
     ],
     "apps/web/**/*.{js,jsx,ts,tsx}": [
-      "eslint --fix"
+      "bun --cwd apps/web run lint -- --fix"
     ],
     "apps/api/**/*.{js,jsx,ts,tsx}": [
-      "eslint --fix"
+      "bun --cwd apps/api run lint -- --fix"
     ],
-    "packages/**/*.{js,jsx,ts,tsx}": [
-      "eslint --fix"
+    "packages/ui/**/*.{js,jsx,ts,tsx}": [
+      "bun --cwd packages/ui run lint -- --fix"
     ]
   }
 }
