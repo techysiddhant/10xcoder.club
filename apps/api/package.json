@@ -9,7 +9,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "bun run build:binary",
     "build:binary": "bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server.js src/index.ts",
-    "start": "./server.js"
+    "start": "./server.js",
+    "clean": "rm -rf dist server.js"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.3.3",
