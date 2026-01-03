@@ -8,7 +8,9 @@
 [![Elysia](https://img.shields.io/badge/Elysia-1.3+-000000?logo=elysia&logoColor=white)](https://elysiajs.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 
-A modern full-stack monorepo built with **Turborepo**, **Bun**, **Next.js**, and **Elysia**.
+**One place for developers to learn, build, and grow together.**
+
+A community-driven platform built with modern technologies to help developers become 10x better.
 
 [Getting Started](#-getting-started) •
 [Project Structure](#-project-structure) •
