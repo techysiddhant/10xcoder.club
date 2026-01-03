@@ -12,8 +12,8 @@ import {
   Text
 } from '@react-email/components'
 
-interface VerificationEmailProps {
-  name: string
+interface MagicLinkEmailProps {
+  email: string
   url: string
 }
 
@@ -27,22 +27,22 @@ function isUrlSafe(url: string): boolean {
     // Only allow https (or http for localhost in development)
     const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'
     if (parsed.protocol !== 'https:' && !(isLocalhost && parsed.protocol === 'http:')) {
-      console.error(`[VerificationEmail] Blocked unsafe URL scheme: ${parsed.protocol}`)
+      console.error(`[MagicLinkEmail] Blocked unsafe URL scheme: ${parsed.protocol}`)
       return false
     }
     // Reject URLs with embedded credentials
     if (parsed.username || parsed.password) {
-      console.error('[VerificationEmail] Blocked URL with embedded credentials')
+      console.error('[MagicLinkEmail] Blocked URL with embedded credentials')
       return false
     }
     return true
   } catch {
-    console.error(`[VerificationEmail] Invalid URL format: ${url}`)
+    console.error(`[MagicLinkEmail] Invalid URL format: ${url}`)
     return false
   }
 }
 
-export default function VerificationEmail({ name, url }: Readonly<VerificationEmailProps>) {
+export default function MagicLinkEmail({ email, url }: Readonly<MagicLinkEmailProps>) {
   const safeUrl = isUrlSafe(url) ? url : undefined
 
   return (
@@ -56,14 +56,14 @@ export default function VerificationEmail({ name, url }: Readonly<VerificationEm
             </Section>
             <Section>
               <Heading className="text-[28px] font-bold text-[#111827] m-0 mb-[24px]">
-                Verify your email
+                Sign in to 10xCoder.club
               </Heading>
               <Text className="text-[16px] leading-[24px] text-[#4b5563] m-0 mb-[16px]">
-                Hey {name},
+                Hey there,
               </Text>
               <Text className="text-[16px] leading-[24px] text-[#4b5563] m-0 mb-[24px]">
-                Thanks for joining 10xCoder.club! To complete your registration and start your
-                journey to becoming a 10x developer, please verify your email address.
+                Click the button below to sign in to your 10xCoder.club account. This magic link
+                will expire in 10 minutes.
               </Text>
               <Section className="mb-[32px] mt-4">
                 {safeUrl ? (
@@ -71,17 +71,17 @@ export default function VerificationEmail({ name, url }: Readonly<VerificationEm
                     className="bg-[#f59e0b] text-white font-medium py-[12px] px-[20px] rounded-[8px] text-[14px] no-underline text-center box-border"
                     href={safeUrl}
                   >
-                    Verify Email
+                    Sign In
                   </Button>
                 ) : (
                   <Text className="text-[14px] text-[#dc2626] font-medium">
-                    Unable to generate verification link. Please contact support.
+                    Unable to generate sign-in link. Please contact support.
                   </Text>
                 )}
               </Section>
               <Text className="text-[14px] leading-[20px] text-[#6b7280] m-0 mb-[16px]">
-                This link will expire in 24 hours. If you didn't sign up for 10xCoder.club, you can
-                safely ignore this email.
+                If you didn't request this email, you can safely ignore it. Someone may have typed
+                your email address by mistake.
               </Text>
               <Hr className="border-[#e5e7eb] my-[32px]" />
               <Text className="text-[14px] leading-[20px] text-[#6b7280] m-0">
@@ -106,7 +106,7 @@ export default function VerificationEmail({ name, url }: Readonly<VerificationEm
   )
 }
 
-VerificationEmail.PreviewProps = {
-  name: 'John Doe',
-  url: 'https://example.com/verify'
+MagicLinkEmail.PreviewProps = {
+  email: 'johndoe@example.com',
+  url: 'https://10xcoder.club/api/auth/magic-link/verify?token=abc123'
 }

@@ -5,7 +5,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { redis } from './redis'
 import { DEFAULT_USER_NAMES, RoleSchema } from '@workspace/schemas'
 import { admin, lastLoginMethod, magicLink, openAPI, username } from 'better-auth/plugins'
-import { sendResetPasswordEmail, verifyEmail } from './resend'
+import { sendMagicLinkEmail, sendResetPasswordEmail, verifyEmail } from './resend'
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -124,7 +124,7 @@ export const auth = betterAuth({
     openAPI(),
     magicLink({
       sendMagicLink: async ({ email, token, url }, ctx) => {
-        // send email to user
+        void sendMagicLinkEmail(email, url)
       }
     })
   ],

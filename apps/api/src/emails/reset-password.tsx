@@ -93,7 +93,7 @@ export default function ResetPasswordEmail({ name, url }: Readonly<ResetPassword
             </Section>
             <Section className="mt-[32px] pt-[32px] border-t border-[#e5e7eb]">
               <Text className="text-[12px] text-[#9ca3af] text-center m-0">
-                © 2026 10xCoder.club. All rights reserved.
+                © {new Date().getFullYear()} 10xCoder.club. All rights reserved.
               </Text>
               <Text className="text-[12px] text-[#9ca3af] text-center m-0">
                 Helping developers level up their coding skills
