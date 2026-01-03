@@ -9,7 +9,26 @@ const EnvSchema = z.object({
   POSTGRES_PASSWORD: z.string().min(1),
   POSTGRES_DB: z.string().min(1),
   POSTGRES_HOST: z.string().min(1),
-  POSTGRES_PORT: z.coerce.number().int().positive().default(5432)
+  POSTGRES_PORT: z.coerce.number().int().positive().default(5432),
+  REDIS_HOST: z.string().min(1),
+  REDIS_PORT: z.coerce.number().int().positive().default(6379),
+  REDIS_PASSWORD: z.string().min(1),
+  BETTER_AUTH_SECRET: z.string().min(32, 'Auth secret must be at least 32 characters'),
+  API_URL: z.string().url(),
+  GITHUB_CLIENT_ID: z.string().min(1),
+  GITHUB_CLIENT_SECRET: z.string().min(1),
+  RESEND_API_KEY: z.string().min(1)
 })
 
-export const env = EnvSchema.parse(process.env)
+const result = EnvSchema.safeParse(process.env)
+
+if (!result.success) {
+  console.error('❌ Invalid environment variables:')
+  for (const issue of result.error.issues) {
+    console.error(`   - ${issue.path.join('.')}: ${issue.message}`)
+  }
+  console.error('\n📝 Please check apps/api/.env.example for required variables.')
+  process.exit(1)
+}
+
+export const env = result.data

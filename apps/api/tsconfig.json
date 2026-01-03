@@ -6,7 +6,9 @@
     "paths": {
       "@workspace/schemas*": ["../../packages/schemas/src/index.ts"],
       "@/*": ["src/*"]
-    }
+    },
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
   },
   "include": ["src"]
 }
