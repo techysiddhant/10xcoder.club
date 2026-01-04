@@ -3,6 +3,9 @@ import { rateLimit } from 'elysia-rate-limit'
 import { cors } from '@elysiajs/cors'
 import { logger } from 'elysia-logger'
 import { env } from '@/config/env'
+import { AuthOpenAPI } from './lib/auth-open-api'
+import openapi from '@elysiajs/openapi'
+import type { OpenAPIV3 } from 'openapi-types'
 
 export const app = new Elysia()
 
@@ -35,6 +38,32 @@ export const app = new Elysia()
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       credentials: true,
       allowedHeaders: ['Content-Type', 'Authorization']
+    })
+  )
+  .use(
+    openapi({
+      path: '/docs',
+      documentation: {
+        // Better Auth's generated schema is OpenAPI-like but doesn't match @elysiajs/openapi's
+        // strict OpenAPI typings; cast at the integration boundary.
+        components: (await AuthOpenAPI.components) as unknown as OpenAPIV3.ComponentsObject,
+        paths: (await AuthOpenAPI.getPaths()) as unknown as OpenAPIV3.PathsObject<{}, {}>,
+        info: {
+          title: '10xcoder.club API',
+          version: '1.0.0'
+        }
+      },
+      exclude: {
+        paths: ['/', '/api/health']
+      },
+      scalar: {
+        theme: 'kepler',
+        layout: 'classic',
+        defaultHttpClient: {
+          targetKey: 'js',
+          clientKey: 'fetch'
+        }
+      }
     })
   )
   .onError(({ code, error }) => {

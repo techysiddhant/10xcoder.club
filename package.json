@@ -16,7 +16,12 @@
     "format:check": "prettier --check .",
     "prepare": "husky install",
     "ui:add": "./scripts/ui-add.sh",
-    "ui:diff": "./scripts/ui-diff.sh"
+    "ui:diff": "./scripts/ui-diff.sh",
+    "db:studio": "bun --cwd apps/api drizzle-kit studio --config src/drizzle.config.ts",
+    "db:generate": "bun --cwd apps/api drizzle-kit generate --config src/drizzle.config.ts",
+    "db:migrate": "bun --cwd apps/api drizzle-kit migrate --config src/drizzle.config.ts",
+    "api:add": "cd apps/api && bun add",
+    "api:add-dev": "cd apps/api && bun add -d"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

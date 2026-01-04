@@ -28,3 +28,22 @@ export const UserSchema = UserCreateSchema.extend({
   id: z.string()
 })
 export type User = z.infer<typeof UserSchema>
+
+export const RoleSchema = z.enum(['USER', 'ADMIN'])
+export type Role = z.infer<typeof RoleSchema>
+
+export const DEFAULT_USER_NAMES = [
+  'user',
+  'admin',
+  'guest',
+  'blog',
+  'blogs',
+  'writer',
+  'writers',
+  'content',
+  'contents',
+  'techysiddhant',
+  'siddhantjain',
+  'siddhant'
+] as const
+export type DefaultUserName = (typeof DEFAULT_USER_NAMES)[number]
