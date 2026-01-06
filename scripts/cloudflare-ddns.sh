@@ -374,8 +374,7 @@ main() {
     
     if [ "$current_ip" = "$dns_ip" ]; then
         # IP matches DNS, update cache and exit
-        echo "$current_ip" > "$IP_CACHE_FILE"
-        if [ $? -ne 0 ]; then
+        if ! echo "$current_ip" > "$IP_CACHE_FILE"; then
             log_warn "Could not update IP cache file"
         fi
         log_debug "IP matches DNS record, cache updated"
@@ -397,8 +396,7 @@ main() {
     # Update DNS with retries
     if retry_with_backoff "$CF_MAX_RETRIES" "$CF_RETRY_DELAY" update_dns "$current_ip" "$record_id"; then
         log "Successfully updated DNS record to $current_ip"
-        echo "$current_ip" > "$IP_CACHE_FILE"
-        if [ $? -ne 0 ]; then
+        if ! echo "$current_ip" > "$IP_CACHE_FILE"; then
             log_warn "Could not update IP cache file"
         fi
         exit 0

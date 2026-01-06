@@ -4,6 +4,10 @@ on:
   push:
     branches: ['main']
 
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -197,12 +201,18 @@ jobs:
             echo ""
             echo "🗄️  Running database migrations..."
 
+            # Source environment variables from .env file
+            # set -a exports all variables, set +a turns it off
+            set -a
+            source .env
+            set +a
+
             # Wait for database to be fully ready
             sleep 5
 
             # Run drizzle-kit push using a temporary container connected to the network
             docker run --rm \
-              --network "${COMPOSE_PROJECT_NAME}_default" \
+              --network "${COMPOSE_PROJECT_NAME}_app_net" \
               -v "$(pwd)/apps/api:/app" \
               -w /app \
               -e DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}" \

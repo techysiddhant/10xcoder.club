@@ -31,10 +31,14 @@ ENV NODE_ENV=production
 # https://elysiajs.com/patterns/deploy.html
 RUN bun --cwd apps/api run build:binary
 
-# Production image
-FROM --platform=linux/amd64 gcr.io/distroless/base
+# Production image - using alpine for healthcheck support (wget/curl available)
+# Note: distroless doesn't have wget/curl which breaks docker-compose healthchecks
+FROM --platform=linux/amd64 alpine:3.19
 
 WORKDIR /app
+
+# Install only what's needed for healthcheck and runtime
+RUN apk add --no-cache wget ca-certificates
 
 ENV NODE_ENV=production
 ENV PORT=3000
@@ -43,6 +47,9 @@ COPY --from=build /app/apps/api/server.js ./server
 
 # Copy drizzle migrations for runtime migrations
 COPY --from=build /app/apps/api/drizzle ./drizzle
+
+# Make server executable
+RUN chmod +x ./server
 
 EXPOSE 3000
 

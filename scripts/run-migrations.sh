@@ -78,8 +78,22 @@ echo "🔍 Checking pending migrations..."
 
 if [ "$DRY_RUN" == "true" ]; then
     echo ""
-    echo "📋 DRY RUN - Would apply the following migrations:"
-    ls -la apps/api/drizzle/*.sql 2>/dev/null || echo "No migration files found"
+    echo "📋 DRY RUN - Checking pending migrations..."
+    
+    # Use drizzle-kit to show what would be applied
+    docker run --rm \\
+        --network ${PROJECT_NAME}_app_net \\
+        -v "\$(pwd)/apps/api:/app" \\
+        -w /app \\
+        -e DATABASE_URL="postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@db:5432/\${POSTGRES_DB}" \\
+        node:20-alpine \\
+        sh -c "npm install --silent drizzle-kit drizzle-orm postgres @types/node typescript && npx drizzle-kit push --config=src/drizzle.config.ts --strict" 2>&1 || {
+            echo "⚠️  Could not run drizzle-kit check"
+            echo ""
+            echo "Listing migration files instead:"
+            ls -la apps/api/drizzle/*.sql 2>/dev/null || echo "No migration files found"
+        }
+    
     echo ""
     echo "To apply migrations, run without DRY_RUN=true"
 else
@@ -89,7 +103,7 @@ else
     # Run drizzle-kit migrate using a temporary Node container
     # This connects to the database directly and applies migrations
     docker run --rm \
-        --network ${PROJECT_NAME}_default \
+        --network ${PROJECT_NAME}_app_net \
         -v "\$(pwd)/apps/api:/app" \
         -w /app \
         -e DATABASE_URL="postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@db:5432/\${POSTGRES_DB}" \

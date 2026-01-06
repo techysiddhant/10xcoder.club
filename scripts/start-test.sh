@@ -11,7 +11,7 @@ echo "============================"
 HOST="${HOST:-your-ec2-host}"
 USERNAME="${USERNAME:-ubuntu}"
 KEY_PATH="${KEY_PATH:-~/.ssh/id_rsa}"
-PROJECT_NAME="10xcoder-test"
+PROJECT_NAME="${PROJECT_NAME:-10xcoder-test}"
 
 if [ "$HOST" == "your-ec2-host" ]; then
     echo "Error: Please set HOST environment variable or update this script"

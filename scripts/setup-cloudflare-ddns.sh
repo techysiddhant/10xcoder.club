@@ -46,14 +46,13 @@ cp "$SCRIPT_DIR/cloudflare-ddns.sh" /usr/local/bin/cloudflare-ddns
 chmod +x /usr/local/bin/cloudflare-ddns
 echo "✅ DDNS script installed to /usr/local/bin/cloudflare-ddns"
 
-# Setup cron job
-CRON_JOB="*/5 * * * * /usr/local/bin/cloudflare-ddns >> /var/log/cloudflare-ddns.log 2>&1"
-# Setup cron job
+# Setup cron jobs
 CRON_JOB="*/5 * * * * /usr/local/bin/cloudflare-ddns >> /var/log/cloudflare-ddns.log 2>&1"
 REBOOT_JOB="@reboot sleep 30 && /usr/local/bin/cloudflare-ddns >> /var/log/cloudflare-ddns.log 2>&1"
 
-# Add to crontab if not already present
-(crontab -l 2>/dev/null | grep -v -F "/usr/local/bin/cloudflare-ddns >> /var/log/cloudflare-ddns.log"; echo "$CRON_JOB"; echo "$REBOOT_JOB") | crontab -
+# Add to crontab - remove any existing cloudflare-ddns entries first (exact match on script path)
+# Using grep -v -F to match the exact script path, not just partial strings
+(crontab -l 2>/dev/null | grep -v -F "/usr/local/bin/cloudflare-ddns"; echo "$CRON_JOB"; echo "$REBOOT_JOB") | crontab -
 echo "✅ Cron job configured (runs every 5 minutes + on reboot)"
 echo ""
 echo "🚀 Running initial DNS update..."

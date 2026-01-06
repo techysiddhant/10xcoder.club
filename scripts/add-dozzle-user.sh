@@ -83,7 +83,9 @@ if grep -q "$USER_KEY_PATTERN" "$USERS_FILE" 2>/dev/null; then
     
     # Try using yq if available (safer YAML handling)
     if command -v yq &> /dev/null; then
-        if ! yq -i ".users.${USERNAME}.password = \"${PASSWORD_HASH}\"" "$USERS_FILE"; then
+        # Use strenv() for safe injection - avoids shell/YAML interpretation of special chars
+        export USERNAME PASSWORD_HASH
+        if ! yq -i '.users[strenv("USERNAME")].password = strenv("PASSWORD_HASH")' "$USERS_FILE"; then
             echo "Error: Failed to update password using yq"
             exit 1
         fi

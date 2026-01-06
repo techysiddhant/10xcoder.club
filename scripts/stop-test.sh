@@ -13,6 +13,15 @@ USERNAME="${USERNAME:-ubuntu}"
 KEY_PATH="${KEY_PATH:-~/.ssh/id_rsa}"
 PROJECT_NAME="${PROJECT_NAME:-10xcoder-test}"
 
+# Expand tilde in KEY_PATH
+KEY_PATH="${KEY_PATH/#\~/$HOME}"
+
+if [ ! -f "$KEY_PATH" ]; then
+    echo "Error: SSH key not found at $KEY_PATH"
+    echo "Please set KEY_PATH environment variable to your SSH key location"
+    exit 1
+fi
+
 if [ "$HOST" == "your-ec2-host" ]; then
     echo "Error: Please set HOST environment variable or update this script"
     echo "Usage: HOST=your-ec2-ip ./scripts/stop-test.sh"
