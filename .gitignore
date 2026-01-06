@@ -7,7 +7,7 @@ dist
 *.log
 coverage
 bun.lockb
-
+AWS_DEPLOYMENT.md
 # dependencies
 /node_modules
 /.pnp
@@ -91,3 +91,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dozzle authentication (contains password hashes)
+dozzle_data/users.yml

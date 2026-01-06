@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+*.js
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files (handled separately in CI)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+coverage/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Turbo
+.turbo/
+
+# Misc
+.prettierignore
+.husky/
+commitlint.config.cjs
+prettier.config.mjs
+eslint.config.mjs

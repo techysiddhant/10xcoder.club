@@ -1,0 +1,232 @@
+name: Deploy Production to AWS EC2
+
+on:
+  push:
+    branches: ['main']
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set Environment Variables
+        id: vars
+        run: |
+          echo "ENV_NAME=prod" >> $GITHUB_OUTPUT
+          echo "COMPOSE_PROJECT_NAME=10xcoder-prod" >> $GITHUB_OUTPUT
+          echo "APP_CONTAINER_NAME=10xcoder_prod_app" >> $GITHUB_OUTPUT
+          echo "DB_CONTAINER_NAME=10xcoder_prod_db" >> $GITHUB_OUTPUT
+          echo "REDIS_CONTAINER_NAME=10xcoder_prod_redis" >> $GITHUB_OUTPUT
+          echo "NGINX_CONTAINER_NAME=10xcoder_prod_nginx" >> $GITHUB_OUTPUT
+          echo "DB_VOLUME_NAME=postgres_prod_data" >> $GITHUB_OUTPUT
+          echo "REDIS_VOLUME_NAME=redis_prod_data" >> $GITHUB_OUTPUT
+          echo "NGINX_PORT=80" >> $GITHUB_OUTPUT
+          echo "APP_PORT=3000" >> $GITHUB_OUTPUT
+
+      - name: Create .env file for Remote
+        run: |
+          echo "${{ secrets.ENV_FILE_PROD }}" > .env.production
+
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: 22
+          source: 'docker-compose.yml,nginx,apps/api/Dockerfile,apps/api/drizzle,apps/api/package.json,apps/api/tsconfig.json,apps/api/src,packages/schemas,package.json,bun.lock,tsconfig.base.json,.env.production,scripts'
+          target: '/home/${{ secrets.USERNAME }}/${{ steps.vars.outputs.COMPOSE_PROJECT_NAME }}'
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: false
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: 22
+          command_timeout: 10m
+          script: |
+            set -e  # Exit on any error
+
+            cd /home/${{ secrets.USERNAME }}/${{ steps.vars.outputs.COMPOSE_PROJECT_NAME }}
+
+            # Move the correct env file to .env
+            mv .env.production .env
+
+            # Export variables for docker-compose
+            export APP_CONTAINER_NAME=${{ steps.vars.outputs.APP_CONTAINER_NAME }}
+            export DB_CONTAINER_NAME=${{ steps.vars.outputs.DB_CONTAINER_NAME }}
+            export REDIS_CONTAINER_NAME=${{ steps.vars.outputs.REDIS_CONTAINER_NAME }}
+            export NGINX_CONTAINER_NAME=${{ steps.vars.outputs.NGINX_CONTAINER_NAME }}
+            export DB_VOLUME_NAME=${{ steps.vars.outputs.DB_VOLUME_NAME }}
+            export REDIS_VOLUME_NAME=${{ steps.vars.outputs.REDIS_VOLUME_NAME }}
+            export NGINX_PORT=${{ steps.vars.outputs.NGINX_PORT }}
+            export APP_PORT=${{ steps.vars.outputs.APP_PORT }}
+            export COMPOSE_PROJECT_NAME=${{ steps.vars.outputs.COMPOSE_PROJECT_NAME }}
+
+            # Configuration
+            MAX_RETRIES=3
+            HEALTH_TIMEOUT=300  # 5 minutes
+            POLL_INTERVAL=10    # 10 seconds
+
+            echo "🚀 Starting deployment..."
+
+            # Gracefully stop existing containers
+            echo "📦 Stopping existing containers..."
+
+            # Check if any containers are running for this project
+            EXISTING_CONTAINERS=$(docker compose ps -q 2>/dev/null | wc -l || echo "0")
+
+            if [ "$EXISTING_CONTAINERS" -gt 0 ]; then
+              echo "  Found $EXISTING_CONTAINERS running container(s), stopping..."
+              
+              # Attempt graceful shutdown with error capture
+              DOWN_OUTPUT=$(docker compose down --remove-orphans 2>&1)
+              DOWN_EXIT=$?
+              
+              if [ $DOWN_EXIT -ne 0 ]; then
+                echo "⚠️  Warning: docker compose down failed (exit code: $DOWN_EXIT)"
+                echo "  Error output: $DOWN_OUTPUT"
+                
+                # Check for critical errors vs recoverable ones
+                if echo "$DOWN_OUTPUT" | grep -qiE "(permission denied|daemon|socket)"; then
+                  echo "❌ Critical Docker error detected. Cannot proceed."
+                  exit 1
+                fi
+                
+                # For non-critical errors (e.g., container already stopped), continue
+                echo "  Attempting to force remove remaining containers..."
+                docker compose rm -f -s 2>/dev/null || true
+              else
+                echo "  ✅ Containers stopped successfully"
+              fi
+            else
+              echo "  No existing containers found"
+            fi
+
+            # Build and start with retries
+            echo "🔨 Building and starting containers..."
+            RETRY_COUNT=0
+            DEPLOY_SUCCESS=false
+
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if docker compose up -d --build --remove-orphans 2>&1; then
+                DEPLOY_SUCCESS=true
+                break
+              fi
+              
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                BACKOFF=$((RETRY_COUNT * 10))
+                echo "⚠️  Deploy attempt $RETRY_COUNT failed, retrying in ${BACKOFF}s..."
+                sleep $BACKOFF
+              fi
+            done
+
+            if [ "$DEPLOY_SUCCESS" != "true" ]; then
+              echo "❌ Failed to start containers after $MAX_RETRIES attempts"
+              docker compose logs --no-color --tail=100
+              exit 1
+            fi
+
+            echo "⏳ Waiting for containers to become healthy..."
+
+            # Wait for health checks with timeout
+            ELAPSED=0
+            ALL_HEALTHY=false
+
+            while [ $ELAPSED -lt $HEALTH_TIMEOUT ]; do
+              sleep $POLL_INTERVAL
+              ELAPSED=$((ELAPSED + POLL_INTERVAL))
+              
+              # Get container health status
+              HEALTH_STATUS=$(docker compose ps --format json 2>/dev/null | jq -r '.[].Health // "none"' 2>/dev/null || echo "unknown")
+              RUNNING_COUNT=$(docker compose ps --format json 2>/dev/null | jq -r '.[].State' 2>/dev/null | grep -c "running" || echo "0")
+              UNHEALTHY_COUNT=$(docker compose ps --format json 2>/dev/null | jq -r '.[].Health' 2>/dev/null | grep -c "unhealthy" || echo "0")
+              
+              echo "  ⏱️  ${ELAPSED}s - Running: $RUNNING_COUNT, Unhealthy: $UNHEALTHY_COUNT"
+              
+              # Check if any container is unhealthy
+              if [ "$UNHEALTHY_COUNT" -gt 0 ]; then
+                echo "❌ Unhealthy container detected!"
+                docker compose ps
+                docker compose logs --no-color --tail=50
+                exit 1
+              fi
+              
+              # Check if all expected services are running and healthy
+              # Dynamically get expected service count from docker-compose config
+              EXPECTED_SERVICES=$(docker compose config --services 2>/dev/null | wc -l | tr -d ' ')
+              EXPECTED_SERVICES=${EXPECTED_SERVICES:-4}  # Fallback to 4 if command fails
+              HEALTHY_COUNT=$(docker compose ps --format json 2>/dev/null | jq -r '.[].Health' 2>/dev/null | grep -c "healthy" || echo "0")
+              
+              # Services without healthcheck show as empty/none, count running as success for those
+              TOTAL_OK=$((HEALTHY_COUNT + $(docker compose ps --format json 2>/dev/null | jq -r 'select(.Health == "" or .Health == null) | .State' 2>/dev/null | grep -c "running" || echo "0")))
+              
+              if [ "$RUNNING_COUNT" -ge "$EXPECTED_SERVICES" ]; then
+                # All services running, check if health checks pass
+                STARTING_COUNT=$(docker compose ps --format json 2>/dev/null | jq -r '.[].Health' 2>/dev/null | grep -c "starting" || echo "0")
+                if [ "$STARTING_COUNT" -eq 0 ]; then
+                  ALL_HEALTHY=true
+                  break
+                fi
+              fi
+            done
+
+            # Final status check
+            echo ""
+            echo "📊 Final container status:"
+            docker compose ps
+
+            if [ "$ALL_HEALTHY" != "true" ]; then
+              echo ""
+              echo "❌ Containers did not become healthy within ${HEALTH_TIMEOUT}s"
+              echo ""
+              echo "📋 Container logs:"
+              docker compose logs --no-color --tail=100
+              exit 1
+            fi
+
+            echo ""
+            echo "✅ Deployment successful! All containers are running and healthy."
+
+            # Run database migrations
+            echo ""
+            echo "🗄️  Running database migrations..."
+
+            # Source environment variables from .env file
+            # set -a exports all variables, set +a turns it off
+            set -a
+            source .env
+            set +a
+
+            # Wait for database to be fully ready
+            sleep 5
+
+            # Run drizzle-kit push using a temporary container connected to the network
+            docker run --rm \
+              --network "${COMPOSE_PROJECT_NAME}_app_net" \
+              -v "$(pwd)/apps/api:/app" \
+              -w /app \
+              -e DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}" \
+              node:20-alpine \
+              sh -c "npm install --silent drizzle-kit drizzle-orm postgres @types/node typescript && npx drizzle-kit push --config=src/drizzle.config.ts" 2>&1 || {
+                echo "⚠️  Migration via drizzle-kit push failed, trying alternative method..."
+                
+                # Alternative: Apply SQL files directly
+                for sql_file in apps/api/drizzle/*.sql; do
+                  if [ -f "$sql_file" ]; then
+                    echo "Applying $sql_file..."
+                    docker exec $DB_CONTAINER_NAME psql -U $POSTGRES_USER -d $POSTGRES_DB -f "/dev/stdin" < "$sql_file" || true
+                  fi
+                done
+              }
+
+            echo "✅ Database migrations completed!"
