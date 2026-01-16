@@ -75,6 +75,7 @@ A community-driven platform built with modern technologies to help developers be
   curl -fsSL https://bun.sh/install | bash
   ```
 - **[PostgreSQL](https://www.postgresql.org/)** - For the API database
+- **[Redis](https://redis.io/)** - For caching (install via Homebrew: `brew install redis`)
 - **[Git](https://git-scm.com/)** - Version control
 
 ### Installation
@@ -127,17 +128,30 @@ A community-driven platform built with modern technologies to help developers be
 
 ### API (`apps/api/.env`)
 
-| Variable            | Required | Default       | Description                                                  |
-| ------------------- | -------- | ------------- | ------------------------------------------------------------ |
-| `NODE_ENV`          | No       | `development` | Environment mode: `development`, `test`, `production`        |
-| `PORT`              | No       | `3000`        | API server port                                              |
-| `LOG_LEVEL`         | No       | `info`        | Logging level: `debug`, `info`, `warn`, `error`              |
-| `CORS_ORIGIN`       | No       | -             | Comma-separated allowed origins (permissive in dev if unset) |
-| `POSTGRES_USER`     | **Yes**  | -             | PostgreSQL username                                          |
-| `POSTGRES_PASSWORD` | **Yes**  | -             | PostgreSQL password                                          |
-| `POSTGRES_DB`       | **Yes**  | -             | PostgreSQL database name                                     |
-| `POSTGRES_HOST`     | **Yes**  | -             | PostgreSQL host                                              |
-| `POSTGRES_PORT`     | No       | `5432`        | PostgreSQL port                                              |
+| Variable                | Required | Default       | Description                                                  |
+| ----------------------- | -------- | ------------- | ------------------------------------------------------------ |
+| `NODE_ENV`              | No       | `development` | Environment mode: `development`, `test`, `production`        |
+| `PORT`                  | No       | `3000`        | API server port                                              |
+| `LOG_LEVEL`             | No       | `info`        | Logging level: `debug`, `info`, `warn`, `error`              |
+| `CORS_ORIGIN`           | No       | -             | Comma-separated allowed origins (permissive in dev if unset) |
+| `POSTGRES_USER`         | **Yes**  | -             | PostgreSQL username                                          |
+| `POSTGRES_PASSWORD`     | **Yes**  | -             | PostgreSQL password                                          |
+| `POSTGRES_DB`           | **Yes**  | -             | PostgreSQL database name                                     |
+| `POSTGRES_HOST`         | **Yes**  | -             | PostgreSQL host                                              |
+| `POSTGRES_PORT`         | No       | `5432`        | PostgreSQL port                                              |
+| `REDIS_URL`             | **Yes**  | -             | Redis connection URL for caching                             |
+| `API_URL`               | **Yes**  | -             | Public API URL (for auth callbacks)                          |
+| `BETTER_AUTH_SECRET`    | **Yes**  | -             | Secret key for session encryption (min 32 chars)             |
+| `DOMAIN`                | **Yes**  | -             | Domain for cookies (e.g., `localhost` or `yourdomain.com`)   |
+| `GITHUB_CLIENT_ID`      | **Yes**  | -             | GitHub OAuth App client ID                                   |
+| `GITHUB_CLIENT_SECRET`  | **Yes**  | -             | GitHub OAuth App client secret                               |
+| `YOUTUBE_API_KEY`       | No       | -             | YouTube Data API v3 key (enables rich video/playlist data)   |
+| `GEMINI_API_KEY`        | No       | -             | Gemini API key for semantic search embeddings                |
+| `RESEND_API_KEY`        | No       | -             | Resend API key for transactional emails                      |
+| `AWS_ACCESS_KEY_ID`     | No       | -             | AWS access key for S3 uploads                                |
+| `AWS_SECRET_ACCESS_KEY` | No       | -             | AWS secret key for S3 uploads                                |
+| `AWS_S3_BUCKET`         | No       | -             | S3 bucket name for uploads                                   |
+| `AWS_REGION`            | No       | `ap-south-1`  | AWS region                                                   |
 
 ### Web (`apps/web/.env.local`)
 
