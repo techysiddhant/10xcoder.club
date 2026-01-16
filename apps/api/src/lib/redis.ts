@@ -1,5 +1,9 @@
 import Redis from 'ioredis'
 import { env } from '@/config/env'
+import { logger } from '@/lib/logger'
+
+// Redis logger
+const redisLogger = logger.child({ component: 'redis' })
 
 export const redis = new Redis({
   host: env.REDIS_HOST,
@@ -11,23 +15,29 @@ export const redis = new Redis({
 })
 
 redis.on('connect', () => {
-  console.log('🟢 Redis connected')
+  redisLogger.info({ host: env.REDIS_HOST, port: env.REDIS_PORT }, 'Redis connected')
 })
 
 redis.on('error', (err) => {
-  console.error('🔴 Redis connection error:', err.message)
+  redisLogger.error({ error: err.message }, 'Redis connection error')
+})
+
+redis.on('reconnecting', () => {
+  redisLogger.warn('Redis reconnecting')
 })
 
 export async function connectRedis(): Promise<void> {
   try {
     await redis.connect()
   } catch (err) {
-    console.error('❌ Failed to connect to Redis')
-    console.error(`   Host: ${env.REDIS_HOST}:${env.REDIS_PORT}`)
-    if (err instanceof Error) {
-      console.error(`   Error: ${err.message}`)
-    }
-    console.error('\n📝 Please ensure Redis is running and check your .env configuration.')
+    redisLogger.fatal(
+      {
+        host: env.REDIS_HOST,
+        port: env.REDIS_PORT,
+        error: err instanceof Error ? err.message : String(err)
+      },
+      'Failed to connect to Redis'
+    )
     process.exit(1)
   }
 }

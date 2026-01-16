@@ -47,3 +47,6 @@ export const DEFAULT_USER_NAMES = [
   'siddhant'
 ] as const
 export type DefaultUserName = (typeof DEFAULT_USER_NAMES)[number]
+
+// Resource schemas
+export * from './resource'

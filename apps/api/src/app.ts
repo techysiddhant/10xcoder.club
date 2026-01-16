@@ -1,22 +1,21 @@
 import { Elysia } from 'elysia'
 import { rateLimit } from 'elysia-rate-limit'
 import { cors } from '@elysiajs/cors'
-import { logger } from 'elysia-logger'
 import { env } from '@/config/env'
 import { AuthOpenAPI } from './lib/auth-open-api'
 import openapi from '@elysiajs/openapi'
 import type { OpenAPIV3 } from 'openapi-types'
+import { resourcesRoutes } from '@/routes/resources'
+import { uploadRoutes } from '@/routes/upload'
+import { adminRoutes } from '@/routes/admin'
+import { voteRoutes } from '@/routes/vote'
+import { scrapeRoutes } from '@/routes/scrape'
+import { loggingMiddleware } from '@/middleware/logging.middleware'
+import { parseError, AppError } from '@/utils/errors'
 
 export const app = new Elysia()
-
-  .onRequest(() => {
-    // console.log('!!! INCOMING REQUEST:', request.method, request.url);
-  })
-  .use(
-    logger({
-      level: env.LOG_LEVEL
-    })
-  )
+  // Structured logging with request context
+  .use(loggingMiddleware)
   .use(
     rateLimit({
       max: 60,
@@ -25,8 +24,10 @@ export const app = new Elysia()
         req.headers.get('x-api-key') || server?.requestIP(req)?.address || '',
       errorResponse: new Response(
         JSON.stringify({
+          success: false,
           status: 429,
-          message: 'Too many requests - try again later'
+          code: 'RATE_LIMITED',
+          message: 'Too many requests. Please try again later.'
         }),
         { status: 429, headers: { 'Content-Type': 'application/json' } }
       )
@@ -66,15 +67,22 @@ export const app = new Elysia()
       }
     })
   )
-  .onError(({ code, error }) => {
+  .onError(({ code, error, set }) => {
+    // Already a Response object
     if (error instanceof Response) {
       return error
     }
-    return {
-      status: 'error',
-      code,
-      message: error.toString()
+
+    // Already an AppError
+    if (error instanceof AppError) {
+      set.status = error.status
+      return error.toResponse()
     }
+
+    // Parse and convert any error to AppError
+    const appError = parseError(error)
+    set.status = appError.status
+    return appError.toResponse()
   })
   .get('/', () => {
     return {
@@ -82,5 +90,10 @@ export const app = new Elysia()
       message: 'Server is running'
     }
   })
+  .use(resourcesRoutes)
+  .use(uploadRoutes)
+  .use(adminRoutes)
+  .use(voteRoutes)
+  .use(scrapeRoutes)
 
 export type App = typeof app

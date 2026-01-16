@@ -1,0 +1,1 @@
+CREATE INDEX "resource_embedding_hnsw_idx" ON "resource" USING hnsw ("embedding" vector_cosine_ops);

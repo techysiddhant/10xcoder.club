@@ -1,0 +1,1 @@
+ALTER TABLE "resource" ADD COLUMN "embedding" vector(768);

@@ -12,7 +12,7 @@ const sendResetPasswordEmail = async (email: string, name: string, url: string) 
   const sanitizedUrl = assertValidEmailUrl(url)
 
   await resend.emails.send({
-    from: `10xcoder.club <no-reply@${env.EMAIL_FROM}>`,
+    from: `10xCoder.club <no-reply@${env.DOMAIN}>`,
     to: email,
     subject: 'Reset your password',
     react: ResetPasswordEmail({ name, url: sanitizedUrl })
@@ -26,7 +26,7 @@ const verifyEmail = async (email: string, name: string, url: string) => {
   const sanitizedUrl = assertValidEmailUrl(url)
 
   await resend.emails.send({
-    from: `10xcoder.club <no-reply@${env.EMAIL_FROM}>`,
+    from: `10xCoder.club <no-reply@${env.DOMAIN}>`,
     to: email,
     subject: 'Verify your email',
     react: VerificationEmail({ name, url: sanitizedUrl })
@@ -39,7 +39,7 @@ const sendMagicLinkEmail = async (email: string, url: string) => {
   const sanitizedUrl = assertValidEmailUrl(url)
 
   await resend.emails.send({
-    from: `10xcoder.club <no-reply@${env.EMAIL_FROM}>`,
+    from: `10xCoder.club <no-reply@${env.DOMAIN}>`,
     to: email,
     subject: 'Sign in to 10xCoder.club',
     react: MagicLinkEmail({ email, url: sanitizedUrl })

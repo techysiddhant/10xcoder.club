@@ -12,7 +12,9 @@ AWS_DEPLOYMENT.md
 /node_modules
 /.pnp
 .pnp.js
-
+# In .gitignore
+dump.rdb
+*.rdb
 # testing
 /coverage
 server.js
@@ -94,3 +96,4 @@ next-env.d.ts
 
 # dozzle authentication (contains password hashes)
 dozzle_data/users.yml
+dozzle_data/users.yml.example
