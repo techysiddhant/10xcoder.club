@@ -29,7 +29,27 @@ export class DevToProvider implements ScrapeProvider {
   name = 'devto'
 
   canHandle(url: string): boolean {
-    return url.includes('dev.to') && DEVTO_PATTERN.test(url)
+    try {
+      // Parse URL and verify it's HTTP/HTTPS
+      const parsedUrl = new URL(url)
+      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+        return false
+      }
+
+      // Verify hostname is exactly 'dev.to' or ends with '.dev.to' (for subdomains)
+      const hostname = parsedUrl.hostname.toLowerCase()
+      if (hostname !== 'dev.to' && !hostname.endsWith('.dev.to')) {
+        return false
+      }
+
+      // Test pathname against DEVTO_PATTERN
+      // Construct test string in format expected by pattern: "dev.to/pathname"
+      const testString = `dev.to${parsedUrl.pathname}`
+      return DEVTO_PATTERN.test(testString)
+    } catch {
+      // Return false on URL parsing errors or invalid inputs
+      return false
+    }
   }
 
   async scrape(url: string, _options?: ScrapeOptions): Promise<ScrapedResource> {

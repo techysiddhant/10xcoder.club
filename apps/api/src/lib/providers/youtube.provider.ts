@@ -19,7 +19,7 @@ import { logger } from '../logger'
 
 // Patterns for video ID extraction
 const VIDEO_PATTERNS = [
-  /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+  /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/,
   /^([a-zA-Z0-9_-]{11})$/ // Direct video ID
 ]
 
@@ -49,7 +49,17 @@ export class YouTubeProvider implements ScrapeProvider {
   name = 'youtube'
 
   canHandle(url: string): boolean {
-    return url.includes('youtube.com') || url.includes('youtu.be')
+    try {
+      const { hostname } = new URL(url)
+      return (
+        hostname === 'youtube.com' ||
+        hostname === 'www.youtube.com' ||
+        hostname === 'm.youtube.com' ||
+        hostname === 'youtu.be'
+      )
+    } catch {
+      return false
+    }
   }
 
   async scrape(url: string, _options?: ScrapeOptions): Promise<ScrapedResource> {
@@ -465,7 +475,7 @@ export class YouTubeProvider implements ScrapeProvider {
     const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`
 
     try {
-      const response = await fetch(oembedUrl)
+      const response = await this.fetchWithTimeout(oembedUrl)
       if (response.ok) {
         const data = await response.json()
 

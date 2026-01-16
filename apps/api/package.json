@@ -26,6 +26,7 @@
     "elysia-logger": "^0.5.2",
     "elysia-rate-limit": "^4.4.2",
     "ioredis": "^5.8.2",
+    "pino": "^10.2.0",
     "postgres": "^3.4.7",
     "resend": "^6.6.0"
   },

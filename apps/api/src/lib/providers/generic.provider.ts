@@ -25,8 +25,16 @@ export class GenericProvider implements ScrapeProvider {
   private readonly MAX_REDIRECTS = 5
 
   async scrape(url: string, _options?: ScrapeOptions): Promise<ScrapedResource> {
+    // Parse and validate URL
+    let parsedUrl: URL
+    try {
+      parsedUrl = new URL(url)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Invalid URL format'
+      throw new InvalidUrlError(`Invalid URL: ${url}. ${errorMessage}`)
+    }
+
     // Validate URL protocol
-    const parsedUrl = new URL(url)
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       throw new InvalidUrlError(
         `Invalid URL protocol: ${parsedUrl.protocol}. Only http and https are allowed.`

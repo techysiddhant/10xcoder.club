@@ -1,28 +1,5 @@
 {
   "name": "10xcoder-club",
-  "private": true,
-  "packageManager": "bun@1.2.0",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "clean": "turbo run clean && rm -rf .turbo node_modules/.cache",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "prepare": "husky install",
-    "ui:add": "./scripts/ui-add.sh",
-    "ui:diff": "./scripts/ui-diff.sh",
-    "db:studio": "bun --cwd apps/api drizzle-kit studio --config src/drizzle.config.ts",
-    "db:generate": "bun --cwd apps/api drizzle-kit generate --config src/drizzle.config.ts",
-    "db:migrate": "bun --cwd apps/api drizzle-kit migrate --config src/drizzle.config.ts",
-    "api:add": "cd apps/api && bun add",
-    "api:add-dev": "cd apps/api && bun add -d"
-  },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
@@ -49,7 +26,27 @@
       "bun --cwd packages/ui run lint -- --fix"
     ]
   },
-  "dependencies": {
-    "pino": "^10.2.0"
-  }
+  "packageManager": "bun@1.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf .turbo node_modules/.cache",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky install",
+    "ui:add": "./scripts/ui-add.sh",
+    "ui:diff": "./scripts/ui-diff.sh",
+    "db:studio": "bun --cwd apps/api drizzle-kit studio --config src/drizzle.config.ts",
+    "db:generate": "bun --cwd apps/api drizzle-kit generate --config src/drizzle.config.ts",
+    "db:migrate": "bun --cwd apps/api drizzle-kit migrate --config src/drizzle.config.ts",
+    "api:add": "cd apps/api && bun add",
+    "api:add-dev": "cd apps/api && bun add -d"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }
