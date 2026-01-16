@@ -14,8 +14,8 @@ import { resourceType } from './resourceType'
 import { ResourceLanguageSchema, ResourceStatusSchema } from '@workspace/schemas*'
 
 // Enums
-export const languageEnum = pgEnum('language', ResourceLanguageSchema.enum)
-export const resourceStatusEnum = pgEnum('resource_status', ResourceStatusSchema.enum)
+export const languageEnum = pgEnum('language', ResourceLanguageSchema.options)
+export const resourceStatusEnum = pgEnum('resource_status', ResourceStatusSchema.options)
 
 // Metadata type for JSONB column
 export type ResourceMetadata = {

@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS vector;--> statement-breakpoint
 CREATE TYPE "public"."language" AS ENUM('english', 'hindi');--> statement-breakpoint
 CREATE TYPE "public"."resource_status" AS ENUM('approved', 'rejected', 'pending');--> statement-breakpoint
 CREATE TYPE "public"."vote_type" AS ENUM('upvote', 'downvote');--> statement-breakpoint
@@ -67,8 +68,8 @@ CREATE TABLE "user_vote" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-DROP INDEX "user_email_idx";--> statement-breakpoint
-DROP INDEX "user_username_idx";--> statement-breakpoint
+DROP INDEX IF EXISTS "user_email_idx";--> statement-breakpoint
+DROP INDEX IF EXISTS "user_username_idx";--> statement-breakpoint
 ALTER TABLE "resource" ADD CONSTRAINT "resource_resource_type_id_resource_type_id_fk" FOREIGN KEY ("resource_type_id") REFERENCES "public"."resource_type"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "resource" ADD CONSTRAINT "resource_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "resource_to_tags" ADD CONSTRAINT "resource_to_tags_resource_id_resource_id_fk" FOREIGN KEY ("resource_id") REFERENCES "public"."resource"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
