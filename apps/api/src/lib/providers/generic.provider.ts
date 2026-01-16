@@ -146,7 +146,7 @@ export class GenericProvider implements ScrapeProvider {
       const parsedCurrentUrl = new URL(currentUrl)
       const currentAllowedIps = await this.validateHostname(parsedCurrentUrl.hostname)
       // Use the resolved IPs for this request
-      allowedIps = currentAllowedIps.length > 0 ? currentAllowedIps : allowedIps
+      allowedIps = currentAllowedIps
 
       // Use fetchWithIpVerification instead of standard fetch
       const response = await this.fetchWithIpVerification(currentUrl, allowedIps, signal)
@@ -196,7 +196,7 @@ export class GenericProvider implements ScrapeProvider {
         try {
           const redirectAllowedIps = await this.validateHostname(parsedRedirectUrl.hostname)
           // Update allowed IPs for next iteration
-          allowedIps = redirectAllowedIps.length > 0 ? redirectAllowedIps : allowedIps
+          allowedIps = redirectAllowedIps
         } catch (error) {
           if (error instanceof Error && error.message.startsWith('SSRF blocked')) {
             throw new InvalidUrlError(
@@ -411,7 +411,7 @@ export class GenericProvider implements ScrapeProvider {
       }
 
       signal.addEventListener('abort', () => {
-        req.destroy()
+        req.destroy(new Error('Aborted'))
       })
 
       req.end()

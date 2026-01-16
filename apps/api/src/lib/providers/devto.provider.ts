@@ -6,8 +6,8 @@
 import type { ScrapedResource, ScrapeProvider, ScrapeOptions } from '@/types'
 import { InvalidUrlError, PlatformApiError, ScrapeNotFoundError } from '@/lib/errors'
 
-// Matches: dev.to/username/article-slug or dev.to/organization/article-slug
-const DEVTO_PATTERN = /dev\.to\/([^/]+)\/([^/?#]+)/
+// Matches pathname pattern: /username/article-slug or /organization/article-slug
+const DEVTO_PATHNAME_PATTERN = /^\/([^/]+)\/([^/?#]+)/
 
 interface DevToUrlParts {
   username: string
@@ -15,41 +15,29 @@ interface DevToUrlParts {
 }
 
 function parseDevToUrl(url: string): DevToUrlParts | null {
-  const match = url.match(DEVTO_PATTERN)
-  if (match) {
-    return {
-      username: match[1]!,
-      articleSlug: match[2]!
+  try {
+    const parsed = new URL(url)
+    // Verify protocol is HTTP/HTTPS
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return null
     }
+    const hostname = parsed.hostname.toLowerCase()
+    if (hostname !== 'dev.to' && !hostname.endsWith('.dev.to')) {
+      return null
+    }
+    const match = parsed.pathname.match(DEVTO_PATHNAME_PATTERN)
+    if (!match) return null
+    return { username: match[1]!, articleSlug: match[2]! }
+  } catch {
+    return null
   }
-  return null
 }
 
 export class DevToProvider implements ScrapeProvider {
   name = 'devto'
 
   canHandle(url: string): boolean {
-    try {
-      // Parse URL and verify it's HTTP/HTTPS
-      const parsedUrl = new URL(url)
-      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-        return false
-      }
-
-      // Verify hostname is exactly 'dev.to' or ends with '.dev.to' (for subdomains)
-      const hostname = parsedUrl.hostname.toLowerCase()
-      if (hostname !== 'dev.to' && !hostname.endsWith('.dev.to')) {
-        return false
-      }
-
-      // Test pathname against DEVTO_PATTERN
-      // Construct test string in format expected by pattern: "dev.to/pathname"
-      const testString = `dev.to${parsedUrl.pathname}`
-      return DEVTO_PATTERN.test(testString)
-    } catch {
-      // Return false on URL parsing errors or invalid inputs
-      return false
-    }
+    return Boolean(parseDevToUrl(url))
   }
 
   async scrape(url: string, _options?: ScrapeOptions): Promise<ScrapedResource> {
