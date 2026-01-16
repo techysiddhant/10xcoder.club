@@ -11,7 +11,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import { user } from './user'
 import { resourceType } from './resourceType'
-import { ResourceLanguageSchema, ResourceStatusSchema } from '@workspace/schemas*'
+import { ResourceLanguageSchema, ResourceStatusSchema } from '@workspace/schemas'
 
 // Enums
 export const languageEnum = pgEnum('language', ResourceLanguageSchema.options)
