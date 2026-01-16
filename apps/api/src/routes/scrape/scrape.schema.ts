@@ -81,7 +81,7 @@ const ScrapeErrorSchema = t.Object({
 
 export const scrapeUrlSchema = {
   body: t.Object({
-    url: t.String({ minLength: 5, format: 'uri' })
+    url: t.String({ minLength: 5 })
   }),
   detail: {
     tags: ['Scrape'],

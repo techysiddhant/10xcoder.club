@@ -5,6 +5,9 @@
 
 import * as cheerio from 'cheerio'
 import { lookup } from 'dns/promises'
+import http from 'node:http'
+import https from 'node:https'
+import type { Socket } from 'node:net'
 import type { ScrapedResource, ScrapeProvider, ScrapeOptions } from '@/types'
 import { InvalidUrlError, PlatformApiError } from '@/lib/errors'
 
@@ -31,14 +34,15 @@ export class GenericProvider implements ScrapeProvider {
     }
 
     // SSRF protection: Check if hostname resolves to private/internal IPs
-    await this.validateHostname(parsedUrl.hostname)
+    // Returns resolved addresses for connect-time verification
+    const allowedIps = await this.validateHostname(parsedUrl.hostname)
 
     // Set up timeout with AbortController
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), this.FETCH_TIMEOUT_MS)
 
     try {
-      const response = await this.fetchWithRedirectHandling(url, controller.signal)
+      const response = await this.fetchWithRedirectHandling(url, allowedIps, controller.signal)
 
       if (!response.ok) {
         throw new PlatformApiError(`Failed to fetch URL: ${response.status}`)
@@ -83,10 +87,13 @@ export class GenericProvider implements ScrapeProvider {
       // Determine resource type based on URL patterns
       const suggestedResourceType = this.detectResourceType(url)
 
+      // Use the final redirected URL from the response for resolving relative image URLs
+      const finalUrl = response.url || url
+
       return {
         title: title.trim(),
         description: description?.trim() || null,
-        image: image ? this.resolveUrl(image, url) : null,
+        image: image ? this.resolveUrl(image, finalUrl) : null,
         credits: author?.trim() || null,
         url,
 
@@ -115,21 +122,26 @@ export class GenericProvider implements ScrapeProvider {
   /**
    * Fetch with manual redirect handling to prevent SSRF attacks
    * Validates each redirect target against hostname/IP allowlist
+   * Uses connect-time IP verification to prevent DNS rebinding attacks
    */
-  private async fetchWithRedirectHandling(url: string, signal: AbortSignal): Promise<Response> {
+  private async fetchWithRedirectHandling(
+    url: string,
+    initialAllowedIps: string[],
+    signal: AbortSignal
+  ): Promise<Response> {
     let currentUrl = url
     let redirectCount = 0
+    let allowedIps = initialAllowedIps
 
     while (redirectCount <= this.MAX_REDIRECTS) {
-      const response = await fetch(currentUrl, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-        },
-        redirect: 'manual',
-        signal
-      })
+      // Validate and resolve IPs for current URL
+      const parsedCurrentUrl = new URL(currentUrl)
+      const currentAllowedIps = await this.validateHostname(parsedCurrentUrl.hostname)
+      // Use the resolved IPs for this request
+      allowedIps = currentAllowedIps.length > 0 ? currentAllowedIps : allowedIps
+
+      // Use fetchWithIpVerification instead of standard fetch
+      const response = await this.fetchWithIpVerification(currentUrl, allowedIps, signal)
 
       // Check if response is a redirect (3xx status)
       if (response.status >= 300 && response.status < 400) {
@@ -172,9 +184,11 @@ export class GenericProvider implements ScrapeProvider {
           )
         }
 
-        // SSRF protection: Validate redirect target hostname
+        // SSRF protection: Validate redirect target hostname and get resolved IPs
         try {
-          await this.validateHostname(parsedRedirectUrl.hostname)
+          const redirectAllowedIps = await this.validateHostname(parsedRedirectUrl.hostname)
+          // Update allowed IPs for next iteration
+          allowedIps = redirectAllowedIps.length > 0 ? redirectAllowedIps : allowedIps
         } catch (error) {
           if (error instanceof Error && error.message.startsWith('SSRF blocked')) {
             throw new InvalidUrlError(
@@ -199,8 +213,9 @@ export class GenericProvider implements ScrapeProvider {
 
   /**
    * Validate hostname is not a private/internal IP address (SSRF protection)
+   * Returns resolved addresses for connect-time verification
    */
-  private async validateHostname(hostname: string): Promise<void> {
+  private async validateHostname(hostname: string): Promise<string[]> {
     // List of blocked patterns
     const blockedPatterns = [
       // Loopback
@@ -236,25 +251,163 @@ export class GenericProvider implements ScrapeProvider {
     }
 
     // Try to resolve hostname and check the IP
-    // Note: This has a TOCTOU (Time-Of-Check-Time-Of-Use) vulnerability - DNS rebinding attacks
-    // can change the IP between this check and the actual fetch. For stronger protection, consider
-    // post-connect IP verification, OS/network-level egress controls, or a proxy.
     try {
       const addresses = await lookup(hostname, { all: true })
+      const resolvedAddresses: string[] = []
 
       // Check all returned addresses against blocked patterns
       for (const { address } of addresses) {
         if (blockedPatterns.some((pattern) => pattern.test(address))) {
           throw new InvalidUrlError(`SSRF blocked: ${hostname} resolves to private IP ${address}`)
         }
+        resolvedAddresses.push(address)
       }
+
+      // Return resolved addresses for connect-time verification
+      return resolvedAddresses
     } catch (error) {
       // If it's our SSRF error, rethrow it
       if (error instanceof Error && error.message.startsWith('SSRF blocked')) {
         throw error
       }
-      // DNS lookup failed - could be a valid domain, let fetch handle it
+      // DNS lookup failed - return empty array, will be handled during connection
+      return []
     }
+  }
+
+  /**
+   * Make an HTTP/HTTPS request with connect-time IP verification
+   * Validates socket remoteAddress against pinned IPs to prevent DNS rebinding attacks
+   */
+  private async fetchWithIpVerification(
+    url: string,
+    allowedIps: string[],
+    signal: AbortSignal
+  ): Promise<Response> {
+    const parsedUrl = new URL(url)
+    const isHttps = parsedUrl.protocol === 'https:'
+    const port = parsedUrl.port || (isHttps ? 443 : 80)
+    const hostname = parsedUrl.hostname
+
+    // If we have allowed IPs, pin to the first one
+    const pinnedIp = allowedIps.length > 0 ? allowedIps[0]! : null
+
+    return new Promise((resolve, reject) => {
+      // Create request options
+      const options: http.RequestOptions | https.RequestOptions = {
+        hostname: pinnedIp || hostname, // Use pinned IP if available
+        port,
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: 'GET',
+        headers: {
+          Host: hostname, // Preserve original hostname for Host header
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+      }
+
+      // For HTTPS, set servername for SNI (Server Name Indication)
+      if (isHttps && pinnedIp) {
+        ;(options as https.RequestOptions).servername = hostname
+      }
+
+      const requestModule = isHttps ? https : http
+      const req = requestModule.request(options, (res) => {
+        // Collect response data
+        const chunks: Buffer[] = []
+        res.on('data', (chunk) => chunks.push(chunk))
+        res.on('end', () => {
+          const body = Buffer.concat(chunks)
+          // Convert Node.js response to Fetch Response
+          const response = new Response(body, {
+            status: res.statusCode || 200,
+            statusText: res.statusMessage || 'OK',
+            headers: res.headers as HeadersInit
+          })
+          // Set the final URL - use response.url if available (after redirects), otherwise use original url
+          const finalUrl = (res as any).url || url
+          Object.defineProperty(response, 'url', {
+            value: finalUrl,
+            writable: false
+          })
+          resolve(response)
+        })
+      })
+
+      // Handle socket connection for IP verification
+      req.on('socket', (socket: Socket) => {
+        socket.on('connect', () => {
+          const remoteAddress = socket.remoteAddress
+          if (!remoteAddress) {
+            req.destroy()
+            reject(
+              new InvalidUrlError(`SSRF blocked: Could not verify connection IP for ${hostname}`)
+            )
+            return
+          }
+
+          // Normalize IPv6 addresses (remove brackets)
+          const normalizedRemote = remoteAddress.replace(/^\[|\]$/g, '')
+          const normalizedAllowed = allowedIps.map((ip) => ip.replace(/^\[|\]$/g, ''))
+
+          // Verify the socket's remoteAddress matches one of the allowed IPs
+          if (allowedIps.length > 0 && !normalizedAllowed.includes(normalizedRemote)) {
+            req.destroy()
+            reject(
+              new InvalidUrlError(
+                `SSRF blocked: Connection IP ${remoteAddress} does not match resolved IPs for ${hostname}`
+              )
+            )
+            return
+          }
+
+          // Additional check: verify the IP is not in blocked ranges
+          const blockedPatterns = [
+            /^127\./,
+            /^::1$/,
+            /^0\.0\.0\.0$/,
+            /^10\./,
+            /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
+            /^192\.168\./,
+            /^169\.254\./,
+            /^fe80:/i,
+            /^f[cd][0-9a-f]{2}:/i
+          ]
+
+          if (blockedPatterns.some((pattern) => pattern.test(normalizedRemote))) {
+            req.destroy()
+            reject(
+              new InvalidUrlError(
+                `SSRF blocked: Connection IP ${remoteAddress} is in a private/internal range`
+              )
+            )
+            return
+          }
+        })
+
+        socket.on('error', (error) => {
+          reject(error)
+        })
+      })
+
+      req.on('error', (error) => {
+        reject(error)
+      })
+
+      // Handle abort signal
+      if (signal.aborted) {
+        req.destroy()
+        reject(new Error('Aborted'))
+        return
+      }
+
+      signal.addEventListener('abort', () => {
+        req.destroy()
+      })
+
+      req.end()
+    })
   }
 
   private detectResourceType(url: string): ScrapedResource['suggestedResourceType'] {

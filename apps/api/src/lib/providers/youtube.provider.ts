@@ -173,20 +173,41 @@ export class YouTubeProvider implements ScrapeProvider {
       part: 'snippet,contentDetails'
     })
 
-    const playlistResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/playlists?${playlistParams}`,
-      { headers: { 'User-Agent': 'Mozilla/5.0 (Bot/Scraper)' } }
-    )
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => {
+      controller.abort()
+    }, DEFAULT_TIMEOUT_MS)
 
-    if (!playlistResponse.ok) {
-      throw new PlatformApiError(`YouTube API error: ${playlistResponse.status}`)
-    }
+    let playlistData
+    let playlist
 
-    const playlistData = await playlistResponse.json()
-    const playlist = playlistData.items?.[0]
+    try {
+      const playlistResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/playlists?${playlistParams}`,
+        {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Bot/Scraper)' },
+          signal: controller.signal
+        }
+      )
 
-    if (!playlist) {
-      throw new ScrapeNotFoundError('Playlist not found on YouTube')
+      clearTimeout(timeoutId)
+
+      if (!playlistResponse.ok) {
+        throw new PlatformApiError(`YouTube API error: ${playlistResponse.status}`)
+      }
+
+      playlistData = await playlistResponse.json()
+      playlist = playlistData.items?.[0]
+
+      if (!playlist) {
+        throw new ScrapeNotFoundError('Playlist not found on YouTube')
+      }
+    } catch (error) {
+      clearTimeout(timeoutId)
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new PlatformApiError('YouTube API request timed out')
+      }
+      throw error
     }
 
     // 2. Fetch playlist items (videos in the playlist)
@@ -262,6 +283,33 @@ export class YouTubeProvider implements ScrapeProvider {
   }
 
   /**
+   * Helper method to fetch with timeout handling
+   * Wraps fetch with AbortController and DEFAULT_TIMEOUT_MS timeout
+   */
+  private async fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => {
+      controller.abort()
+    }, DEFAULT_TIMEOUT_MS)
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      })
+
+      clearTimeout(timeoutId)
+      return response
+    } catch (error) {
+      clearTimeout(timeoutId)
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new PlatformApiError('YouTube API request timed out')
+      }
+      throw error
+    }
+  }
+
+  /**
    * Fetch all videos in a playlist (up to MAX_PLAYLIST_VIDEOS)
    * Uses pagination (50 items per request)
    * Also fetches video durations in batches
@@ -285,7 +333,7 @@ export class YouTubeProvider implements ScrapeProvider {
         params.set('pageToken', nextPageToken)
       }
 
-      const response = await fetch(
+      const response = await this.fetchWithTimeout(
         `https://www.googleapis.com/youtube/v3/playlistItems?${params}`,
         { headers: { 'User-Agent': 'Mozilla/5.0 (Bot/Scraper)' } }
       )
@@ -353,9 +401,10 @@ export class YouTubeProvider implements ScrapeProvider {
           part: 'contentDetails'
         })
 
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?${params}`, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Bot/Scraper)' }
-        })
+        const response = await this.fetchWithTimeout(
+          `https://www.googleapis.com/youtube/v3/videos?${params}`,
+          { headers: { 'User-Agent': 'Mozilla/5.0 (Bot/Scraper)' } }
+        )
 
         if (response.ok) {
           const data = await response.json()

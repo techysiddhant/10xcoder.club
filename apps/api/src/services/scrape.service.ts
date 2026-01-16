@@ -28,7 +28,8 @@ function getCacheKey(url: string, isGitHubAuthenticated: boolean): string | null
   let normalized: string
   try {
     const parsed = new URL(url.trim())
-
+    parsed.username = ''
+    parsed.password = ''
     // Lower-case the hostname
     parsed.hostname = parsed.hostname.toLowerCase()
 

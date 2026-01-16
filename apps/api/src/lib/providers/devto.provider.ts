@@ -4,7 +4,7 @@
  */
 
 import type { ScrapedResource, ScrapeProvider, ScrapeOptions } from '@/types'
-import { InvalidUrlError, PlatformApiError } from '@/lib/errors'
+import { InvalidUrlError, PlatformApiError, ScrapeNotFoundError } from '@/lib/errors'
 
 // Matches: dev.to/username/article-slug or dev.to/organization/article-slug
 const DEVTO_PATTERN = /dev\.to\/([^/]+)\/([^/?#]+)/
@@ -57,6 +57,9 @@ export class DevToProvider implements ScrapeProvider {
       clearTimeout(timeoutId)
 
       if (!response.ok) {
+        if (response.status === 404) {
+          throw new ScrapeNotFoundError(`Dev.to article not found: ${username}/${articleSlug}`)
+        }
         throw new PlatformApiError(`Dev.to API error: ${response.status}`)
       }
 

@@ -48,5 +48,8 @@
     "packages/ui/**/*.{js,jsx,ts,tsx}": [
       "bun --cwd packages/ui run lint -- --fix"
     ]
+  },
+  "dependencies": {
+    "pino": "^10.2.0"
   }
 }
