@@ -1,0 +1,1 @@
+ALTER TABLE "resource" ADD COLUMN "credits_url" text;

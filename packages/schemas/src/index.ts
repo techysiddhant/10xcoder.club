@@ -32,6 +32,12 @@ export type User = z.infer<typeof UserSchema>
 export const RoleSchema = z.enum(['USER', 'ADMIN'])
 export type Role = z.infer<typeof RoleSchema>
 
+export const ResourceLanguageSchema = z.enum(['english', 'hindi'])
+export type ResourceLanguage = z.infer<typeof ResourceLanguageSchema>
+
+export const ResourceStatusSchema = z.enum(['approved', 'rejected', 'pending'])
+export type ResourceStatus = z.infer<typeof ResourceStatusSchema>
+
 export const DEFAULT_USER_NAMES = [
   'user',
   'admin',
@@ -44,6 +50,25 @@ export const DEFAULT_USER_NAMES = [
   'contents',
   'techysiddhant',
   'siddhantjain',
-  'siddhant'
+  'siddhant',
+  'video',
+  'videos',
+  'audio',
+  'audios',
+  'podcast',
+  'podcasts',
+  'blog',
+  'blogs',
+  'article',
+  'articles',
+  'post',
+  'posts',
+  'content',
+  'contents',
+  'tutorial',
+  'tutorials',
+  'guide',
+  'guides',
+  'username'
 ] as const
 export type DefaultUserName = (typeof DEFAULT_USER_NAMES)[number]
