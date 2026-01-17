@@ -1,6 +1,7 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { s3Client, S3_BUCKET } from '@/lib/s3'
+import { logger } from '@/lib/logger'
 
 // Allowed file types
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'] as const
@@ -90,7 +91,7 @@ export async function getPresignedUploadUrl(
       }
     }
   } catch (error) {
-    console.error('Failed to generate presigned URL:', error)
+    logger.error({ err: error }, 'Failed to generate presigned URL')
     return { success: false, error: 'Failed to generate upload URL' }
   }
 }

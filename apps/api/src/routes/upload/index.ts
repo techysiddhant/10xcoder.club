@@ -43,6 +43,7 @@ export const uploadRoutes = new Elysia({ prefix: '/api/upload' })
         fileName: t.String({ minLength: 1, maxLength: 255 }),
         fileType: t.Union([
           t.Literal('image/jpeg'),
+          t.Literal('image/jpg'),
           t.Literal('image/png'),
           t.Literal('image/webp')
         ]),
