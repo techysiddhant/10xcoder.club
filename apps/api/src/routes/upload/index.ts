@@ -25,8 +25,12 @@ export const uploadRoutes = new Elysia({ prefix: '/api/upload' })
       )
 
       if (!result.success) {
+        if (result.errorType === 'INTERNAL_ERROR') {
+          set.status = HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR
+          return errorResponse('INTERNAL_ERROR', result.error)
+        }
         set.status = HttpStatusEnum.HTTP_400_BAD_REQUEST
-        return errorResponse('VALIDATION_ERROR', result.error ?? 'Failed to generate upload URL')
+        return errorResponse('VALIDATION_ERROR', result.error)
       }
 
       // Return uploadUrl and key for client

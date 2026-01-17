@@ -27,20 +27,27 @@ interface PresignedUrlResult {
   expiresIn: number
 }
 
+// Error types for distinguishing validation vs internal errors
+export type UploadErrorType = 'VALIDATION_ERROR' | 'INTERNAL_ERROR'
+
 /**
  * Generate a presigned URL for uploading to S3
  */
 export async function getPresignedUploadUrl(
   input: GetPresignedUrlInput,
   userId: string
-): Promise<{ success: true; data: PresignedUrlResult } | { success: false; error: string }> {
+): Promise<
+  | { success: true; data: PresignedUrlResult }
+  | { success: false; error: string; errorType: UploadErrorType }
+> {
   const { fileName, fileType, fileSize, folder } = input
 
   // Validate file type
   if (!ALLOWED_TYPES.includes(fileType as AllowedType)) {
     return {
       success: false,
-      error: `Invalid file type. Allowed: ${ALLOWED_TYPES.join(', ')}`
+      error: `Invalid file type. Allowed: ${ALLOWED_TYPES.join(', ')}`,
+      errorType: 'VALIDATION_ERROR'
     }
   }
 
@@ -48,13 +55,15 @@ export async function getPresignedUploadUrl(
   if (fileSize <= 0) {
     return {
       success: false,
-      error: 'File too small or invalid'
+      error: 'File too small or invalid',
+      errorType: 'VALIDATION_ERROR'
     }
   }
   if (fileSize > MAX_FILE_SIZE) {
     return {
       success: false,
-      error: `File too large. Max size: ${MAX_FILE_SIZE / 1024 / 1024}MB`
+      error: `File too large. Max size: ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+      errorType: 'VALIDATION_ERROR'
     }
   }
 
@@ -92,6 +101,6 @@ export async function getPresignedUploadUrl(
     }
   } catch (error) {
     logger.error({ err: error }, 'Failed to generate presigned URL')
-    return { success: false, error: 'Failed to generate upload URL' }
+    return { success: false, error: 'Failed to generate upload URL', errorType: 'INTERNAL_ERROR' }
   }
 }
