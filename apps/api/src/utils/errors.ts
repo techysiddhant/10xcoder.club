@@ -11,6 +11,7 @@ export type ErrorCode =
   | 'NOT_FOUND'
   | 'UNAUTHORIZED'
   | 'FORBIDDEN'
+  | 'BAD_REQUEST'
   | 'CONFLICT'
   | 'RATE_LIMITED'
   | 'INTERNAL_ERROR'
@@ -74,6 +75,7 @@ export class AppError extends Error {
       NOT_FOUND: 404,
       UNAUTHORIZED: 401,
       FORBIDDEN: 403,
+      BAD_REQUEST: 400,
       CONFLICT: 409,
       RATE_LIMITED: 429,
       INTERNAL_ERROR: 500,
@@ -147,12 +149,9 @@ export function parseDbError(error: unknown): AppError {
 
   // Foreign key constraint on resource_type
   if (message.includes('resource_type') && message.includes('violates foreign key')) {
-    return new AppError(
-      'VALIDATION_ERROR',
-      'Invalid resource type. Please use: video, blog, tool, repo, course, or documentation',
-      400,
-      { resourceType: 'Invalid resource type' }
-    )
+    return new AppError('VALIDATION_ERROR', 'Invalid resource type', 400, {
+      resourceType: 'Invalid resource type'
+    })
   }
 
   // Unique constraint violation

@@ -380,9 +380,10 @@ export async function getAllResources(query: ListResourcesInput) {
     userId
   } = query
 
-  // Try to get from cache first (only for non-search queries)
+  // Try to get from cache first (only for non-search queries and anonymous users)
+  // Skip cache for authenticated users since responses include per-user fields (userVote)
   const cacheKey = generateResourcesCacheKey(query)
-  if (!search) {
+  if (!search && !userId) {
     const cached = await redis.get(cacheKey)
     if (cached) {
       return JSON.parse(cached)
@@ -512,7 +513,7 @@ export async function getAllResources(query: ListResourcesInput) {
                 SELECT id, 1 - (embedding <=> ${JSON.stringify(searchEmbedding)}::vector) as similarity
                 FROM resource
                 WHERE deleted_at IS NULL 
-                  AND status = 'approved',
+                  AND status = 'approved'
                   AND is_published = true
                   AND embedding IS NOT NULL
                   AND id = ANY(${resourceIds}::text[])
@@ -524,7 +525,7 @@ export async function getAllResources(query: ListResourcesInput) {
                 SELECT id, 1 - (embedding <=> ${JSON.stringify(searchEmbedding)}::vector) as similarity
                 FROM resource
                 WHERE deleted_at IS NULL 
-                  AND status = 'approved',
+                  AND status = 'approved'
                   AND is_published = true
                   AND embedding IS NOT NULL
                 ORDER BY embedding <=> ${JSON.stringify(searchEmbedding)}::vector
@@ -616,8 +617,8 @@ export async function getAllResources(query: ListResourcesInput) {
       resourceTypeId: rest.resourceTypeId,
       tags: rtt.map((item) => item.tag),
       techStack: rtts.map((item) => item.techStack),
-      upvotes: counts.upvotes,
-      downvotes: counts.downvotes,
+      upvoteCount: counts.upvotes,
+      downvoteCount: counts.downvotes,
       userVote: userVotes.get(r.id) ?? null
     }
   })
@@ -628,8 +629,9 @@ export async function getAllResources(query: ListResourcesInput) {
     hasMore
   }
 
-  // Cache the result (skip caching for search queries)
-  if (!search) {
+  // Cache the result (skip caching for search queries and authenticated users)
+  // Authenticated users have per-user fields (userVote) that shouldn't be cached under shared keys
+  if (!search && !userId) {
     await redis.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL.RESOURCES_LIST)
   }
 

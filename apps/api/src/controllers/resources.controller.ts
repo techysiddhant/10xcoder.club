@@ -173,6 +173,7 @@ export const create = async ({
     language?: 'english' | 'hindi'
     tags?: string[]
     techStack?: string[]
+    credits?: string
   }
   user: UserAuth
   set: Context['set']
@@ -196,7 +197,8 @@ export const create = async ({
       resourceType: body.resourceType,
       language: body.language ?? 'english',
       tags: body.tags ?? [],
-      techStack: body.techStack ?? []
+      techStack: body.techStack ?? [],
+      credits: body.credits
     },
     user.id
   )
@@ -227,16 +229,24 @@ export const update = async ({
     language?: 'english' | 'hindi'
     tags?: string[]
     techStack?: string[]
+    credits?: string
   }
   user: UserAuth
   set: Context['set']
 }) => {
-  const result = await updateResource(params.id, body, user.id)
+  const result = await updateResource(params.id, { ...body, credits: body.credits }, user.id)
 
   if ('error' in result) {
     const status = result.status ?? HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR
     set.status = status
-    const code = status === 404 ? 'NOT_FOUND' : status === 403 ? 'FORBIDDEN' : 'INTERNAL_ERROR'
+    const code =
+      status === 400
+        ? 'BAD_REQUEST'
+        : status === 404
+          ? 'NOT_FOUND'
+          : status === 403
+            ? 'FORBIDDEN'
+            : 'INTERNAL_ERROR'
     return errorResponse(code, result.error ?? 'An error occurred', status)
   }
 
@@ -269,7 +279,14 @@ export const remove = async ({
   if ('error' in result) {
     const status = result.status ?? HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR
     set.status = status
-    const code = status === 404 ? 'NOT_FOUND' : status === 403 ? 'FORBIDDEN' : 'INTERNAL_ERROR'
+    const code =
+      status === 400
+        ? 'BAD_REQUEST'
+        : status === 404
+          ? 'NOT_FOUND'
+          : status === 403
+            ? 'FORBIDDEN'
+            : 'INTERNAL_ERROR'
     return errorResponse(code, result.error ?? 'An error occurred', status)
   }
 
@@ -297,7 +314,14 @@ export const restore = async ({
   if ('error' in result) {
     const status = result.status ?? HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR
     set.status = status
-    const code = status === 404 ? 'NOT_FOUND' : status === 403 ? 'FORBIDDEN' : 'INTERNAL_ERROR'
+    const code =
+      status === 400
+        ? 'BAD_REQUEST'
+        : status === 404
+          ? 'NOT_FOUND'
+          : status === 403
+            ? 'FORBIDDEN'
+            : 'INTERNAL_ERROR'
     return errorResponse(code, result.error ?? 'An error occurred', status)
   }
 
