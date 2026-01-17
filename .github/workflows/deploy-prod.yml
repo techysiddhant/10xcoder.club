@@ -249,38 +249,7 @@ jobs:
             echo "📝 Building and running migrations..."
 
             # Run migrations as a one-off task (--rm removes the container after exit)
-            if docker compose --profile migrate run --rm --build migrate 2>&1; then
-              echo "✅ Migrations applied successfully!"
-            else
-              echo "⚠️  Migration via docker compose failed, trying SQL files directly..."
-              
-              # Fallback: Apply SQL files directly in order
-              MIGRATION_FAILED=false
-              FAILED_FILES=""
-              
-              for sql_file in apps/api/drizzle/*.sql; do
-                # Skip if no files match the glob (nullglob behavior)
-                [ -e "$sql_file" ] || continue
-                
-                echo "Applying $sql_file..."
-                if ! docker exec ${{ env.DB_CONTAINER_NAME }} psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -f "/dev/stdin" < "$sql_file"; then
-                  echo "❌ Failed to apply: $sql_file"
-                  MIGRATION_FAILED=true
-                  FAILED_FILES="$FAILED_FILES $sql_file"
-                else
-                  echo "✅ Applied: $sql_file"
-                fi
-              done
-              
-              if [ "$MIGRATION_FAILED" = "true" ]; then
-                echo ""
-                echo "❌ SQL Migration FAILED!"
-                echo "Failed files:$FAILED_FILES"
-                echo ""
-                echo "Please check the database logs and fix the failing migrations."
-                exit 1
-              fi
-            fi
+            docker compose --profile migrate run --rm --build migrate
 
             # Clean up migration container
             docker compose --profile migrate rm -f migrate 2>/dev/null || true
