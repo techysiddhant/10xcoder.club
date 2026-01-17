@@ -1,3 +1,11 @@
+# =============================================================================
+# 10xcoder.club API Server Dockerfile
+# =============================================================================
+# Multi-stage build for production deployment
+# - Stage 1 (build): Compiles TypeScript to a single Bun binary
+# - Stage 2 (production): Minimal Alpine image with the compiled binary
+# =============================================================================
+
 FROM --platform=linux/amd64 oven/bun:1.1.43 AS build
 
 WORKDIR /app
@@ -34,6 +42,12 @@ RUN bun --cwd apps/api run build:binary
 # Production image - using alpine for healthcheck support (wget/curl available)
 # Note: distroless doesn't have wget/curl which breaks docker-compose healthchecks
 FROM --platform=linux/amd64 alpine:3.19
+
+# Labels for container metadata (OCI standard) - must be in final stage
+LABEL org.opencontainers.image.source="https://github.com/techysiddhant/10xcoder.club"
+LABEL org.opencontainers.image.description="10xcoder.club API Server"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.vendor="10xcoder.club"
 
 WORKDIR /app
 

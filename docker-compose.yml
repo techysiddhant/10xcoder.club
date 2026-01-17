@@ -1,4 +1,27 @@
 services:
+  # ==========================================================================
+  # Migration Service (run with: docker compose --profile migrate up migrate)
+  # ==========================================================================
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/migration.Dockerfile
+    container_name: ${MIGRATE_CONTAINER_NAME:-10xcoder_migrate}
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_net
+    profiles:
+      - migrate
+    # Exit after running migrations
+    restart: 'no'
+
+  # ==========================================================================
+  # Application Service
+  # ==========================================================================
   app:
     build:
       context: .
