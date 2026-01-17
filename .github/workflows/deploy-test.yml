@@ -243,10 +243,8 @@ jobs:
             # Run migrations using the dedicated migrate service
             echo "📝 Building and running migrations..."
 
-            # Build and run the migrate service
-            docker compose --profile migrate build migrate
-
-            if docker compose --profile migrate up migrate --exit-code-from migrate 2>&1; then
+            # Run migrations as a one-off task (--rm removes the container after exit)
+            if docker compose --profile migrate run --rm --build migrate 2>&1; then
               echo "✅ Migrations applied successfully!"
             else
               echo "⚠️  Migration via docker compose failed, trying SQL files directly..."

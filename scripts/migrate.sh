@@ -98,6 +98,7 @@ load_env() {
     if [ -f "$env_file" ]; then
         log_info "Loading environment from $env_file"
         set -a
+        # shellcheck disable=SC1090
         source "$env_file"
         set +a
     fi
