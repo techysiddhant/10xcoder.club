@@ -1,4 +1,6 @@
+import path from 'path'
 import { db } from '@/db'
+import { logger } from '@/lib/logger'
 import {
   resource,
   resourceType,
@@ -11,6 +13,36 @@ import { eq, and, isNull, or, ilike, inArray, sql, desc, lt } from 'drizzle-orm'
 import { redis } from '@/lib/redis'
 import { generateResourcesCacheKey, CACHE_TTL, REDIS_KEY } from '@/constant'
 import { getEmbedding, isGeminiConfigured } from '@/lib/gemini'
+import { env } from '@/config/env'
+
+// ==========================================
+// Helper: Transform resource image URL
+// If image is just a filename/key, append CDN URL with resources folder path
+// If image is already a full URL, return as-is
+// Defends against path traversal by sanitizing filename
+// ==========================================
+function transformImageUrl(image: string | null | undefined): string | null {
+  if (!image) return null
+
+  // Check if it's already a full URL
+  if (image.startsWith('http://') || image.startsWith('https://')) {
+    return image
+  }
+
+  // Sanitize: extract basename to prevent path traversal (strips directory components)
+  const filename = path.basename(image)
+
+  // Validate: only allow safe characters (alphanumerics, dots, dashes, underscores)
+  // Reject empty filenames, dot-only names, or filenames with unsafe characters
+  const safeFilenamePattern = /^[a-zA-Z0-9._-]+$/
+  if (!filename || filename === '.' || filename === '..' || !safeFilenamePattern.test(filename)) {
+    return null
+  }
+
+  // It's a safe filename, append CDN URL with resources folder path
+  const cdnUrl = env.CDN_URL.replace(/\/$/, '') // Remove trailing slash if present
+  return `${cdnUrl}/resources/${filename}`
+}
 
 // Type for database instance or transaction context (shared query interface)
 type DbOrTransaction = Pick<typeof db, 'select' | 'insert' | 'delete' | 'update'>
@@ -209,12 +241,12 @@ export async function createResource(data: CreateResourceInput, userId: string) 
     throw new Error(`Invalid resource type: ${resourceTypeName}`)
   }
 
-  // Get or create tags and tech stack
-  const tagIds = await getOrCreateTags(tagNames)
-  const techStackIds = await getOrCreateTechStack(techStackNames)
-
   // Create the resource and associations in a transaction
   const newResource = await db.transaction(async (tx) => {
+    // Get or create tags and tech stack within transaction
+    const tagIds = await getOrCreateTags(tagNames, tx)
+    const techStackIds = await getOrCreateTechStack(techStackNames, tx)
+
     // Create the resource
     const result = await tx
       .insert(resource)
@@ -288,6 +320,7 @@ export async function getResourceById(id: string) {
   const { resourceToTags: rtt, resourceToTechStack: rtts, resourceType: rt, ...rest } = result
   return {
     ...rest,
+    image: transformImageUrl(rest.image),
     resourceType: rt.name,
     resourceTypeId: rest.resourceTypeId,
     tags: rtt.map((r) => r.tag),
@@ -335,6 +368,7 @@ export async function getPublicResourceById(id: string) {
   const { resourceToTags: rtt, resourceToTechStack: rtts, resourceType: rt, ...rest } = result
   return {
     ...rest,
+    image: transformImageUrl(rest.image),
     resourceType: rt.name,
     resourceTypeId: rest.resourceTypeId,
     tags: rtt.map((r) => r.tag),
@@ -386,7 +420,16 @@ export async function getAllResources(query: ListResourcesInput) {
   if (!search && !userId) {
     const cached = await redis.get(cacheKey)
     if (cached) {
-      return JSON.parse(cached)
+      try {
+        return JSON.parse(cached)
+      } catch (parseError) {
+        logger.error(
+          { err: parseError, cacheKey },
+          'Failed to parse cached resources data, invalidating cache'
+        )
+        await redis.del(cacheKey)
+        // Proceed to fetch fresh data
+      }
     }
   }
 
@@ -425,7 +468,7 @@ export async function getAllResources(query: ListResourcesInput) {
       conditions.push(sql`${resource.embedding} IS NOT NULL`)
       useVectorSearch = true
     } catch (error) {
-      console.error('Vector search failed, falling back to ILIKE:', error)
+      logger.error({ err: error, search }, 'Vector search failed, falling back to ILIKE')
       // Fallback to ILIKE search (escape special characters)
       const escapedSearch = escapeILikePattern(search)
       conditions.push(
@@ -613,6 +656,7 @@ export async function getAllResources(query: ListResourcesInput) {
     const counts = voteCounts.get(r.id) ?? { upvotes: r.upvoteCount, downvotes: r.downvoteCount }
     return {
       ...rest,
+      image: transformImageUrl(rest.image),
       resourceType: rt.name,
       resourceTypeId: rest.resourceTypeId,
       tags: rtt.map((item) => item.tag),
@@ -860,6 +904,7 @@ export async function getUserResources(userId: string, query: UserResourcesInput
     const { resourceToTags: rtt, resourceToTechStack: rtts, resourceType: rt, ...rest } = r
     return {
       ...rest,
+      image: transformImageUrl(rest.image),
       resourceType: rt.name,
       resourceTypeId: rest.resourceTypeId,
       tags: rtt.map((item) => item.tag),
@@ -908,6 +953,7 @@ export async function getUserResourceById(resourceId: string, userId: string) {
   const { resourceToTags: rtt, resourceToTechStack: rtts, resourceType: rt, ...rest } = result
   return {
     ...rest,
+    image: transformImageUrl(rest.image),
     resourceType: rt.name,
     resourceTypeId: rest.resourceTypeId,
     tags: rtt.map((item) => item.tag),
