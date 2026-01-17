@@ -23,6 +23,8 @@ export class GenericProvider implements ScrapeProvider {
   private readonly FETCH_TIMEOUT_MS = 5000
   // Maximum number of redirects to follow
   private readonly MAX_REDIRECTS = 5
+  // Maximum response body size in bytes (2 MB)
+  private readonly MAX_RESPONSE_SIZE = 2 * 1024 * 1024
 
   async scrape(url: string, _options?: ScrapeOptions): Promise<ScrapedResource> {
     // Parse and validate URL
@@ -284,6 +286,27 @@ export class GenericProvider implements ScrapeProvider {
   }
 
   /**
+   * Normalize IPv4-mapped IPv6 addresses (::ffff:x.x.x.x) to their IPv4 form
+   * Returns the IPv4 address if the input is IPv4-mapped, otherwise returns the original address
+   */
+  private normalizeIpv4Mapped(ip: string): string {
+    // Remove brackets if present
+    const unbracketed = ip.replace(/^\[|\]$/g, '')
+
+    // Check for IPv4-mapped IPv6 pattern: ::ffff:x.x.x.x or ::FFFF:x.x.x.x
+    const ipv4MappedPattern = /^::ffff:([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$/i
+    const match = unbracketed.match(ipv4MappedPattern)
+
+    if (match) {
+      // Return the extracted IPv4 address
+      return match[1]!
+    }
+
+    // Not IPv4-mapped, return original (with brackets removed for consistency)
+    return unbracketed
+  }
+
+  /**
    * Make an HTTP/HTTPS request with connect-time IP verification
    * Validates socket remoteAddress against pinned IPs to prevent DNS rebinding attacks
    */
@@ -324,8 +347,38 @@ export class GenericProvider implements ScrapeProvider {
       const req = requestModule.request(options, (res) => {
         // Collect response data
         const chunks: Buffer[] = []
-        res.on('data', (chunk) => chunks.push(chunk))
+        let totalBytes = 0
+        let sizeLimitExceeded = false
+
+        res.on('data', (chunk: Buffer) => {
+          // Track cumulative byte length
+          totalBytes += chunk.length
+
+          // Enforce size cap
+          if (totalBytes > this.MAX_RESPONSE_SIZE) {
+            sizeLimitExceeded = true
+            // Abort the upstream request immediately
+            req.destroy()
+            res.destroy()
+            // Reject with clear error message (will result in 413-style handling upstream)
+            reject(
+              new PlatformApiError(
+                `Response body exceeds maximum size of ${this.MAX_RESPONSE_SIZE} bytes (received ${totalBytes} bytes)`
+              )
+            )
+            return
+          }
+
+          // Only push chunk if under limit
+          chunks.push(chunk)
+        })
+
         res.on('end', () => {
+          // Only concatenate if we didn't exceed the limit
+          if (sizeLimitExceeded) {
+            return // Error already handled in data handler
+          }
+
           const body = Buffer.concat(chunks)
           // Convert Node.js response to Fetch Response
           const response = new Response(body, {
@@ -341,6 +394,16 @@ export class GenericProvider implements ScrapeProvider {
           })
           resolve(response)
         })
+
+        res.on('error', (error) => {
+          // Handle errors during response streaming
+          req.destroy()
+          reject(
+            new PlatformApiError(
+              `Failed to read response: ${error instanceof Error ? error.message : 'Unknown error'}`
+            )
+          )
+        })
       })
 
       // Handle socket connection for IP verification
@@ -355,9 +418,9 @@ export class GenericProvider implements ScrapeProvider {
             return
           }
 
-          // Normalize IPv6 addresses (remove brackets)
-          const normalizedRemote = remoteAddress.replace(/^\[|\]$/g, '')
-          const normalizedAllowed = allowedIps.map((ip) => ip.replace(/^\[|\]$/g, ''))
+          // Normalize IPv4-mapped IPv6 addresses to IPv4 form before checks
+          const normalizedRemote = this.normalizeIpv4Mapped(remoteAddress)
+          const normalizedAllowed = allowedIps.map((ip) => this.normalizeIpv4Mapped(ip))
 
           // Verify the socket's remoteAddress matches one of the allowed IPs
           if (allowedIps.length > 0 && !normalizedAllowed.includes(normalizedRemote)) {
@@ -406,12 +469,17 @@ export class GenericProvider implements ScrapeProvider {
       // Handle abort signal
       if (signal.aborted) {
         req.destroy()
-        reject(new Error('Aborted'))
+        const abortError = new Error('Aborted')
+        abortError.name = 'AbortError'
+        reject(abortError)
         return
       }
 
       signal.addEventListener('abort', () => {
-        req.destroy(new Error('Aborted'))
+        const abortError = new Error('Aborted')
+        abortError.name = 'AbortError'
+        req.destroy(abortError)
+        reject(abortError)
       })
 
       req.end()
