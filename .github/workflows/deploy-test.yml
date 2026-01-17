@@ -216,9 +216,20 @@ jobs:
 
             echo "🗄️  Running database migrations..."
 
+            # Export variables for docker-compose interpolation
+            export APP_CONTAINER_NAME="${{ env.APP_CONTAINER_NAME }}"
+            export DB_CONTAINER_NAME="${{ env.DB_CONTAINER_NAME }}"
+            export REDIS_CONTAINER_NAME="${{ env.REDIS_CONTAINER_NAME }}"
+            export NGINX_CONTAINER_NAME="${{ env.NGINX_CONTAINER_NAME }}"
+            export DB_VOLUME_NAME="${{ env.DB_VOLUME_NAME }}"
+            export REDIS_VOLUME_NAME="${{ env.REDIS_VOLUME_NAME }}"
+            export NGINX_PORT="${{ env.NGINX_PORT }}"
+            export APP_PORT="${{ env.APP_PORT }}"
+            export COMPOSE_PROJECT_NAME="${{ env.COMPOSE_PROJECT_NAME }}"
+
             # Source environment variables from .env file
             set -a
-            source .env
+            [ -f .env ] && source .env
             set +a
 
             # Wait for database to be fully ready
@@ -274,6 +285,22 @@ jobs:
 
             echo "🔍 Verifying test deployment..."
 
+            # Export variables for docker-compose interpolation
+            export APP_CONTAINER_NAME="${{ env.APP_CONTAINER_NAME }}"
+            export DB_CONTAINER_NAME="${{ env.DB_CONTAINER_NAME }}"
+            export REDIS_CONTAINER_NAME="${{ env.REDIS_CONTAINER_NAME }}"
+            export NGINX_CONTAINER_NAME="${{ env.NGINX_CONTAINER_NAME }}"
+            export DB_VOLUME_NAME="${{ env.DB_VOLUME_NAME }}"
+            export REDIS_VOLUME_NAME="${{ env.REDIS_VOLUME_NAME }}"
+            export NGINX_PORT="${{ env.NGINX_PORT }}"
+            export APP_PORT="${{ env.APP_PORT }}"
+            export COMPOSE_PROJECT_NAME="${{ env.COMPOSE_PROJECT_NAME }}"
+
+            # Source environment variables from .env file
+            set -a
+            [ -f .env ] && source .env
+            set +a
+
             # Check container status
             echo ""
             echo "📊 Container Status:"
@@ -289,11 +316,11 @@ jobs:
             # Check via nginx - fail the job if health checks don't pass
             HEALTH_CHECK_PASSED=false
 
-            if docker exec ${{ env.NGINX_CONTAINER_NAME }} wget -qO- http://localhost/health 2>/dev/null; then
-              echo "✅ Health check passed: http://localhost/health"
+            if curl -sSf http://localhost:${{ env.NGINX_PORT }}/health 2>/dev/null; then
+              echo "✅ Health check passed: http://localhost:${{ env.NGINX_PORT }}/health"
               HEALTH_CHECK_PASSED=true
-            elif docker exec ${{ env.NGINX_CONTAINER_NAME }} wget -qO- http://app:3000/ 2>/dev/null; then
-              echo "✅ Health check passed: http://app:3000/"
+            elif docker exec ${{ env.APP_CONTAINER_NAME }} wget -qO- http://localhost:3000/health 2>/dev/null; then
+              echo "✅ Health check passed: http://localhost:3000/health (via app container)"
               HEALTH_CHECK_PASSED=true
             fi
 
@@ -302,8 +329,8 @@ jobs:
               echo ""
               echo "Container: ${{ env.NGINX_CONTAINER_NAME }}"
               echo "Attempted checks:"
-              echo "  1. wget http://localhost/health - FAILED"
-              echo "  2. wget http://app:3000/ - FAILED"
+              echo "  1. curl http://localhost:${{ env.NGINX_PORT }}/health - FAILED"
+              echo "  2. docker exec ${{ env.APP_CONTAINER_NAME }} wget http://localhost:3000/health - FAILED"
               echo ""
               echo "Please check container logs:"
               echo "  docker compose logs app"
@@ -314,7 +341,6 @@ jobs:
             # Check database tables
             echo ""
             echo "📋 Database Tables:"
-            source .env
             docker exec ${{ env.DB_CONTAINER_NAME }} psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c "\dt" 2>/dev/null || echo "Could not list tables"
 
             echo ""
