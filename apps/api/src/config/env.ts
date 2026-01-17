@@ -19,7 +19,8 @@ const EnvSchema = z.object({
   GITHUB_CLIENT_SECRET: z.string().min(1),
   RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM: z.string().min(1),
-  YOUTUBE_API_KEY: z.string().min(1).optional()
+  YOUTUBE_API_KEY: z.string().min(1).optional(),
+  GEMINI_API_KEY: z.string().min(1)
 })
 
 const result = EnvSchema.safeParse(process.env)

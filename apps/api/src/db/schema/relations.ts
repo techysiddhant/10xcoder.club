@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm'
 import { resource } from './resource'
+import { resourceType } from './resourceType'
 import { tag } from './tag'
 import { techStack } from './techStack'
 import { resourceToTags } from './resourceToTags'
@@ -12,8 +13,17 @@ export const resourceRelations = relations(resource, ({ one, many }) => ({
     fields: [resource.createdBy],
     references: [user.id]
   }),
+  resourceType: one(resourceType, {
+    fields: [resource.resourceTypeId],
+    references: [resourceType.id]
+  }),
   resourceToTags: many(resourceToTags),
   resourceToTechStack: many(resourceToTechStack)
+}))
+
+// ResourceType relations
+export const resourceTypeRelations = relations(resourceType, ({ many }) => ({
+  resources: many(resource)
 }))
 
 // Tag relations
