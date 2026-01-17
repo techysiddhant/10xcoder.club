@@ -7,6 +7,7 @@ import { AuthOpenAPI } from './lib/auth-open-api'
 import openapi from '@elysiajs/openapi'
 import type { OpenAPIV3 } from 'openapi-types'
 import { scrapeRoutes } from './routes/scrape'
+import { resourcesRoutes } from './routes/resources'
 
 export const app = new Elysia()
 
@@ -83,6 +84,7 @@ export const app = new Elysia()
       message: 'Server is running'
     }
   })
+  .use(resourcesRoutes)
   .use(scrapeRoutes)
 
 export type App = typeof app
