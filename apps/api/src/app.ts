@@ -8,6 +8,7 @@ import openapi from '@elysiajs/openapi'
 import type { OpenAPIV3 } from 'openapi-types'
 import { scrapeRoutes } from './routes/scrape'
 import { resourcesRoutes } from './routes/resources'
+import { uploadRoutes } from './routes/upload'
 
 export const app = new Elysia()
 
@@ -86,5 +87,6 @@ export const app = new Elysia()
   })
   .use(resourcesRoutes)
   .use(scrapeRoutes)
+  .use(uploadRoutes)
 
 export type App = typeof app
