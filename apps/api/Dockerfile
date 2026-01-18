@@ -1,70 +1,91 @@
 # =============================================================================
-# 10xcoder.club API Server Dockerfile
-# =============================================================================
-# Multi-stage build for production deployment
-# - Stage 1 (build): Compiles TypeScript to a single Bun binary
-# - Stage 2 (production): Minimal Alpine image with the compiled binary
+# 10xcoder.club API Dockerfile (Production Safe)
 # =============================================================================
 
-FROM --platform=linux/amd64 oven/bun:1.1.43 AS build
-
-WORKDIR /app
-
-# Cache install layer (monorepo-aware)
-# Copy all package.json files to ensure lockfile integrity
-COPY package.json ./package.json
-COPY bun.lock ./bun.lock
-COPY tsconfig.base.json ./tsconfig.base.json
-
-# Apps
-COPY apps/api/package.json ./apps/api/package.json
-COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
-COPY apps/web/package.json ./apps/web/package.json
-
-# Packages
-COPY packages/schemas/package.json ./packages/schemas/package.json
-COPY packages/ui/package.json ./packages/ui/package.json
-COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
-COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
-
-RUN bun install --frozen-lockfile
-
-# Copy source
-COPY apps/api ./apps/api
-COPY packages/schemas ./packages/schemas
-
-ENV NODE_ENV=production
-
-# Build a single portable binary (Elysia deploy guide)
-# https://elysiajs.com/patterns/deploy.html
-RUN cd apps/api && bun run build:binary
-
-# Production image - using alpine for healthcheck support (wget/curl available)
-# Note: distroless doesn't have wget/curl which breaks docker-compose healthchecks
-FROM --platform=linux/amd64 alpine:3.19
-
-# Labels for container metadata (OCI standard) - must be in final stage
-LABEL org.opencontainers.image.source="https://github.com/techysiddhant/10xcoder.club"
-LABEL org.opencontainers.image.description="10xcoder.club API Server"
-LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.vendor="10xcoder.club"
-
-WORKDIR /app
-
-# Install only what's needed for healthcheck and runtime
-RUN apk add --no-cache wget ca-certificates
-
-ENV NODE_ENV=production
-ENV PORT=3000
-
-COPY --from=build /app/apps/api/server.js ./server
-
-# Copy drizzle migrations for runtime migrations
-COPY --from=build /app/apps/api/drizzle ./drizzle
-
-# Make server executable
-RUN chmod +x ./server
-
-EXPOSE 3000
-
-CMD ["./server"]
+# -----------------------------------------------------------------------------
+# Base image (Alpine + Bun)
+# -----------------------------------------------------------------------------
+    FROM oven/bun:1.1.43-alpine AS base
+    WORKDIR /app
+    
+    # -----------------------------------------------------------------------------
+    # Stage 1 — Install dependencies (cached)
+    # -----------------------------------------------------------------------------
+    FROM base AS install
+    
+    # ---- Bun memory safety (critical for free tier) ----
+    ENV NODE_ENV=development
+    ENV BUN_MAX_CONCURRENCY=2
+    ENV BUN_MAX_HTTP_CONNECTIONS=2
+    ENV BUN_INSTALL_OPTIONAL=false
+    
+    # Dev dependencies
+    RUN mkdir -p /temp/dev
+    COPY package.json bun.lock tsconfig.base.json /temp/dev/
+    
+    # Workspace manifests
+    COPY apps/api/package.json /temp/dev/apps/api/
+    COPY apps/web/package.json /temp/dev/apps/web/
+    COPY packages/schemas/package.json /temp/dev/packages/schemas/
+    COPY packages/ui/package.json /temp/dev/packages/ui/
+    COPY packages/eslint-config/package.json /temp/dev/packages/eslint-config/
+    COPY packages/typescript-config/package.json /temp/dev/packages/typescript-config/
+    
+    RUN cd /temp/dev && bun install --frozen-lockfile --no-progress
+    
+    # Prod dependencies
+    RUN mkdir -p /temp/prod
+    COPY package.json bun.lock tsconfig.base.json /temp/prod/
+    
+    COPY apps/api/package.json /temp/prod/apps/api/
+    COPY apps/web/package.json /temp/prod/apps/web/
+    COPY packages/schemas/package.json /temp/prod/packages/schemas/
+    COPY packages/ui/package.json /temp/prod/packages/ui/
+    COPY packages/eslint-config/package.json /temp/prod/packages/eslint-config/
+    COPY packages/typescript-config/package.json /temp/prod/packages/typescript-config/
+    
+    RUN cd /temp/prod && bun install --frozen-lockfile --production --ignore-scripts --no-progress
+    
+    # -----------------------------------------------------------------------------
+    # Stage 2 — Build
+    # -----------------------------------------------------------------------------
+    FROM base AS build
+    
+    ENV NODE_ENV=production
+    
+    # Copy dev deps
+    COPY --from=install /temp/dev/node_modules ./node_modules
+    
+    # Copy source
+    COPY tsconfig.base.json ./
+    COPY apps/api ./apps/api
+    COPY packages/schemas ./packages/schemas
+    
+    # Build API (TypeScript → JS)
+    RUN cd apps/api && bun run build
+    
+    # -----------------------------------------------------------------------------
+    # Stage 3 — Runtime (production)
+    # -----------------------------------------------------------------------------
+    # Using alpine for minimal image size - compiled binary is self-contained
+    FROM alpine:3.20 AS release
+    
+    WORKDIR /app
+    
+    ENV NODE_ENV=production
+    ENV PORT=3000
+    
+    # Install minimal runtime deps (for healthchecks)
+    RUN apk add --no-cache ca-certificates wget
+    
+    # Copy compiled binary (self-contained, no node_modules needed)
+    COPY --from=build /app/apps/api/server.js ./server
+    RUN chmod +x ./server
+    
+    # Copy drizzle migrations (runtime usage)
+    COPY --from=build /app/apps/api/drizzle ./drizzle
+    
+    EXPOSE 3000
+    
+    CMD ["./server"]
+    
