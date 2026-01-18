@@ -85,6 +85,12 @@ export const app = new Elysia()
       message: 'Server is running'
     }
   })
+  .get('/health', () => {
+    return {
+      status: 'healthy',
+      timestamp: new Date().toISOString()
+    }
+  })
   .use(resourcesRoutes)
   .use(scrapeRoutes)
   .use(uploadRoutes)

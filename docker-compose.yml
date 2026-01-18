@@ -1,4 +1,28 @@
 services:
+  # ==========================================================================
+  # Migration Service (run with: docker compose --profile migrate up migrate)
+  # ==========================================================================
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/migration.Dockerfile
+    container_name: ${MIGRATE_CONTAINER_NAME:-10xcoder_migrate}
+    environment:
+      # Use pre-encoded DATABASE_URL to handle special characters in credentials
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_net
+    profiles:
+      - migrate
+    # Exit after running migrations
+    restart: 'no'
+
+  # ==========================================================================
+  # Application Service
+  # ==========================================================================
   app:
     build:
       context: .

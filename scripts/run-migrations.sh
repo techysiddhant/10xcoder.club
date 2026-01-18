@@ -86,8 +86,8 @@ if [ "$DRY_RUN" == "true" ]; then
         -v "\$(pwd)/apps/api:/app" \\
         -w /app \\
         -e DATABASE_URL="postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@db:5432/\${POSTGRES_DB}" \\
-        node:20-alpine \\
-        sh -c "npm install --silent drizzle-kit drizzle-orm postgres @types/node typescript && npx drizzle-kit push --config=src/drizzle.config.ts --strict" 2>&1 || {
+        oven/bun:1.1.43-alpine \\
+        sh -c "ls -la drizzle/*.sql 2>/dev/null" 2>&1 || {
             echo "⚠️  Could not run drizzle-kit check"
             echo ""
             echo "Listing migration files instead:"
@@ -100,16 +100,16 @@ else
     echo ""
     echo "🚀 Applying migrations..."
     
-    # Run drizzle-kit migrate using a temporary Node container
+    # Run drizzle-kit migrate using a temporary Bun container
     # This connects to the database directly and applies migrations
     docker run --rm \
         --network ${PROJECT_NAME}_app_net \
         -v "\$(pwd)/apps/api:/app" \
         -w /app \
         -e DATABASE_URL="postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@db:5432/\${POSTGRES_DB}" \
-        node:20-alpine \
-        sh -c "npm install drizzle-kit drizzle-orm postgres && npx drizzle-kit push --config=src/drizzle.config.ts" 2>&1 || {
-            echo "❌ Migration failed using drizzle-kit push"
+        oven/bun:1.1.43-alpine \
+        sh -c "bun install drizzle-kit drizzle-orm postgres && bunx drizzle-kit migrate --config=src/drizzle.config.ts" 2>&1 || {
+            echo "❌ Migration failed using drizzle-kit migrate"
             echo ""
             echo "Alternative: Run migrations manually:"
             echo "  1. SSH into the server: ssh -i $KEY_PATH $USERNAME@$HOST"
