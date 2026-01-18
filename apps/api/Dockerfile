@@ -67,8 +67,8 @@ RUN cd apps/api && bun run build:binary
 # -----------------------------------------------------------------------------
 # Stage 3 — Runtime (production)
 # -----------------------------------------------------------------------------
-# Using alpine for minimal image size - compiled binary is self-contained
-FROM --platform=linux/amd64 alpine:3.20 AS release
+# Using Debian slim for glibc compatibility with compiled Bun binary
+FROM --platform=linux/amd64 debian:bookworm-slim AS release
 
 WORKDIR /app
 
@@ -80,7 +80,10 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 # Install minimal runtime deps (for healthchecks)
-RUN apk add --no-cache ca-certificates wget
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy compiled binary (self-contained, no node_modules needed)
 COPY --from=build /app/apps/api/server.js ./server
