@@ -94,7 +94,7 @@ jobs:
 
             while [ $WAITED -lt $MAX_WAIT ]; do
               RUNNING=$(docker compose ps --services --filter "status=running" | wc -l)
-              EXPECTED=$(docker compose config --services | wc -l)
+              EXPECTED=$(docker compose config --services | grep -v "migrate" | wc -l)
 
               echo "  ${WAITED}s → Running $RUNNING / $EXPECTED"
 

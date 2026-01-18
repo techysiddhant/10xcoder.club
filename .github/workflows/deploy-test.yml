@@ -164,7 +164,7 @@ jobs:
               fi
               
               # Check if all expected services are running and healthy
-              EXPECTED_SERVICES=$(docker compose config --services 2>/dev/null | wc -l | tr -d ' ')
+              EXPECTED_SERVICES=$(docker compose config --services 2>/dev/null | grep -v "migrate" | wc -l | tr -d ' ')
               EXPECTED_SERVICES=${EXPECTED_SERVICES:-4}  # Fallback to 4 if command fails
               
               if [ "$RUNNING_COUNT" -ge "$EXPECTED_SERVICES" ]; then
