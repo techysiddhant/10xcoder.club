@@ -62,7 +62,7 @@ COPY apps/api ./apps/api
 COPY packages/schemas ./packages/schemas
 
 # Build API (TypeScript → compiled binary for linux/amd64)
-RUN cd apps/api && bun run build
+RUN cd apps/api && bun run build:binary
 
 # -----------------------------------------------------------------------------
 # Stage 3 — Runtime (production)
