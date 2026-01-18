@@ -37,7 +37,7 @@ ENV NODE_ENV=production
 
 # Build a single portable binary (Elysia deploy guide)
 # https://elysiajs.com/patterns/deploy.html
-RUN bun --cwd apps/api run build:binary
+RUN cd apps/api && bun run build:binary
 
 # Production image - using alpine for healthcheck support (wget/curl available)
 # Note: distroless doesn't have wget/curl which breaks docker-compose healthchecks
