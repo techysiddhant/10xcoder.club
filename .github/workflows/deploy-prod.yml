@@ -42,7 +42,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
           port: 22
-          source: 'docker-compose.yml,nginx,apps/api/Dockerfile,apps/api/migration.Dockerfile,apps/api/drizzle,apps/api/package.json,apps/api/tsconfig.json,apps/api/src,packages/schemas,package.json,bun.lock,tsconfig.base.json,.env.production,scripts'
+          source: 'docker-compose.yml,nginx,apps/api,apps/web/package.json,packages,package.json,bun.lock,tsconfig.base.json,.env.production,scripts'
           target: '/home/${{ secrets.USERNAME }}/${{ env.COMPOSE_PROJECT_NAME }}'
 
       - name: Deploy on EC2
