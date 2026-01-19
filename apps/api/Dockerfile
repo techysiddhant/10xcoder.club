@@ -7,7 +7,7 @@
 # -----------------------------------------------------------------------------
 # Build stage - Alpine with Bun
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 oven/bun:1.1.43-alpine AS build
+FROM --platform=linux/amd64 oven/bun:1.1.43-debian AS build
 
 WORKDIR /app
 
