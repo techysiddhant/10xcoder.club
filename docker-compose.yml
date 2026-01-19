@@ -10,12 +10,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks: [app_net]
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -23,12 +17,6 @@ services:
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD}
     networks: [app_net]
-    healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
 
   app:
     build:
@@ -68,17 +56,9 @@ services:
       AWS_REGION: ${AWS_REGION:-us-east-1}
       CDN_URL: ${CDN_URL}
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - db
+      - redis
     networks: [app_net]
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3000/']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   migrate:
     build:
@@ -86,14 +66,9 @@ services:
       dockerfile: apps/api/migration.Dockerfile
     container_name: 10xcoder_migrate
     environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     networks: [app_net]
     restart: 'no'
     profiles: ['migrate']
@@ -109,15 +84,8 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/ssl/cloudflare:/etc/ssl/cloudflare:ro
     depends_on:
-      app:
-        condition: service_healthy
+      - app
     networks: [app_net]
-    healthcheck:
-      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost/health']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
 networks:
   app_net:

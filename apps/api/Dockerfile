@@ -5,7 +5,7 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Build stage - Alpine with Bun
+# Build stage - Debian with Bun
 # -----------------------------------------------------------------------------
 FROM --platform=linux/amd64 oven/bun:1.1.43-debian AS build
 
@@ -38,32 +38,22 @@ RUN cd apps/api && bun build \
     src/index.ts
 
 # -----------------------------------------------------------------------------
-# Runtime stage - Debian Slim (glibc compatible with bun-linux-x64)
+# Runtime stage - Distroless (minimal, secure, ~20MB)
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 debian:bookworm-slim AS runtime
+FROM --platform=linux/amd64 gcr.io/distroless/base-debian12:nonroot AS runtime
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Install minimal runtime dependencies (curl for health checks)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy compiled binary from build stage
 COPY --from=build /app/apps/api/server ./server
-RUN chmod +x ./server
 
 # Copy drizzle migrations
 COPY --from=build /app/apps/api/drizzle ./drizzle
 
-# Create non-root user for security
-RUN useradd -r -s /bin/false appuser
-USER appuser
-
 EXPOSE 3000
 
+# Distroless runs as nonroot user (UID 65532) by default
 CMD ["./server"]
