@@ -19,9 +19,7 @@ services:
     networks: [app_net]
 
   app:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    image: ghcr.io/techysiddhant/10xcoder-api:latest
     container_name: ${APP_CONTAINER_NAME:-10xcoder_app}
     restart: unless-stopped
     environment:
