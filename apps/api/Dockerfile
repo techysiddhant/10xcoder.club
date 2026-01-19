@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 # =============================================================================
 # 10xcoder.club API Dockerfile - Production Ready for AWS EC2
 # =============================================================================
@@ -22,7 +24,9 @@ COPY packages/ui/package.json ./packages/ui/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 
-RUN bun install --frozen-lockfile --ignore-scripts
+# Cache bun dependencies between builds
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile --ignore-scripts
 
 # --- Copy source files ---
 COPY apps/api ./apps/api
