@@ -2,16 +2,17 @@ FROM oven/bun:1.1.43-alpine
 
 WORKDIR /app
 
-# Required for pg_isready
+# Required tools
 RUN apk add --no-cache postgresql-client
 
-# Copy migration inputs
+# Copy only what migrations need
 COPY apps/api/src/db ./src/db
 COPY apps/api/drizzle ./drizzle
 COPY apps/api/tsconfig.json ./tsconfig.json
 
-# Minimal pinned deps
-RUN echo '{
+# Create minimal package.json safely
+RUN cat <<'EOF' > package.json
+{
   "name": "migration",
   "type": "module",
   "dependencies": {
@@ -19,39 +20,28 @@ RUN echo '{
     "drizzle-orm": "0.45.1",
     "postgres": "3.4.7"
   }
-}' > package.json
+}
+EOF
 
-# Install prod-only deps
-RUN bun install --production --no-save
+# Install deps
+RUN bun install --no-save
 
-# Create drizzle config safely
-RUN mkdir -p src && cat <<'EOF' > src/drizzle.config.ts
-import { defineConfig } from 'drizzle-kit'
+# Drizzle config
+RUN cat <<'EOF' > src/drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
 
-const {
-  POSTGRES_USER,
-  POSTGRES_PASSWORD,
-  POSTGRES_DB,
-  POSTGRES_HOST,
-  POSTGRES_PORT = '5432',
-} = process.env
-
-if (!POSTGRES_USER || !POSTGRES_PASSWORD || !POSTGRES_DB || !POSTGRES_HOST) {
-  throw new Error('Missing Postgres environment variables')
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is required");
 }
 
-const DATABASE_URL =
-  `postgres://${POSTGRES_USER}:${encodeURIComponent(POSTGRES_PASSWORD)}` +
-  `@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`
-
 export default defineConfig({
-  schema: './src/db/schema',
-  out: './drizzle',
-  dialect: 'postgresql',
+  schema: "./src/db/schema",
+  out: "./drizzle",
+  dialect: "postgresql",
   dbCredentials: {
-    url: DATABASE_URL,
-  },
-})
+    url: process.env.DATABASE_URL
+  }
+});
 EOF
 
 ENV NODE_ENV=production
