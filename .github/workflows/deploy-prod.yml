@@ -199,15 +199,10 @@ jobs:
             docker compose ps
 
             echo "🏥 Health check..."
-            sleep 5
+            sleep 10
 
             if curl -sf http://localhost:${{ env.NGINX_PORT }}/health; then
-              echo "✅ Health OK (nginx)"
-              exit 0
-            fi
-
-            if docker compose exec -T app curl -sf http://localhost:3000/health; then
-              echo "✅ Health OK (app)"
+              echo "✅ Health OK"
               exit 0
             fi
 

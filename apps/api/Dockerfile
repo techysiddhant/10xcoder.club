@@ -50,7 +50,6 @@ ENV PORT=3000
 # Install minimal runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy compiled binary from build stage
@@ -65,9 +64,5 @@ RUN useradd -r -s /bin/false appuser
 USER appuser
 
 EXPOSE 3000
-
-# Healthcheck for Docker and AWS ALB
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
 
 CMD ["./server"]
