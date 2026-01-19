@@ -47,9 +47,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Install minimal runtime dependencies
+# Install minimal runtime dependencies (curl for health checks)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy compiled binary from build stage
