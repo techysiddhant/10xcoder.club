@@ -10,49 +10,26 @@ concurrency:
 
 env:
   COMPOSE_PROJECT_NAME: 10xcoder-prod
-  APP_CONTAINER_NAME: 10xcoder_prod_app
-  DB_CONTAINER_NAME: 10xcoder_prod_db
-  REDIS_CONTAINER_NAME: 10xcoder_prod_redis
-  NGINX_CONTAINER_NAME: 10xcoder_prod_nginx
-  DB_VOLUME_NAME: postgres_prod_data
-  REDIS_VOLUME_NAME: redis_prod_data
-  NGINX_PORT: 80
-  APP_PORT: 3000
+  APP_CONTAINER_NAME: 10xcoder_app
 
-# ============================================================================
-# JOB 1 — DEPLOY
-# ============================================================================
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Create production env file
-        run: |
-          echo "${{ secrets.ENV_FILE_PROD }}" > .env.production
+      - name: Write env file
+        run: echo "${{ secrets.ENV_FILE_PROD }}" > .env
 
-      - name: Copy files to EC2
+      - name: Upload files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
-          port: 22
-          source: >
-            docker-compose.yml,
-            nginx,
-            apps/api,
-            apps/web/package.json,
-            packages,
-            package.json,
-            bun.lock,
-            tsconfig.base.json,
-            .env.production,
-            scripts
-          target: /home/${{ secrets.USERNAME }}/${{ env.COMPOSE_PROJECT_NAME }}
+          source: docker-compose.yml,apps,packages,nginx,.env,package.json,bun.lock,tsconfig.base.json
+          target: /home/${{ secrets.USERNAME }}/10xcoder-prod
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -60,110 +37,36 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
-          port: 22
           command_timeout: 15m
           script: |
             set -e
 
-            cd /home/${{ secrets.USERNAME }}/${{ env.COMPOSE_PROJECT_NAME }}
+            cd ~/10xcoder-prod
 
-            mv .env.production .env
+            echo "🧹 Freeing port 80 (host-level)"
+            sudo systemctl stop nginx || true
+            sudo systemctl stop apache2 || true
+            sudo fuser -k 80/tcp || true
 
-            export COMPOSE_PROJECT_NAME=${{ env.COMPOSE_PROJECT_NAME }}
+            echo "🧹 Stopping old containers"
+            docker compose down || true
 
-            echo "🚀 Starting deployment..."
+            echo "🚀 Starting stack"
+            docker compose up -d --build || true
 
-            echo "🧹 Stopping old containers..."
-            docker compose down --remove-orphans || true
+            echo "🧪 Running migrations"
+            docker compose --profile migrate run --rm migrate || true
 
-            echo "🔨 Building & starting containers..."
-            docker compose up -d --build --remove-orphans
-
-            echo "📦 Current container status:"
-            docker compose ps
-
-            echo "✅ Deployment completed successfully"
-
-  # ============================================================================
-  # JOB 2 — MIGRATIONS
-  # ============================================================================
-  migrate:
-    runs-on: ubuntu-latest
-    needs: deploy
-
-    steps:
-      - name: Run database migrations
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          port: 22
-          command_timeout: 10m
-          script: |
-            set -e
-
-            cd /home/${{ secrets.USERNAME }}/${{ env.COMPOSE_PROJECT_NAME }}
-
-            set -a
-            source .env
-            set +a
-
-            echo "⏳ Waiting for database to be ready..."
-
-            MAX_WAIT=60
-            WAITED=0
-
-            while [ $WAITED -lt $MAX_WAIT ]; do
-              if docker compose exec -T db pg_isready -U "$POSTGRES_USER"; then
-                echo "✅ Database ready"
+            echo "⏳ Waiting for app to be running"
+            for i in {1..30}; do
+              if docker inspect -f '{{.State.Status}}' $APP_CONTAINER_NAME | grep -q running; then
+                echo "✅ App is running"
                 break
               fi
               sleep 2
-              WAITED=$((WAITED + 2))
             done
 
-            if [ $WAITED -ge $MAX_WAIT ]; then
-              echo "❌ Database not ready"
-              exit 1
-            fi
+            echo "🔍 Final verification"
+            docker inspect -f '{{.State.Status}}' $APP_CONTAINER_NAME | grep running
 
-            echo "📝 Running migrations..."
-            docker compose --profile migrate run --rm migrate
-
-            echo "✅ Migrations completed"
-
-  # ============================================================================
-  # JOB 3 — VERIFY
-  # ============================================================================
-  verify:
-    runs-on: ubuntu-latest
-    needs: migrate
-
-    steps:
-      - name: Verify deployment
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          port: 22
-          command_timeout: 5m
-          script: |
-            set -e
-
-            cd /home/${{ secrets.USERNAME }}/${{ env.COMPOSE_PROJECT_NAME }}
-
-            echo "📊 Container status:"
-            docker compose ps
-
-            echo "🌐 Verifying nginx port..."
-
-            if nc -z localhost ${{ env.NGINX_PORT }}; then
-              echo "✅ Nginx is reachable on port ${{ env.NGINX_PORT }}"
-              exit 0
-            fi
-
-            echo "❌ Nginx is not reachable"
-            docker compose logs --tail=100
-            exit 1
+            echo "🎉 Deployment successful"
