@@ -87,8 +87,17 @@ services:
       - app
     networks: [app_net]
 
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: 10xcoder_uptime
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma_data:/app/data
+    networks: [app_net]
+
 networks:
   app_net:
 
 volumes:
   postgres_data:
+  uptime_kuma_data:
