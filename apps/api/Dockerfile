@@ -1,11 +1,11 @@
 # =============================================================================
-# 10xcoder.club API Dockerfile
+# 10xcoder.club API Dockerfile - Production Ready for AWS EC2
 # =============================================================================
 # Build from monorepo root: docker build -f apps/api/Dockerfile .
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Build stage
+# Build stage - Alpine with Bun
 # -----------------------------------------------------------------------------
 FROM --platform=linux/amd64 oven/bun:1.1.43-alpine AS build
 
@@ -24,11 +24,11 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 RUN bun install --frozen-lockfile --ignore-scripts
 
-# --- Copy source ---
+# --- Copy source files ---
 COPY apps/api ./apps/api
 COPY packages/schemas ./packages/schemas
 
-# --- Build compiled binary for linux/amd64 ---
+# --- Build compiled binary for linux/amd64 (glibc) ---
 RUN cd apps/api && bun build \
     --compile \
     --minify-whitespace \
@@ -38,28 +38,36 @@ RUN cd apps/api && bun build \
     src/index.ts
 
 # -----------------------------------------------------------------------------
-# Runtime stage (Debian for glibc compatibility)
+# Runtime stage - Debian Slim (glibc compatible with bun-linux-x64)
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 debian:bookworm-slim AS release
+FROM --platform=linux/amd64 debian:bookworm-slim AS runtime
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Install minimal runtime deps (for healthchecks)
+# Install minimal runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
-    wget \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy compiled binary (self-contained, no node_modules needed)
+# Copy compiled binary from build stage
 COPY --from=build /app/apps/api/server ./server
 RUN chmod +x ./server
 
 # Copy drizzle migrations
 COPY --from=build /app/apps/api/drizzle ./drizzle
 
+# Create non-root user for security
+RUN useradd -r -s /bin/false appuser
+USER appuser
+
 EXPOSE 3000
+
+# Healthcheck for Docker and AWS ALB
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
 
 CMD ["./server"]
