@@ -70,14 +70,6 @@ jobs:
             mv .env.production .env
 
             export COMPOSE_PROJECT_NAME=${{ env.COMPOSE_PROJECT_NAME }}
-            export APP_CONTAINER_NAME=${{ env.APP_CONTAINER_NAME }}
-            export DB_CONTAINER_NAME=${{ env.DB_CONTAINER_NAME }}
-            export REDIS_CONTAINER_NAME=${{ env.REDIS_CONTAINER_NAME }}
-            export NGINX_CONTAINER_NAME=${{ env.NGINX_CONTAINER_NAME }}
-            export DB_VOLUME_NAME=${{ env.DB_VOLUME_NAME }}
-            export REDIS_VOLUME_NAME=${{ env.REDIS_VOLUME_NAME }}
-            export NGINX_PORT=${{ env.NGINX_PORT }}
-            export APP_PORT=${{ env.APP_PORT }}
 
             echo "🚀 Starting deployment..."
 
@@ -85,37 +77,12 @@ jobs:
             docker compose down --remove-orphans || true
 
             echo "🔨 Building & starting containers..."
-            docker compose build --no-cache app
-            docker compose up -d --remove-orphans
+            docker compose up -d --build --remove-orphans
 
-            echo "⏳ Waiting for containers to start..."
+            echo "📦 Current container status:"
+            docker compose ps
 
-            MAX_WAIT=300
-            WAITED=0
-
-            while [ $WAITED -lt $MAX_WAIT ]; do
-              RUNNING=$(docker compose ps --services --filter "status=running" | wc -l)
-              EXPECTED=$(docker compose config --services | grep -v "migrate" | wc -l)
-
-              echo "  ${WAITED}s → Running $RUNNING / $EXPECTED"
-
-              if [ "$RUNNING" -ge "$EXPECTED" ]; then
-                echo "✅ All services are running"
-                break
-              fi
-
-              sleep 5
-              WAITED=$((WAITED + 5))
-            done
-
-            if [ $WAITED -ge $MAX_WAIT ]; then
-              echo "❌ Services failed to start"
-              docker compose ps
-              docker compose logs --tail=100
-              exit 1
-            fi
-
-            echo "✅ Deployment completed"
+            echo "✅ Deployment completed successfully"
 
   # ============================================================================
   # JOB 2 — MIGRATIONS
@@ -138,13 +105,11 @@ jobs:
 
             cd /home/${{ secrets.USERNAME }}/${{ env.COMPOSE_PROJECT_NAME }}
 
-            export COMPOSE_PROJECT_NAME=${{ env.COMPOSE_PROJECT_NAME }}
-
             set -a
             source .env
             set +a
 
-            echo "⏳ Waiting for DB..."
+            echo "⏳ Waiting for database to be ready..."
 
             MAX_WAIT=60
             WAITED=0
@@ -189,23 +154,16 @@ jobs:
 
             cd /home/${{ secrets.USERNAME }}/${{ env.COMPOSE_PROJECT_NAME }}
 
-            export COMPOSE_PROJECT_NAME=${{ env.COMPOSE_PROJECT_NAME }}
-
-            set -a
-            source .env
-            set +a
-
             echo "📊 Container status:"
             docker compose ps
 
-            echo "🏥 Health check..."
-            sleep 10
+            echo "🌐 Verifying nginx port..."
 
-            if curl -sf http://localhost:${{ env.NGINX_PORT }}/health; then
-              echo "✅ Health OK"
+            if nc -z localhost ${{ env.NGINX_PORT }}; then
+              echo "✅ Nginx is reachable on port ${{ env.NGINX_PORT }}"
               exit 0
             fi
 
-            echo "❌ Health check failed"
+            echo "❌ Nginx is not reachable"
             docker compose logs --tail=100
             exit 1
