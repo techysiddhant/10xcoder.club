@@ -82,3 +82,8 @@ export function generateResourcesCacheKey(query: ResourceListQuery): string {
   if (query.search) parts.push(`search:${encodeURIComponent(query.search)}`)
   return parts.join(':')
 }
+
+// Queue names constant
+export const QUEUE_NAMES = {
+  VOTE_SYNC: 'vote-sync'
+} as const

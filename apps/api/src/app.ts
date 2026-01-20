@@ -9,6 +9,7 @@ import type { OpenAPIV3 } from 'openapi-types'
 import { scrapeRoutes } from './routes/scrape'
 import { resourcesRoutes } from './routes/resources'
 import { uploadRoutes } from './routes/upload'
+import { voteRoutes } from './routes/vote'
 
 export const app = new Elysia()
 
@@ -107,5 +108,5 @@ export const app = new Elysia()
   .use(resourcesRoutes)
   .use(scrapeRoutes)
   .use(uploadRoutes)
-
+  .use(voteRoutes)
 export type App = typeof app
