@@ -1,4 +1,3 @@
-import path from 'path'
 import { db } from '@/db'
 import { logger } from '@/lib/logger'
 import {
@@ -17,9 +16,9 @@ import { env } from '@/config/env'
 
 // ==========================================
 // Helper: Transform resource image URL
-// If image is just a filename/key, append CDN URL with resources folder path
+// If image is an S3 key (e.g., "resources/userId/file.jpg"), prepend CDN URL
 // If image is already a full URL, return as-is
-// Defends against path traversal by sanitizing filename
+// Defends against path traversal by rejecting ".." segments
 // ==========================================
 function transformImageUrl(image: string | null | undefined): string | null {
   if (!image) return null
@@ -29,19 +28,22 @@ function transformImageUrl(image: string | null | undefined): string | null {
     return image
   }
 
-  // Sanitize: extract basename to prevent path traversal (strips directory components)
-  const filename = path.basename(image)
-
-  // Validate: only allow safe characters (alphanumerics, dots, dashes, underscores)
-  // Reject empty filenames, dot-only names, or filenames with unsafe characters
-  const safeFilenamePattern = /^[a-zA-Z0-9._-]+$/
-  if (!filename || filename === '.' || filename === '..' || !safeFilenamePattern.test(filename)) {
+  // Security: prevent path traversal attacks
+  if (image.includes('..')) {
     return null
   }
 
-  // It's a safe filename, append CDN URL with resources folder path
+  // Validate: only allow safe characters in the path
+  // Allows alphanumerics, dots, dashes, underscores, and forward slashes
+  const safePathPattern = /^[a-zA-Z0-9._\-/]+$/
+  if (!safePathPattern.test(image)) {
+    return null
+  }
+
+  // Image is an S3 key like "resources/userId/timestamp-filename.jpg"
+  // Prepend CDN URL to create full URL
   const cdnUrl = env.CDN_URL.replace(/\/$/, '') // Remove trailing slash if present
-  return `${cdnUrl}/resources/${filename}`
+  return `${cdnUrl}/${image}`
 }
 
 // Type for database instance or transaction context (shared query interface)
