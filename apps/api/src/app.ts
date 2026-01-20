@@ -9,6 +9,11 @@ import type { OpenAPIV3 } from 'openapi-types'
 import { scrapeRoutes } from './routes/scrape'
 import { resourcesRoutes } from './routes/resources'
 import { uploadRoutes } from './routes/upload'
+import { voteRoutes } from './routes/vote'
+import { initVoteSubscriber } from './lib/vote-subscriber'
+
+// Initialize shared vote subscriber for SSE (must complete before accepting requests)
+await initVoteSubscriber()
 
 export const app = new Elysia()
 
@@ -107,5 +112,5 @@ export const app = new Elysia()
   .use(resourcesRoutes)
   .use(scrapeRoutes)
   .use(uploadRoutes)
-
+  .use(voteRoutes)
 export type App = typeof app
