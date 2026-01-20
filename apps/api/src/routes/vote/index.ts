@@ -76,11 +76,6 @@ export const voteRoutes = new Elysia({ prefix: '/api/vote' })
       // Generate unique client ID
       const clientId = crypto.randomUUID()
 
-      // Set SSE headers
-      set.headers['Content-Type'] = 'text/event-stream'
-      set.headers['Cache-Control'] = 'no-cache'
-      set.headers['Connection'] = 'keep-alive'
-
       // Create readable stream
       const stream = new ReadableStream<string>({
         start(controller) {

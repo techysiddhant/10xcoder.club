@@ -141,6 +141,10 @@ const worker = new Worker<VoteJobData>(
             jobLogger.warn('Vote not found or type mismatch, skipping counter update')
           }
         })
+      } else {
+        // Unknown action value - log warning and fail the job
+        jobLogger.warn({ action }, 'Unknown action value received')
+        throw new Error(`Unknown action value: ${action}`)
       }
 
       jobLogger.info('Vote job completed successfully')
