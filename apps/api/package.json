@@ -19,6 +19,7 @@
     "@elysiajs/openapi": "^1.4.13",
     "@google/genai": "^1.37.0",
     "@react-email/components": "1.0.3",
+    "@sentry/bun": "^10.35.0",
     "@workspace/schemas": "workspace:*",
     "better-auth": "^1.4.10",
     "cheerio": "^1.1.2",

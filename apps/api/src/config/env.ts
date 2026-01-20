@@ -25,7 +25,9 @@ const EnvSchema = z.object({
   AWS_ACCESS_KEY_ID: z.string().min(1),
   AWS_SECRET_ACCESS_KEY: z.string().min(1),
   AWS_S3_BUCKET: z.string().min(1),
-  CDN_URL: z.string().url()
+  CDN_URL: z.string().url(),
+  // Sentry (optional - for error tracking and performance monitoring)
+  SENTRY_DSN: z.string().url().optional()
 })
 
 const result = EnvSchema.safeParse(process.env)

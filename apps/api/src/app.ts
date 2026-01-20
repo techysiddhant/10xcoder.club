@@ -70,6 +70,19 @@ export const app = new Elysia()
     })
   )
   .onError(({ code, error }) => {
+    // Capture error in Sentry (async, doesn't block response)
+    if (env.SENTRY_DSN) {
+      import('@/lib/sentry')
+        .then(({ Sentry }) => {
+          Sentry.captureException(error, {
+            tags: { errorCode: code }
+          })
+        })
+        .catch(() => {
+          // Silently ignore Sentry failures to avoid disrupting error response
+        })
+    }
+
     if (error instanceof Response) {
       return error
     }
