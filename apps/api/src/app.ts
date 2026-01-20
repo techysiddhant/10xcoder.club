@@ -10,6 +10,10 @@ import { scrapeRoutes } from './routes/scrape'
 import { resourcesRoutes } from './routes/resources'
 import { uploadRoutes } from './routes/upload'
 import { voteRoutes } from './routes/vote'
+import { initVoteSubscriber } from './lib/vote-subscriber'
+
+// Initialize shared vote subscriber for SSE
+initVoteSubscriber()
 
 export const app = new Elysia()
 
