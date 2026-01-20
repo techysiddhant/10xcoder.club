@@ -22,11 +22,11 @@ if (SENTRY_DSN) {
     sampleRate: 1.0,
 
     // Integrations for enhanced monitoring
+    // Note: postgresIntegration is disabled because it's incompatible with
+    // Bun compiled binaries (causes "Cannot replace module namespace object's binding" error)
     integrations: [
       // Capture unhandled promise rejections
-      Sentry.onUnhandledRejectionIntegration(),
-      // Capture database queries (postgres)
-      Sentry.postgresIntegration()
+      Sentry.onUnhandledRejectionIntegration()
     ],
 
     // Filter sensitive data from being sent to Sentry
