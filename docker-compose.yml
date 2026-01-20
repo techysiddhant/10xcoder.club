@@ -53,6 +53,8 @@ services:
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       CDN_URL: ${CDN_URL}
+      # Sentry (error tracking)
+      SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       - db
       - redis
