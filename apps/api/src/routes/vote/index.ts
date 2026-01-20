@@ -1,8 +1,8 @@
 import { Elysia, t } from 'elysia'
 import { authMiddleware } from '@/middleware/auth.middleware'
 import { upvote, downvote } from '@/controllers/vote.controller'
-import { ErrorResponseSchema } from '@/utils/errors'
-import { addVoteClient, removeVoteClient } from '@/lib/vote-subscriber'
+import { ErrorResponseSchema, errorResponse } from '@/utils/errors'
+import { addVoteClient, removeVoteClient, isVoteSubscriberReady } from '@/lib/vote-subscriber'
 
 // Vote response schema
 const VoteResponseSchema = t.Object({
@@ -67,6 +67,12 @@ export const voteRoutes = new Elysia({ prefix: '/api/vote' })
   .get(
     '/stream',
     async ({ set }) => {
+      // Check if subscriber is ready before accepting clients
+      if (!isVoteSubscriberReady()) {
+        set.status = 503
+        return errorResponse('INTERNAL_ERROR', 'Vote stream service unavailable', 503)
+      }
+
       // Generate unique client ID
       const clientId = crypto.randomUUID()
 
@@ -79,7 +85,13 @@ export const voteRoutes = new Elysia({ prefix: '/api/vote' })
       const stream = new ReadableStream<string>({
         start(controller) {
           // Register this client with the shared subscriber
-          addVoteClient(clientId, controller)
+          const added = addVoteClient(clientId, controller)
+
+          if (!added) {
+            // Subscriber became unavailable - close the stream
+            controller.close()
+            return
+          }
 
           // Send connection confirmation
           controller.enqueue(`data: ${JSON.stringify({ type: 'connected', clientId })}\n\n`)
@@ -104,6 +116,9 @@ export const voteRoutes = new Elysia({ prefix: '/api/vote' })
         summary: 'SSE stream for vote updates',
         description:
           'Server-Sent Events stream for real-time vote count updates. Public endpoint with global rate limiting. Clients should filter updates by resourceId as needed.'
+      },
+      response: {
+        503: ErrorResponseSchema
       }
     }
   )

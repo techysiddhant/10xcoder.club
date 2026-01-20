@@ -8,6 +8,9 @@ import { logger } from '@/lib/logger'
 
 const voteLogger = logger.child({ service: 'vote' })
 
+// TTL for vote count cache (1 hour in seconds)
+const VOTE_COUNT_TTL = 3600
+
 export type VoteType = 'upvote' | 'downvote'
 export type VoteState = VoteType | null
 
@@ -42,10 +45,20 @@ export async function getVoteCounts(
 
   const counts = result[0] ?? { upvoteCount: 0, downvoteCount: 0 }
 
-  // Cache in Redis
+  // Cache in Redis with TTL
   await Promise.all([
-    redis.set(REDIS_KEY.UPVOTE_COUNT(resourceId), counts.upvoteCount.toString()),
-    redis.set(REDIS_KEY.DOWNVOTE_COUNT(resourceId), counts.downvoteCount.toString())
+    redis.set(
+      REDIS_KEY.UPVOTE_COUNT(resourceId),
+      counts.upvoteCount.toString(),
+      'EX',
+      VOTE_COUNT_TTL
+    ),
+    redis.set(
+      REDIS_KEY.DOWNVOTE_COUNT(resourceId),
+      counts.downvoteCount.toString(),
+      'EX',
+      VOTE_COUNT_TTL
+    )
   ])
 
   return { upvotes: counts.upvoteCount, downvotes: counts.downvoteCount }
@@ -412,15 +425,25 @@ export async function getVoteCountsBatch(
       .from(resource)
       .where(inArray(resource.id, missingIds))
 
-    // Warm the cache and update results
+    // Warm the cache and update results with TTL
     const warmCachePipeline = redis.pipeline()
     for (const row of dbCounts) {
       result.set(row.id, {
         upvotes: row.upvoteCount,
         downvotes: row.downvoteCount
       })
-      warmCachePipeline.set(REDIS_KEY.UPVOTE_COUNT(row.id), row.upvoteCount.toString())
-      warmCachePipeline.set(REDIS_KEY.DOWNVOTE_COUNT(row.id), row.downvoteCount.toString())
+      warmCachePipeline.set(
+        REDIS_KEY.UPVOTE_COUNT(row.id),
+        row.upvoteCount.toString(),
+        'EX',
+        VOTE_COUNT_TTL
+      )
+      warmCachePipeline.set(
+        REDIS_KEY.DOWNVOTE_COUNT(row.id),
+        row.downvoteCount.toString(),
+        'EX',
+        VOTE_COUNT_TTL
+      )
     }
     if (dbCounts.length > 0) {
       await warmCachePipeline.exec()

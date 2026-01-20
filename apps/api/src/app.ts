@@ -12,8 +12,8 @@ import { uploadRoutes } from './routes/upload'
 import { voteRoutes } from './routes/vote'
 import { initVoteSubscriber } from './lib/vote-subscriber'
 
-// Initialize shared vote subscriber for SSE
-initVoteSubscriber()
+// Initialize shared vote subscriber for SSE (must complete before accepting requests)
+await initVoteSubscriber()
 
 export const app = new Elysia()
 

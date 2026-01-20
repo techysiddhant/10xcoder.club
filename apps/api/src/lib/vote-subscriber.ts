@@ -21,10 +21,19 @@ let subscriber: Redis | null = null
 let isInitialized = false
 
 /**
+ * Check if the vote subscriber is ready to accept clients.
+ */
+export function isVoteSubscriberReady(): boolean {
+  return isInitialized
+}
+
+/**
  * Initialize the shared vote subscriber.
  * Should be called once on server startup.
+ * Returns a Promise that resolves when subscription is confirmed,
+ * or rejects on failure (cleans up Redis connection on failure).
  */
-export function initVoteSubscriber(): void {
+export async function initVoteSubscriber(): Promise<void> {
   if (isInitialized) {
     subscriberLogger.warn('Vote subscriber already initialized')
     return
@@ -67,28 +76,41 @@ export function initVoteSubscriber(): void {
     }
   })
 
-  // Subscribe to vote channel
-  subscriber.subscribe(REDIS_KEY.VOTE_CHANNEL, (err) => {
-    if (err) {
-      subscriberLogger.error({ error: err }, 'Failed to subscribe to vote channel')
-    } else {
-      subscriberLogger.info('Subscribed to vote channel')
-      isInitialized = true
-    }
+  // Subscribe to vote channel with Promise wrapper
+  return new Promise<void>((resolve, reject) => {
+    subscriber!.subscribe(REDIS_KEY.VOTE_CHANNEL, (err) => {
+      if (err) {
+        subscriberLogger.error({ error: err }, 'Failed to subscribe to vote channel')
+        // Clean up on failure
+        subscriber?.quit().catch(() => {})
+        subscriber = null
+        reject(err)
+      } else {
+        subscriberLogger.info('Subscribed to vote channel')
+        isInitialized = true
+        resolve()
+      }
+    })
   })
 }
 
 /**
  * Register a new SSE client to receive vote updates.
+ * Returns false if subscriber is not ready.
  * @param clientId Unique identifier for the client
  * @param controller The ReadableStream controller for sending data
  */
 export function addVoteClient(
   clientId: string,
   controller: ReadableStreamDefaultController<string>
-): void {
+): boolean {
+  if (!isInitialized) {
+    subscriberLogger.warn({ clientId }, 'Cannot add client - subscriber not ready')
+    return false
+  }
   clients.set(clientId, controller)
   subscriberLogger.debug({ clientId, totalClients: clients.size }, 'Vote client added')
+  return true
 }
 
 /**
