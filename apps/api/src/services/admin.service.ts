@@ -28,7 +28,10 @@ function escapeLikePattern(value: string): string {
 // ==========================================
 export async function adminGetAllResources(query: AdminListResourcesInput) {
   const { page = 1, limit = 20, status, search } = query
-  const offset = (page - 1) * limit
+  // Clamp page and limit to avoid negative offsets or division by zero
+  const pageClamped = Math.max(1, page)
+  const limitClamped = Math.max(1, limit)
+  const offset = (pageClamped - 1) * limitClamped
 
   // Build conditions - exclude deleted resources by requiring resource.deletedAt to be null
   const conditions = [isNull(resource.deletedAt)]
@@ -55,7 +58,7 @@ export async function adminGetAllResources(query: AdminListResourcesInput) {
     .where(and(...conditions))
 
   const total = countResult[0]?.count ?? 0
-  const totalPages = Math.ceil(total / limit)
+  const totalPages = Math.ceil(total / limitClamped)
 
   // Get resources with creator info
   const resources = await db.query.resource.findMany({
@@ -78,7 +81,7 @@ export async function adminGetAllResources(query: AdminListResourcesInput) {
       }
     },
     orderBy: [desc(resource.createdAt)],
-    limit,
+    limit: limitClamped,
     offset
   })
 
@@ -95,8 +98,8 @@ export async function adminGetAllResources(query: AdminListResourcesInput) {
     data,
     meta: {
       total,
-      page,
-      limit,
+      page: pageClamped,
+      limit: limitClamped,
       totalPages
     }
   }
@@ -214,7 +217,11 @@ export async function adminDeleteResource(resourceId: string) {
     return { success: false, code: 400, error: 'Resource is already deleted' }
   }
 
-  await db.update(resource).set({ deletedAt: new Date() }).where(eq(resource.id, resourceId))
-
-  return { success: true }
+  try {
+    await db.update(resource).set({ deletedAt: new Date() }).where(eq(resource.id, resourceId))
+    return { success: true }
+  } catch (err) {
+    console.error('Failed to delete resource:', err)
+    return { success: false, code: 500, error: 'Failed to delete resource' }
+  }
 }

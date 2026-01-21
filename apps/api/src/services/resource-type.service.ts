@@ -51,29 +51,33 @@ export async function createResourceType(input: ResourceTypeInput) {
  * Returns null if not found, throws Error on empty input or name conflict
  */
 export async function updateResourceType(id: string, input: Partial<ResourceTypeInput>) {
-  // Guard against empty input
-  const hasUpdatableFields = Object.keys(input).length > 0
-  if (!hasUpdatableFields) {
+  // Filter out undefined values to avoid writing undefined to DB
+  const cleanedInput = Object.fromEntries(
+    Object.entries(input).filter(([, value]) => value !== undefined)
+  ) as Partial<ResourceTypeInput>
+
+  // Guard against empty input after filtering
+  if (Object.keys(cleanedInput).length === 0) {
     throw new Error('No fields provided to update')
   }
 
   // Check name uniqueness if name is being updated
-  if (input.name) {
+  if (cleanedInput.name) {
     const existing = await db
       .select({ id: resourceType.id })
       .from(resourceType)
-      .where(eq(resourceType.name, input.name))
+      .where(eq(resourceType.name, cleanedInput.name))
       .limit(1)
 
     if (existing.length > 0 && existing[0]?.id !== id) {
-      throw new Error(`Resource type with name "${input.name}" already exists`)
+      throw new Error(`Resource type with name "${cleanedInput.name}" already exists`)
     }
   }
   // Perform update with DB-level unique constraint handling as backup for race conditions
   try {
     const result = await db
       .update(resourceType)
-      .set(input)
+      .set(cleanedInput)
       .where(eq(resourceType.id, id))
       .returning()
     return result[0] ?? null
@@ -81,7 +85,7 @@ export async function updateResourceType(id: string, input: Partial<ResourceType
     const dbError = error as { code?: string }
     // Postgres unique violation code
     if (dbError.code === '23505') {
-      throw new Error(`Resource type with name "${input.name}" already exists`)
+      throw new Error(`Resource type with name "${cleanedInput.name}" already exists`)
     }
     throw error
   }
