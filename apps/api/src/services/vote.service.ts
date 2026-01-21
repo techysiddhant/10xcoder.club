@@ -363,17 +363,24 @@ export async function toggleVote(
     }
   }
 
-  // Publish event for SSE
-  await redis.publish(
-    REDIS_KEY.VOTE_CHANNEL,
-    JSON.stringify({
-      resourceId,
-      upvotes: counts.upvotes,
-      downvotes: counts.downvotes,
-      action,
-      type
-    })
-  )
+  // Publish event for SSE (non-critical - don't fail vote if this fails)
+  try {
+    await redis.publish(
+      REDIS_KEY.VOTE_CHANNEL,
+      JSON.stringify({
+        resourceId,
+        upvotes: counts.upvotes,
+        downvotes: counts.downvotes,
+        action,
+        type
+      })
+    )
+  } catch (publishError) {
+    voteLogger.error(
+      { error: publishError, resourceId, type, action },
+      'Failed to publish SSE event - vote succeeded but real-time update may be delayed'
+    )
+  }
 
   voteLogger.info({ resourceId, userId, type, action, newVote }, 'Vote toggled')
 

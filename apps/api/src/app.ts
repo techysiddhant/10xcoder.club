@@ -11,6 +11,7 @@ import { resourcesRoutes } from './routes/resources'
 import { uploadRoutes } from './routes/upload'
 import { voteRoutes } from './routes/vote'
 import { initVoteSubscriber } from './lib/vote-subscriber'
+import { adminRoutes } from './routes/admin'
 
 // Initialize shared vote subscriber for SSE (must complete before accepting requests)
 await initVoteSubscriber()
@@ -62,7 +63,7 @@ export const app = new Elysia()
         }
       },
       exclude: {
-        paths: ['/', '/api/health']
+        paths: ['/']
       },
       scalar: {
         theme: 'kepler',
@@ -103,14 +104,25 @@ export const app = new Elysia()
       message: 'Server is running'
     }
   })
-  .get('/health', () => {
-    return {
-      status: 'healthy',
-      timestamp: new Date().toISOString()
+  .get(
+    '/health',
+    () => {
+      return {
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+      }
+    },
+    {
+      detail: {
+        tags: ['Health'],
+        summary: 'Health Check',
+        description: 'Returns the health status of the API server.'
+      }
     }
-  })
+  )
   .use(resourcesRoutes)
   .use(scrapeRoutes)
   .use(uploadRoutes)
   .use(voteRoutes)
+  .use(adminRoutes)
 export type App = typeof app
