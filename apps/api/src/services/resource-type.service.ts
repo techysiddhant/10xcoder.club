@@ -98,11 +98,11 @@ export async function deleteResourceType(id: string) {
 /**
  * Check if a resource type name exists (lightweight check - only selects id)
  */
-export async function resourceTypeExists(name: string): Promise<boolean> {
-  const result = await db
-    .select({ id: resourceType.id })
-    .from(resourceType)
-    .where(eq(resourceType.name, name))
-    .limit(1)
-  return result.length > 0
-}
+// export async function resourceTypeExists(name: string): Promise<boolean> {
+//   const result = await db
+//     .select({ id: resourceType.id })
+//     .from(resourceType)
+//     .where(eq(resourceType.name, name))
+//     .limit(1)
+//   return result.length > 0
+// }

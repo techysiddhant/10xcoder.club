@@ -13,13 +13,30 @@ import { errorResponse } from '@/utils/errors'
 type ServiceErrorResult = { success: boolean; code?: number; error?: string }
 
 function handleServiceError(result: ServiceErrorResult, set: Context['set']) {
-  const status =
-    result.code === 404 ? HttpStatusEnum.HTTP_404_NOT_FOUND : HttpStatusEnum.HTTP_400_BAD_REQUEST
-  set.status = status
+  if (result.code === 500) {
+    set.status = HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR
+    return errorResponse(
+      'INTERNAL_ERROR',
+      result.error ?? 'An internal error occurred',
+      HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR
+    )
+  }
+
+  if (result.code === 404) {
+    set.status = HttpStatusEnum.HTTP_404_NOT_FOUND
+    return errorResponse(
+      'NOT_FOUND',
+      result.error ?? 'Resource not found',
+      HttpStatusEnum.HTTP_404_NOT_FOUND
+    )
+  }
+
+  // Default: validation/client errors
+  set.status = HttpStatusEnum.HTTP_400_BAD_REQUEST
   return errorResponse(
-    result.code === 404 ? 'NOT_FOUND' : 'VALIDATION_ERROR',
+    'VALIDATION_ERROR',
     result.error ?? 'An error occurred',
-    status
+    HttpStatusEnum.HTTP_400_BAD_REQUEST
   )
 }
 
@@ -86,18 +103,27 @@ export const updateStatus = async ({
   }
   set: Context['set']
 }) => {
-  const result = await adminUpdateResourceStatus(params.id, {
-    status: body.status,
-    reason: body.reason
-  })
+  try {
+    const result = await adminUpdateResourceStatus(params.id, {
+      status: body.status,
+      reason: body.reason
+    })
 
-  if (!result.success) {
-    return handleServiceError(result, set)
-  }
+    if (!result.success) {
+      return handleServiceError(result, set)
+    }
 
-  return {
-    status: HttpStatusEnum.HTTP_200_OK,
-    data: result.data
+    return {
+      status: HttpStatusEnum.HTTP_200_OK,
+      data: result.data
+    }
+  } catch (error) {
+    set.status = HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR
+    return errorResponse(
+      'INTERNAL_ERROR',
+      error instanceof Error ? error.message : 'Failed to update resource status',
+      HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR
+    )
   }
 }
 

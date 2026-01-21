@@ -63,7 +63,7 @@ export const app = new Elysia()
         }
       },
       exclude: {
-        paths: ['/', '/api/health']
+        paths: ['/']
       },
       scalar: {
         theme: 'kepler',
@@ -104,12 +104,22 @@ export const app = new Elysia()
       message: 'Server is running'
     }
   })
-  .get('/health', () => {
-    return {
-      status: 'healthy',
-      timestamp: new Date().toISOString()
+  .get(
+    '/health',
+    () => {
+      return {
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+      }
+    },
+    {
+      detail: {
+        tags: ['Health'],
+        summary: 'Health Check',
+        description: 'Returns the health status of the API server.'
+      }
     }
-  })
+  )
   .use(resourcesRoutes)
   .use(scrapeRoutes)
   .use(uploadRoutes)

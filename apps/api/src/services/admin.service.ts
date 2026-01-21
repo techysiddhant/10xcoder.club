@@ -16,6 +16,14 @@ interface UpdateResourceStatusInput {
 }
 
 // ==========================================
+// Helper: Escape SQL LIKE pattern special characters
+// ==========================================
+function escapeLikePattern(value: string): string {
+  // Escape backslash first, then % and _ (PostgreSQL uses \ as escape char)
+  return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')
+}
+
+// ==========================================
 // Get All Resources (Admin - includes all statuses)
 // ==========================================
 export async function adminGetAllResources(query: AdminListResourcesInput) {
@@ -30,11 +38,12 @@ export async function adminGetAllResources(query: AdminListResourcesInput) {
   }
 
   if (search) {
+    const escapedSearch = escapeLikePattern(search)
     conditions.push(
       or(
-        ilike(resource.title, `%${search}%`),
-        ilike(resource.description, `%${search}%`),
-        ilike(resource.url, `%${search}%`)
+        ilike(resource.title, `%${escapedSearch}%`),
+        ilike(resource.description, `%${escapedSearch}%`),
+        ilike(resource.url, `%${escapedSearch}%`)
       )!
     )
   }
@@ -157,30 +166,38 @@ export async function adminUpdateResourceStatus(
     return { success: false, error: 'Resource not found', code: 404 }
   }
 
-  // Generate embedding if approving
-  let embedding: number[] | null = null
-  if (status === 'approved') {
-    embedding = await generateResourceEmbedding(resourceId)
+  try {
+    // Generate embedding if approving
+    let embedding: number[] | null = null
+    if (status === 'approved') {
+      embedding = await generateResourceEmbedding(resourceId)
+    }
+
+    // Update status (and embedding if generated)
+    const updateData: Record<string, unknown> = {
+      status,
+      reason: reason ?? null,
+      isPublished: status === 'approved'
+    }
+
+    if (embedding) {
+      updateData.embedding = embedding
+    }
+
+    const [updated] = await db
+      .update(resource)
+      .set(updateData)
+      .where(eq(resource.id, resourceId))
+      .returning()
+
+    return { success: true, data: updated }
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Failed to update resource status',
+      code: 500
+    }
   }
-
-  // Update status (and embedding if generated)
-  const updateData: Record<string, unknown> = {
-    status,
-    reason: reason ?? null,
-    isPublished: status === 'approved'
-  }
-
-  if (embedding) {
-    updateData.embedding = embedding
-  }
-
-  const [updated] = await db
-    .update(resource)
-    .set(updateData)
-    .where(eq(resource.id, resourceId))
-    .returning()
-
-  return { success: true, data: updated }
 }
 
 // ==========================================
