@@ -21,12 +21,18 @@ if (SENTRY_DSN) {
     // Capture 100% of error events
     sampleRate: 1.0,
 
-    // Integrations for enhanced monitoring
-    // Note: postgresIntegration is disabled because it's incompatible with
-    // Bun compiled binaries (causes "Cannot replace module namespace object's binding" error)
+    // IMPORTANT: Disable default integrations to avoid "Cannot replace module
+    // namespace object's binding" error in Bun compiled binaries.
+    // Default integrations try to patch/wrap module exports which fails because
+    // ES module namespace objects are frozen in Bun's compiled binary.
+    defaultIntegrations: false,
+
+    // Only use integrations that don't require module patching
     integrations: [
-      // Capture unhandled promise rejections
-      Sentry.onUnhandledRejectionIntegration()
+      Sentry.inboundFiltersIntegration(),
+      Sentry.functionToStringIntegration(),
+      Sentry.linkedErrorsIntegration(),
+      Sentry.dedupeIntegration()
     ],
 
     // Filter sensitive data from being sent to Sentry
@@ -44,7 +50,7 @@ if (SENTRY_DSN) {
     release: process.env.npm_package_version ?? '1.0.0'
   })
 
-  console.log('🔍 Sentry initialized for error tracking and performance monitoring')
+  console.log('🔍 Sentry initialized for error tracking')
 } else if (process.env.NODE_ENV === 'production') {
   console.warn('⚠️ SENTRY_DSN not configured - error tracking is disabled')
 }
