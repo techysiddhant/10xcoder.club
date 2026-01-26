@@ -20,7 +20,10 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@workspace/schemas*": ["../../packages/schemas/src/index.ts"],
+      "@workspace/schemas": ["../../packages/schemas/src/index.ts"],
+      "@workspace/schemas/*": ["../../packages/schemas/src/*"],
+      "@workspace/database": ["../../packages/database/src/index.ts"],
+      "@workspace/database/*": ["../../packages/database/src/*"],
       "@workspace/ui/*": ["../../packages/ui/src/*"]
     }
   },
