@@ -190,7 +190,7 @@
   }
 
   .glow {
-    @apply shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)];
+    box-shadow: 0 0 30px -5px color-mix(in oklch, var(--primary) 40%, transparent);
   }
   .container {
     margin-inline: auto; /* center: true */

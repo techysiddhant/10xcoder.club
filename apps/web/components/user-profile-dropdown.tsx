@@ -101,7 +101,8 @@ const UserProfileDropdown = () => {
                 </DropdownMenuItem> */}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={handleSignOut}
+          //   onClick={handleSignOut}
+          onSelect={handleSignOut}
           className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
         >
           <LogOut className="w-4 h-4" />

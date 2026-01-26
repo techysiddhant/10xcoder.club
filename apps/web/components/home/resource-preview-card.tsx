@@ -40,7 +40,7 @@ const ResourcePreviewCard = () => {
         </Card>
 
         {/* Template Card */}
-        <Card className="bg-card ring-border/50 overflow-hidden hover:ring-primary/30 transition-all duration-300">
+        <Card className="bg-card ring-1 ring-border/50 overflow-hidden hover:ring-primary/30 transition-all duration-300">
           <CardContent className="">
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex items-center gap-2">
@@ -75,7 +75,7 @@ const ResourcePreviewCard = () => {
         </Card>
 
         {/* Article Card (smaller) */}
-        <Card className="bg-card ring-border/50 overflow-hidden hover:ring-primary/30 transition-all duration-300">
+        <Card className="bg-card ring-1 ring-border/50 overflow-hidden hover:ring-primary/30 transition-all duration-300">
           <CardContent className="">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
