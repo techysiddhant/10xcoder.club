@@ -1,7 +1,7 @@
 import { z } from '@workspace/schemas'
 
 const PublicEnvSchema = z.object({
-  NEXT_PUBLIC_API_URL: z.string().url().optional()
+  NEXT_PUBLIC_API_URL: z.string().url()
 })
 
 export const publicEnv = PublicEnvSchema.parse({
