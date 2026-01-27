@@ -38,6 +38,7 @@
     "format:check": "prettier --check .",
     "prepare": "husky install",
     "ui:add": "./scripts/ui-add.sh",
+    "ui:add:web": "./scripts/web-ui-add.sh",
     "ui:diff": "./scripts/ui-diff.sh",
     "db:studio": "bun --cwd apps/api drizzle-kit studio --config src/drizzle.config.ts",
     "db:generate": "bun --cwd apps/api drizzle-kit generate --config src/drizzle.config.ts",
