@@ -11,6 +11,7 @@ import { authClient } from '@/lib/auth-client'
 import toast from 'react-hot-toast'
 import { publicEnv } from '@/env/public'
 import { useQueryState } from 'nuqs'
+import { sanitizeRedirectUrl } from '@/lib/utils'
 
 // Zod schema for magic link validation
 const magicLinkSchema = z.object({
@@ -24,9 +25,7 @@ export const MagicLinkForm = () => {
     defaultValue: '/'
   })
 
-  // Validate redirectUrl to prevent open redirect vulnerabilities
-  // Only allow relative paths starting with "/" or fallback to "/"
-  const safeRedirectUrl = redirectUrl && redirectUrl.startsWith('/') ? redirectUrl : '/'
+  const safeRedirectUrl = sanitizeRedirectUrl(redirectUrl)
 
   const form = useForm({
     defaultValues: {
@@ -103,9 +102,8 @@ export const MagicLinkForm = () => {
     >
       <FieldGroup>
         {/* Email Field */}
-        <form.Field
-          name="email"
-          children={(field) => {
+        <form.Field name="email">
+          {(field) => {
             const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
             return (
               <Field data-invalid={isInvalid}>
@@ -126,7 +124,7 @@ export const MagicLinkForm = () => {
               </Field>
             )
           }}
-        />
+        </form.Field>
 
         <Button
           type="submit"

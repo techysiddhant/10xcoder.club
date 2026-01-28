@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import '@workspace/ui/globals.css'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { Toaster } from 'react-hot-toast'
-import { NuqsAdapter } from 'nuqs/adapters/next'
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin']

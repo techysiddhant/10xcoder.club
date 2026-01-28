@@ -7,11 +7,12 @@ import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Github, Loader2, Mail, Sparkles } from 'lucide-react'
-import { MagicLinkForm } from './magic-link-form'
 import { authClient } from '@/lib/auth-client'
 import toast from 'react-hot-toast'
 import { useQueryState } from 'nuqs'
 import { publicEnv } from '@/env/public'
+import { sanitizeRedirectUrl } from '@/lib/utils'
+import { MagicLinkForm } from './magic-link-form'
 
 interface SignInFormProps {
   onSwitchMode: () => void
@@ -29,9 +30,7 @@ const SignInForm = ({ onSwitchMode }: SignInFormProps) => {
     defaultValue: '/'
   })
 
-  // Validate redirectUrl to prevent open redirect vulnerabilities
-  // Only allow relative paths starting with "/" or fallback to "/"
-  const safeRedirectUrl = redirectUrl && redirectUrl.startsWith('/') ? redirectUrl : '/'
+  const safeRedirectUrl = sanitizeRedirectUrl(redirectUrl)
 
   const form = useForm({
     defaultValues: {
@@ -61,20 +60,25 @@ const SignInForm = ({ onSwitchMode }: SignInFormProps) => {
   })
 
   const handleGithubSignIn = async () => {
-    await authClient.signIn.social(
-      {
-        provider: 'github',
-        callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`
-      },
-      {
-        onSuccess: () => {
-          toast.success('Sign in successful')
+    try {
+      await authClient.signIn.social(
+        {
+          provider: 'github',
+          callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`
         },
-        onError: (error) => {
-          toast.error(error?.error?.message || 'Something went wrong')
+        {
+          onSuccess: () => {
+            toast.success('Sign in successful')
+          },
+          onError: (error) => {
+            toast.error(error?.error?.message || 'Something went wrong')
+          }
         }
-      }
-    )
+      )
+    } catch (error) {
+      console.error('GitHub sign in error:', error)
+      toast.error(error instanceof Error ? error.message : 'Something went wrong')
+    }
   }
 
   return (

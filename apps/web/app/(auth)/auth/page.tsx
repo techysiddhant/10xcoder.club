@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import ThemeToggle from '@/components/theme-toggle'
 import AuthPage from './auth'
@@ -72,7 +73,17 @@ const Auth = () => {
           <ThemeToggle />
         </div>
 
-        <AuthPage />
+        <Suspense
+          fallback={
+            <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
+              <div className="w-full max-w-md space-y-6">
+                <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+              </div>
+            </div>
+          }
+        >
+          <AuthPage />
+        </Suspense>
       </div>
     </div>
   )

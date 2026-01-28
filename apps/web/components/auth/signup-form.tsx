@@ -16,6 +16,7 @@ import { useQueryState } from 'nuqs'
 import { authClient } from '@/lib/auth-client'
 import toast from 'react-hot-toast'
 import { publicEnv } from '@/env/public'
+import { sanitizeRedirectUrl } from '@/lib/utils'
 
 interface SignUpFormProps {
   onSwitchMode: () => void
@@ -40,17 +41,7 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
     defaultValue: '/'
   })
 
-  // Validate redirectUrl to prevent open redirect vulnerabilities
-  // Only allow true relative paths: must start with "/" and second character
-  // (if present) must not be "/" or "\" to prevent protocol-relative or
-  // backslash-escaped external redirects
-  const safeRedirectUrl =
-    redirectUrl &&
-    typeof redirectUrl === 'string' &&
-    redirectUrl.length > 0 &&
-    /^\/(?![\\/]).*/.test(redirectUrl)
-      ? redirectUrl
-      : '/'
+  const safeRedirectUrl = sanitizeRedirectUrl(redirectUrl)
 
   const form = useForm({
     defaultValues: {
@@ -87,20 +78,25 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
   })
 
   const handleGithubSignUp = async () => {
-    await authClient.signIn.social(
-      {
-        provider: 'github',
-        callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`
-      },
-      {
-        onSuccess: () => {
-          toast.success('Sign up successful')
+    try {
+      await authClient.signIn.social(
+        {
+          provider: 'github',
+          callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`
         },
-        onError: (error) => {
-          toast.error(error?.error?.message || 'Something went wrong')
+        {
+          onSuccess: () => {
+            toast.success('Sign up successful')
+          },
+          onError: (error) => {
+            toast.error(error?.error?.message || 'Something went wrong')
+          }
         }
-      }
-    )
+      )
+    } catch (error) {
+      console.error('GitHub sign up error:', error)
+      toast.error(error instanceof Error ? error.message : 'Something went wrong')
+    }
   }
 
   // Password requirements helper function
