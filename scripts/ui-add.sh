@@ -14,7 +14,8 @@ cd packages/ui
 # Add each component
 for component in "$@"; do
     echo "Adding shadcn/ui component: $component"
-    bunx --bun shadcn@latest add "$component" --yes
+    # Run interactively - let stdin pass through naturally for prompts
+    bunx --bun shadcn@latest add "$component"
 done
 
 echo "✅ Components added successfully!"
