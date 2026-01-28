@@ -154,9 +154,8 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
       >
         <FieldGroup>
           {/* Name Field */}
-          <form.Field
-            name="name"
-            children={(field) => {
+          <form.Field name="name">
+            {(field) => {
               const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
               return (
                 <Field data-invalid={isInvalid}>
@@ -176,12 +175,11 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
                 </Field>
               )
             }}
-          />
+          </form.Field>
 
           {/* Email Field */}
-          <form.Field
-            name="email"
-            children={(field) => {
+          <form.Field name="email">
+            {(field) => {
               const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
               return (
                 <Field data-invalid={isInvalid}>
@@ -202,12 +200,11 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
                 </Field>
               )
             }}
-          />
+          </form.Field>
 
           {/* Password Field */}
-          <form.Field
-            name="password"
-            children={(field) => {
+          <form.Field name="password">
+            {(field) => {
               const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
               const password = field.state.value
               const showRequirements = password.length > 0
@@ -255,7 +252,7 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
                 </Field>
               )
             }}
-          />
+          </form.Field>
 
           <Button
             type="submit"

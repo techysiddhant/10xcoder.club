@@ -150,9 +150,8 @@ const SignInForm = ({ onSwitchMode }: SignInFormProps) => {
         >
           <FieldGroup>
             {/* Email Field */}
-            <form.Field
-              name="email"
-              children={(field) => {
+            <form.Field name="email">
+              {(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
                 return (
                   <Field data-invalid={isInvalid}>
@@ -173,12 +172,11 @@ const SignInForm = ({ onSwitchMode }: SignInFormProps) => {
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
             {/* Password Field */}
-            <form.Field
-              name="password"
-              children={(field) => {
+            <form.Field name="password">
+              {(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
                 return (
                   <Field data-invalid={isInvalid}>
@@ -207,7 +205,7 @@ const SignInForm = ({ onSwitchMode }: SignInFormProps) => {
                   </Field>
                 )
               }}
-            />
+            </form.Field>
 
             <Button
               type="submit"
