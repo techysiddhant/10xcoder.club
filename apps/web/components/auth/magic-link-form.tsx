@@ -35,22 +35,27 @@ export const MagicLinkForm = () => {
       onChange: magicLinkSchema
     },
     onSubmit: async ({ value }) => {
-      await authClient.signIn.magicLink(
-        {
-          email: value.email,
-          callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`
-        },
-        {
-          onSuccess: () => {
-            setSentEmail(value.email)
-            setIsSent(true)
-            toast.success('Magic link sent')
+      try {
+        await authClient.signIn.magicLink(
+          {
+            email: value.email,
+            callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`
           },
-          onError: (error) => {
-            toast.error(error?.error?.message || 'Something went wrong')
+          {
+            onSuccess: () => {
+              setSentEmail(value.email)
+              setIsSent(true)
+              toast.success('Magic link sent')
+            },
+            onError: (error) => {
+              toast.error(error?.error?.message || 'Something went wrong')
+            }
           }
-        }
-      )
+        )
+      } catch (error) {
+        console.error('Magic link sign-in error:', error)
+        toast.error(error instanceof Error ? error.message : 'Something went wrong')
+      }
     }
   })
 

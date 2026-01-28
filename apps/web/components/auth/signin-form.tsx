@@ -41,21 +41,26 @@ const SignInForm = ({ onSwitchMode }: SignInFormProps) => {
       onChange: signInSchema
     },
     onSubmit: async ({ value }) => {
-      await authClient.signIn.email(
-        {
-          email: value.email,
-          password: value.password,
-          callbackURL: safeRedirectUrl
-        },
-        {
-          onSuccess: () => {
-            toast.success('Sign in successful')
+      try {
+        await authClient.signIn.email(
+          {
+            email: value.email,
+            password: value.password,
+            callbackURL: safeRedirectUrl
           },
-          onError: (error) => {
-            toast.error(error?.error?.message || 'Something went wrong')
+          {
+            onSuccess: () => {
+              toast.success('Sign in successful')
+            },
+            onError: (error) => {
+              toast.error(error?.error?.message || 'Something went wrong')
+            }
           }
-        }
-      )
+        )
+      } catch (error) {
+        console.error('Email sign in error:', error)
+        toast.error(error instanceof Error ? error.message : 'Something went wrong')
+      }
     }
   })
 
