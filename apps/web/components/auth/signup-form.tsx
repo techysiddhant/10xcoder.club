@@ -1,56 +1,59 @@
-'use client'
+"use client";
 
-import { useForm } from '@tanstack/react-form'
-import { z } from 'zod'
-import { Button } from '@workspace/ui/components/button'
-import { Input } from '@workspace/ui/components/input'
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
+import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
-  FieldLabel
-} from '@workspace/ui/components/field'
-import { Github, Loader2, Check } from 'lucide-react'
-import { useQueryState } from 'nuqs'
-import { authClient } from '@/lib/auth-client'
-import toast from 'react-hot-toast'
-import { publicEnv } from '@/env/public'
-import { sanitizeRedirectUrl } from '@/lib/utils'
+  FieldLabel,
+} from "@workspace/ui/components/field";
+import { Github, Loader2, Check } from "lucide-react";
+import { useQueryState } from "nuqs";
+import { authClient } from "@/lib/auth-client";
+import toast from "react-hot-toast";
+import { publicEnv } from "@/env/public";
+import { sanitizeRedirectUrl } from "@/lib/utils";
 
 interface SignUpFormProps {
-  onSwitchMode: () => void
+  onSwitchMode: () => void;
 }
 
 // Zod schema for form validation
 const signUpSchema = z.object({
   name: z
     .string()
-    .min(2, 'Name must be at least 2 characters.')
-    .max(50, 'Name must be at most 50 characters.'),
-  email: z.string().min(1, 'Email is required.').email('Please enter a valid email address.'),
+    .min(2, "Name must be at least 2 characters.")
+    .max(50, "Name must be at most 50 characters."),
+  email: z
+    .string()
+    .min(1, "Email is required.")
+    .email("Please enter a valid email address."),
   password: z
     .string()
-    .min(8, 'Password must be at least 8 characters.')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter.')
-    .regex(/\d/, 'Password must contain at least one number.')
-})
+    .min(8, "Password must be at least 8 characters.")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter.")
+    .regex(/\d/, "Password must contain at least one number."),
+});
 
 export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
-  const [redirectUrl] = useQueryState('redirectUrl', {
-    defaultValue: '/'
-  })
+  const [redirectUrl] = useQueryState("redirectUrl", {
+    defaultValue: "/",
+  });
 
-  const safeRedirectUrl = sanitizeRedirectUrl(redirectUrl)
+  const safeRedirectUrl = sanitizeRedirectUrl(redirectUrl);
 
   const form = useForm({
     defaultValues: {
-      name: '',
-      email: '',
-      password: ''
+      name: "",
+      email: "",
+      password: "",
     },
     validators: {
-      onChange: signUpSchema
+      onChange: signUpSchema,
     },
     onSubmit: async ({ value }) => {
       try {
@@ -59,61 +62,63 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
             name: value.name,
             email: value.email,
             password: value.password,
-            callbackURL: safeRedirectUrl
+            callbackURL: safeRedirectUrl,
           },
           {
             onSuccess: () => {
-              toast.success('Sign up successful! Please check your email.')
+              toast.success("Sign up successful! Please check your email.");
             },
             onError: (error) => {
-              toast.error(error?.error?.message || 'Something went wrong')
-            }
-          }
-        )
+              toast.error(error?.error?.message || "Something went wrong");
+            },
+          },
+        );
       } catch (error) {
-        console.error('Sign up error:', error)
-        toast.error(error instanceof Error ? error.message : 'Network error')
+        console.error("Sign up error:", error);
+        toast.error(error instanceof Error ? error.message : "Network error");
       }
-    }
-  })
+    },
+  });
 
   const handleGithubSignUp = async () => {
     try {
       await authClient.signIn.social(
         {
-          provider: 'github',
-          callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`
+          provider: "github",
+          callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`,
         },
         {
           onSuccess: () => {
-            toast.success('Sign up successful')
+            toast.success("Sign up successful");
           },
           onError: (error) => {
-            toast.error(error?.error?.message || 'Something went wrong')
-          }
-        }
-      )
+            toast.error(error?.error?.message || "Something went wrong");
+          },
+        },
+      );
     } catch (error) {
-      console.error('GitHub sign up error:', error)
-      toast.error(error instanceof Error ? error.message : 'Something went wrong')
+      console.error("GitHub sign up error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Something went wrong",
+      );
     }
-  }
+  };
 
   // Password requirements helper function
   const getPasswordRequirements = (password: string) => [
     {
-      label: 'At least 8 characters',
-      met: password.length >= 8
+      label: "At least 8 characters",
+      met: password.length >= 8,
     },
     {
-      label: 'Contains a number',
-      met: /\d/.test(password)
+      label: "Contains a number",
+      met: /\d/.test(password),
     },
     {
-      label: 'Contains uppercase letter',
-      met: /[A-Z]/.test(password)
-    }
-  ]
+      label: "Contains uppercase letter",
+      met: /[A-Z]/.test(password),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -142,21 +147,24 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Or sign up with email</span>
+          <span className="bg-background px-2 text-muted-foreground">
+            Or sign up with email
+          </span>
         </div>
       </div>
 
       <form
         onSubmit={(e) => {
-          e.preventDefault()
-          form.handleSubmit()
+          e.preventDefault();
+          form.handleSubmit();
         }}
       >
         <FieldGroup>
           {/* Name Field */}
           <form.Field name="name">
             {(field) => {
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
               return (
                 <Field data-invalid={isInvalid}>
                   <FieldLabel htmlFor={field.name}>Full name</FieldLabel>
@@ -173,14 +181,15 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
                   />
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
-              )
+              );
             }}
           </form.Field>
 
           {/* Email Field */}
           <form.Field name="email">
             {(field) => {
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
               return (
                 <Field data-invalid={isInvalid}>
                   <FieldLabel htmlFor={field.name}>Email</FieldLabel>
@@ -198,17 +207,18 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
                   />
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
-              )
+              );
             }}
           </form.Field>
 
           {/* Password Field */}
           <form.Field name="password">
             {(field) => {
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
-              const password = field.state.value
-              const showRequirements = password.length > 0
-              const requirements = getPasswordRequirements(password)
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
+              const password = field.state.value;
+              const showRequirements = password.length > 0;
+              const requirements = getPasswordRequirements(password);
 
               return (
                 <Field data-invalid={isInvalid}>
@@ -231,15 +241,17 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
                         <div
                           key={index}
                           className={`flex items-center gap-2 text-xs transition-colors ${
-                            req.met ? 'text-primary' : 'text-muted-foreground'
+                            req.met ? "text-primary" : "text-muted-foreground"
                           }`}
                         >
                           <div
                             className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${
-                              req.met ? 'bg-primary' : 'bg-muted'
+                              req.met ? "bg-primary" : "bg-muted"
                             }`}
                           >
-                            {req.met && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                            {req.met && (
+                              <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                            )}
                           </div>
                           {req.label}
                         </div>
@@ -250,7 +262,7 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
                     <FieldError errors={field.state.meta.errors} />
                   )}
                 </Field>
-              )
+              );
             }}
           </form.Field>
 
@@ -265,25 +277,31 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
                 Creating account...
               </>
             ) : (
-              'Create account'
+              "Create account"
             )}
           </Button>
         </FieldGroup>
       </form>
 
       <p className="text-center text-xs text-muted-foreground">
-        By signing up, you agree to our{' '}
-        <button type="button" className="text-primary hover:text-primary/80 transition-colors">
+        By signing up, you agree to our{" "}
+        <button
+          type="button"
+          className="text-primary hover:text-primary/80 transition-colors"
+        >
           Terms of Service
-        </button>{' '}
-        and{' '}
-        <button type="button" className="text-primary hover:text-primary/80 transition-colors">
+        </button>{" "}
+        and{" "}
+        <button
+          type="button"
+          className="text-primary hover:text-primary/80 transition-colors"
+        >
           Privacy Policy
         </button>
       </p>
 
       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <button
           type="button"
           onClick={onSwitchMode}
@@ -293,5 +311,5 @@ export const SignUpForm = ({ onSwitchMode }: SignUpFormProps) => {
         </button>
       </p>
     </div>
-  )
-}
+  );
+};

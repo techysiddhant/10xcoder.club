@@ -1,9 +1,9 @@
-import Link from 'next/link'
-import { Suspense } from 'react'
-import { ArrowLeft } from 'lucide-react'
-import ThemeToggle from '@/components/theme-toggle'
-import AuthPage from './auth'
-import Logo from '@/components/logo'
+import Link from "next/link";
+import { Suspense } from "react";
+import { ArrowLeft } from "lucide-react";
+import ThemeToggle from "@/components/theme-toggle";
+import AuthPage from "./auth";
+import Logo from "@/components/logo";
 const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex">
@@ -33,8 +33,8 @@ const Auth = () => {
               <span className="text-gradient">curated resources</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-md">
-              Access thousands of hand-picked developer tools, templates, and learning resources.
-              Join our growing community.
+              Access thousands of hand-picked developer tools, templates, and
+              learning resources. Join our growing community.
             </p>
             <div className="flex items-center gap-8 pt-4">
               <div className="text-center">
@@ -86,7 +86,7 @@ const Auth = () => {
         </Suspense>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Auth
+export default Auth;

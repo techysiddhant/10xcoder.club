@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /**
@@ -16,9 +16,9 @@ export function cn(...inputs: ClassValue[]) {
  * - Anything else falls back to "/"
  */
 export function sanitizeRedirectUrl(url: string | null | undefined): string {
-  if (typeof url === 'string' && url.length > 0 && /^\/(?![\\/]).*/.test(url)) {
-    return url
+  if (typeof url === "string" && url.length > 0 && /^\/(?![\\/]).*/.test(url)) {
+    return url;
   }
 
-  return '/'
+  return "/";
 }

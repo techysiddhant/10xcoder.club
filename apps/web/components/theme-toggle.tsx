@@ -1,20 +1,20 @@
-'use client'
-import { Monitor, Moon, Sun } from 'lucide-react'
-import { useTheme } from 'next-themes'
-import { cn } from '@workspace/ui/lib/utils'
-import { useEffect, useState } from 'react'
+"use client";
+import { Monitor, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { cn } from "@workspace/ui/lib/utils";
+import { useEffect, useState } from "react";
 const options = [
-  { value: 'system' as const, icon: Monitor, label: 'System' },
-  { value: 'light' as const, icon: Sun, label: 'Light' },
-  { value: 'dark' as const, icon: Moon, label: 'Dark' }
-]
+  { value: "system" as const, icon: Monitor, label: "System" },
+  { value: "light" as const, icon: Sun, label: "Light" },
+  { value: "dark" as const, icon: Moon, label: "Dark" },
+];
 const ThemeToggle = () => {
-  const { setTheme, theme } = useTheme()
-  const [isMounted, setIsMounted] = useState(false)
+  const { setTheme, theme } = useTheme();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
   if (!isMounted) {
     return (
@@ -30,7 +30,7 @@ const ThemeToggle = () => {
           </button>
         ))}
       </div>
-    )
+    );
   }
 
   return (
@@ -40,10 +40,10 @@ const ThemeToggle = () => {
           key={value}
           onClick={() => setTheme(value)}
           className={cn(
-            'p-2 rounded-full transition-all duration-200',
+            "p-2 rounded-full transition-all duration-200",
             theme === value
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
           )}
           aria-label={label}
         >
@@ -51,7 +51,7 @@ const ThemeToggle = () => {
         </button>
       ))}
     </div>
-  )
-}
+  );
+};
 
-export default ThemeToggle
+export default ThemeToggle;

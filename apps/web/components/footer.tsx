@@ -1,8 +1,8 @@
-import { Github, Twitter, Linkedin } from 'lucide-react'
-import ThemeToggle from './theme-toggle'
+import { Github, Twitter, Linkedin } from "lucide-react";
+import ThemeToggle from "./theme-toggle";
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer className="py-12 border-t border-border">
@@ -13,18 +13,29 @@ const Footer = () => {
             <div className="w-7 h-7 bg-primary text-primary-foreground font-mono font-bold text-xs flex items-center justify-center rounded">
               10x
             </div>
-            <span className="text-sm text-muted-foreground">© {currentYear} 10xcoder.club</span>
+            <span className="text-sm text-muted-foreground">
+              © {currentYear} 10xcoder.club
+            </span>
           </div>
 
           {/* Links */}
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#resources" className="hover:text-foreground transition-colors">
+            <a
+              href="#resources"
+              className="hover:text-foreground transition-colors"
+            >
               Resources
             </a>
-            <a href="#templates" className="hover:text-foreground transition-colors">
+            <a
+              href="#templates"
+              className="hover:text-foreground transition-colors"
+            >
               Templates
             </a>
-            <a href="#contribute" className="hover:text-foreground transition-colors">
+            <a
+              href="#contribute"
+              className="hover:text-foreground transition-colors"
+            >
               Contribute
             </a>
           </nav>
@@ -65,7 +76,7 @@ const Footer = () => {
         </div>
       </div>
     </footer>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;

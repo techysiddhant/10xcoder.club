@@ -1,69 +1,79 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useForm } from '@tanstack/react-form'
-import { z } from 'zod'
-import { Button } from '@workspace/ui/components/button'
-import { Input } from '@workspace/ui/components/input'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
-import { Loader2, Mail, CheckCircle2, ArrowLeft } from 'lucide-react'
-import { authClient } from '@/lib/auth-client'
-import toast from 'react-hot-toast'
-import { publicEnv } from '@/env/public'
-import { useQueryState } from 'nuqs'
-import { sanitizeRedirectUrl } from '@/lib/utils'
+import { useState } from "react";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
+import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@workspace/ui/components/field";
+import { Loader2, Mail, CheckCircle2, ArrowLeft } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import toast from "react-hot-toast";
+import { publicEnv } from "@/env/public";
+import { useQueryState } from "nuqs";
+import { sanitizeRedirectUrl } from "@/lib/utils";
 
 // Zod schema for magic link validation
 const magicLinkSchema = z.object({
-  email: z.string().min(1, 'Email is required.').email('Please enter a valid email address.')
-})
+  email: z
+    .string()
+    .min(1, "Email is required.")
+    .email("Please enter a valid email address."),
+});
 
 export const MagicLinkForm = () => {
-  const [isSent, setIsSent] = useState(false)
-  const [sentEmail, setSentEmail] = useState('')
-  const [redirectUrl] = useQueryState('redirectUrl', {
-    defaultValue: '/'
-  })
+  const [isSent, setIsSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState("");
+  const [redirectUrl] = useQueryState("redirectUrl", {
+    defaultValue: "/",
+  });
 
-  const safeRedirectUrl = sanitizeRedirectUrl(redirectUrl)
+  const safeRedirectUrl = sanitizeRedirectUrl(redirectUrl);
 
   const form = useForm({
     defaultValues: {
-      email: ''
+      email: "",
     },
     validators: {
-      onChange: magicLinkSchema
+      onChange: magicLinkSchema,
     },
     onSubmit: async ({ value }) => {
       try {
         await authClient.signIn.magicLink(
           {
             email: value.email,
-            callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`
+            callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`,
           },
           {
             onSuccess: () => {
-              setSentEmail(value.email)
-              setIsSent(true)
-              toast.success('Magic link sent')
+              setSentEmail(value.email);
+              setIsSent(true);
+              toast.success("Magic link sent");
             },
             onError: (error) => {
-              toast.error(error?.error?.message || 'Something went wrong')
-            }
-          }
-        )
+              toast.error(error?.error?.message || "Something went wrong");
+            },
+          },
+        );
       } catch (error) {
-        console.error('Magic link sign-in error:', error)
-        toast.error(error instanceof Error ? error.message : 'Something went wrong')
+        console.error("Magic link sign-in error:", error);
+        toast.error(
+          error instanceof Error ? error.message : "Something went wrong",
+        );
       }
-    }
-  })
+    },
+  });
 
   const handleReset = () => {
-    setIsSent(false)
-    setSentEmail('')
-    form.reset()
-  }
+    setIsSent(false);
+    setSentEmail("");
+    form.reset();
+  };
 
   if (isSent) {
     return (
@@ -72,7 +82,9 @@ export const MagicLinkForm = () => {
           <CheckCircle2 className="w-8 h-8 text-primary" />
         </div>
         <div className="space-y-2">
-          <h3 className="text-xl font-semibold text-foreground">Check your email</h3>
+          <h3 className="text-xl font-semibold text-foreground">
+            Check your email
+          </h3>
           <p className="text-muted-foreground text-sm">
             We've sent a magic link to
             <br />
@@ -95,21 +107,22 @@ export const MagicLinkForm = () => {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <form
       onSubmit={(e) => {
-        e.preventDefault()
-        form.handleSubmit()
+        e.preventDefault();
+        form.handleSubmit();
       }}
     >
       <FieldGroup>
         {/* Email Field */}
         <form.Field name="email">
           {(field) => {
-            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
             return (
               <Field data-invalid={isInvalid}>
                 <FieldLabel htmlFor={field.name}>Email</FieldLabel>
@@ -127,7 +140,7 @@ export const MagicLinkForm = () => {
                 />
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
-            )
+            );
           }}
         </form.Field>
 
@@ -154,5 +167,5 @@ export const MagicLinkForm = () => {
         </p>
       </FieldGroup>
     </form>
-  )
-}
+  );
+};

@@ -9,12 +9,12 @@ import {
   Link,
   Section,
   Tailwind,
-  Text
-} from '@react-email/components'
+  Text,
+} from "@react-email/components";
 
 interface ResetPasswordEmailProps {
-  name: string
-  url: string
+  name: string;
+  url: string;
 }
 
 /**
@@ -23,27 +23,38 @@ interface ResetPasswordEmailProps {
  */
 function isUrlSafe(url: string): boolean {
   try {
-    const parsed = new URL(url)
+    const parsed = new URL(url);
     // Only allow https (or http for localhost in development)
-    const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'
-    if (parsed.protocol !== 'https:' && !(isLocalhost && parsed.protocol === 'http:')) {
-      console.error(`[ResetPasswordEmail] Blocked unsafe URL scheme: ${parsed.protocol}`)
-      return false
+    const isLocalhost =
+      parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    if (
+      parsed.protocol !== "https:" &&
+      !(isLocalhost && parsed.protocol === "http:")
+    ) {
+      console.error(
+        `[ResetPasswordEmail] Blocked unsafe URL scheme: ${parsed.protocol}`,
+      );
+      return false;
     }
     // Reject URLs with embedded credentials
     if (parsed.username || parsed.password) {
-      console.error('[ResetPasswordEmail] Blocked URL with embedded credentials')
-      return false
+      console.error(
+        "[ResetPasswordEmail] Blocked URL with embedded credentials",
+      );
+      return false;
     }
-    return true
+    return true;
   } catch {
-    console.error(`[ResetPasswordEmail] Invalid URL format: ${url}`)
-    return false
+    console.error(`[ResetPasswordEmail] Invalid URL format: ${url}`);
+    return false;
   }
 }
 
-export default function ResetPasswordEmail({ name, url }: Readonly<ResetPasswordEmailProps>) {
-  const safeUrl = isUrlSafe(url) ? url : undefined
+export default function ResetPasswordEmail({
+  name,
+  url,
+}: Readonly<ResetPasswordEmailProps>) {
+  const safeUrl = isUrlSafe(url) ? url : undefined;
 
   return (
     <Html>
@@ -52,7 +63,9 @@ export default function ResetPasswordEmail({ name, url }: Readonly<ResetPassword
         <Body className="font-sans py-[40px] bg-[#f3f4f6]">
           <Container className="bg-white rounded-[16px] mx-auto p-[48px] max-w-[500px] shadow-sm">
             <Section className="mb-[32px]">
-              <Text className="text-[24px] font-bold text-[#f59e0b] m-0">10xCoder.club</Text>
+              <Text className="text-[24px] font-bold text-[#f59e0b] m-0">
+                10xCoder.club
+              </Text>
             </Section>
             <Section>
               <Heading className="text-[28px] font-bold text-[#111827] m-0 mb-[24px]">
@@ -62,8 +75,9 @@ export default function ResetPasswordEmail({ name, url }: Readonly<ResetPassword
                 Hey {name},
               </Text>
               <Text className="text-[16px] leading-[24px] text-[#4b5563] m-0 mb-[24px]">
-                We received a request to reset your password for your 10xCoder.club account. Click
-                the button below to create a new password.
+                We received a request to reset your password for your
+                10xCoder.club account. Click the button below to create a new
+                password.
               </Text>
               <Section className="mb-[32px] mt-4">
                 {safeUrl ? (
@@ -80,13 +94,17 @@ export default function ResetPasswordEmail({ name, url }: Readonly<ResetPassword
                 )}
               </Section>
               <Text className="text-[14px] leading-[20px] text-[#6b7280] m-0 mb-[16px]">
-                This link will expire in 1 hour. If you didn't request a password reset, you can
-                safely ignore this email — your password will remain unchanged.
+                This link will expire in 1 hour. If you didn't request a
+                password reset, you can safely ignore this email — your password
+                will remain unchanged.
               </Text>
               <Hr className="border-[#e5e7eb] my-[32px]" />
               <Text className="text-[14px] leading-[20px] text-[#6b7280] m-0">
-                Need help?{' '}
-                <Link href="mailto:support@10xcoder.club" className="text-[#f59e0b] no-underline">
+                Need help?{" "}
+                <Link
+                  href="mailto:support@10xcoder.club"
+                  className="text-[#f59e0b] no-underline"
+                >
                   Contact our support team
                 </Link>
               </Text>
@@ -103,10 +121,10 @@ export default function ResetPasswordEmail({ name, url }: Readonly<ResetPassword
         </Body>
       </Tailwind>
     </Html>
-  )
+  );
 }
 
 ResetPasswordEmail.PreviewProps = {
-  name: 'John Doe',
-  url: 'https://10xcoder.club/reset-password?token=abc123'
-}
+  name: "John Doe",
+  url: "https://10xcoder.club/reset-password?token=abc123",
+};

@@ -4,11 +4,11 @@
  */
 
 export type ScrapeErrorCode =
-  | 'INVALID_URL'
-  | 'SCRAPE_FAILED'
-  | 'PLATFORM_ERROR'
-  | 'RATE_LIMITED'
-  | 'INTERNAL_ERROR'
+  | "INVALID_URL"
+  | "SCRAPE_FAILED"
+  | "PLATFORM_ERROR"
+  | "RATE_LIMITED"
+  | "INTERNAL_ERROR";
 
 /**
  * Base class for scrape errors with a stable code property
@@ -17,13 +17,13 @@ export class ScrapeError extends Error {
   constructor(
     public readonly code: ScrapeErrorCode,
     message: string,
-    public readonly cause?: unknown
+    public readonly cause?: unknown,
   ) {
-    super(message)
-    this.name = 'ScrapeError'
+    super(message);
+    this.name = "ScrapeError";
     // Maintains proper stack trace for where our error was thrown (only available on V8)
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor)
+      Error.captureStackTrace(this, this.constructor);
     }
   }
 }
@@ -33,8 +33,8 @@ export class ScrapeError extends Error {
  */
 export class ScrapeNotFoundError extends ScrapeError {
   constructor(message: string, cause?: unknown) {
-    super('SCRAPE_FAILED', message, cause)
-    this.name = 'ScrapeNotFoundError'
+    super("SCRAPE_FAILED", message, cause);
+    this.name = "ScrapeNotFoundError";
   }
 }
 
@@ -43,8 +43,8 @@ export class ScrapeNotFoundError extends ScrapeError {
  */
 export class PlatformApiError extends ScrapeError {
   constructor(message: string, cause?: unknown) {
-    super('PLATFORM_ERROR', message, cause)
-    this.name = 'PlatformApiError'
+    super("PLATFORM_ERROR", message, cause);
+    this.name = "PlatformApiError";
   }
 }
 
@@ -53,8 +53,8 @@ export class PlatformApiError extends ScrapeError {
  */
 export class RateLimitError extends ScrapeError {
   constructor(message: string, cause?: unknown) {
-    super('RATE_LIMITED', message, cause)
-    this.name = 'RateLimitError'
+    super("RATE_LIMITED", message, cause);
+    this.name = "RateLimitError";
   }
 }
 
@@ -63,8 +63,8 @@ export class RateLimitError extends ScrapeError {
  */
 export class InvalidUrlError extends ScrapeError {
   constructor(message: string, cause?: unknown) {
-    super('INVALID_URL', message, cause)
-    this.name = 'InvalidUrlError'
+    super("INVALID_URL", message, cause);
+    this.name = "InvalidUrlError";
   }
 }
 
@@ -72,18 +72,19 @@ export class InvalidUrlError extends ScrapeError {
  * Mapping from error codes to user-facing messages
  */
 export const ERROR_CODE_TO_MESSAGE: Record<ScrapeErrorCode, string> = {
-  INVALID_URL: 'Please enter a valid URL (e.g., https://youtube.com/watch?v=...)',
-  SCRAPE_FAILED: 'Content not found. Please check the URL and try again.',
-  PLATFORM_ERROR: 'The platform API returned an error. Please try again later.',
-  RATE_LIMITED: 'Too many requests. Please wait a moment and try again.',
-  INTERNAL_ERROR: 'Failed to scrape the URL. Please try again later.'
-}
+  INVALID_URL:
+    "Please enter a valid URL (e.g., https://youtube.com/watch?v=...)",
+  SCRAPE_FAILED: "Content not found. Please check the URL and try again.",
+  PLATFORM_ERROR: "The platform API returned an error. Please try again later.",
+  RATE_LIMITED: "Too many requests. Please wait a moment and try again.",
+  INTERNAL_ERROR: "Failed to scrape the URL. Please try again later.",
+};
 
 /**
  * Get user-facing message for an error code
  */
 export function getUserMessageForErrorCode(code: ScrapeErrorCode): string {
-  return ERROR_CODE_TO_MESSAGE[code]
+  return ERROR_CODE_TO_MESSAGE[code];
 }
 
 /**
@@ -91,15 +92,15 @@ export function getUserMessageForErrorCode(code: ScrapeErrorCode): string {
  */
 export function getStatusForErrorCode(code: ScrapeErrorCode): number {
   switch (code) {
-    case 'INVALID_URL':
-      return 400
-    case 'RATE_LIMITED':
-      return 429
-    case 'SCRAPE_FAILED':
-      return 404
-    case 'PLATFORM_ERROR':
-    case 'INTERNAL_ERROR':
+    case "INVALID_URL":
+      return 400;
+    case "RATE_LIMITED":
+      return 429;
+    case "SCRAPE_FAILED":
+      return 404;
+    case "PLATFORM_ERROR":
+    case "INTERNAL_ERROR":
     default:
-      return 500
+      return 500;
   }
 }

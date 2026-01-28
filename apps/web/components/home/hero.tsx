@@ -1,6 +1,6 @@
-import { Button } from '@workspace/ui/components/button'
-import { ArrowRight, Plus } from 'lucide-react'
-import ResourcePreviewCard from './resource-preview-card'
+import { Button } from "@workspace/ui/components/button";
+import { ArrowRight, Plus } from "lucide-react";
+import ResourcePreviewCard from "./resource-preview-card";
 
 const Hero = () => {
   return (
@@ -22,8 +22,9 @@ const Hero = () => {
           </h1>
 
           <p className="opacity-0 animate-fade-up delay-2 text-lg text-muted-foreground mb-8 leading-relaxed max-w-2xl">
-            A free, community-curated hub of high-quality learning resources and production-ready
-            GitHub templates — reviewed, selected, and trusted by developers.
+            A free, community-curated hub of high-quality learning resources and
+            production-ready GitHub templates — reviewed, selected, and trusted
+            by developers.
           </p>
 
           <div className="opacity-0 animate-fade-up delay-3 flex flex-col sm:flex-row gap-3">
@@ -31,7 +32,11 @@ const Hero = () => {
               Explore Resources
               <ArrowRight className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="lg" className="h-12 px-6 font-semibold gap-2 group">
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 px-6 font-semibold gap-2 group"
+            >
               <Plus className="w-4 h-4" />
               Contribute
             </Button>
@@ -55,7 +60,7 @@ const Hero = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Hero
+export default Hero;

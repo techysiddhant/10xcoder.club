@@ -35,8 +35,8 @@ const Hero = () => {
 
         {/* Subheadline */}
         <p className="subheadline animate-fade-up delay-3">
-          A curated collection of high-quality tutorials, courses, and tools to help you level up
-          your coding skills.
+          A curated collection of high-quality tutorials, courses, and tools to
+          help you level up your coding skills.
         </p>
 
         {/* Launching Soon Button */}
@@ -67,7 +67,7 @@ const Hero = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Hero
+export default Hero;

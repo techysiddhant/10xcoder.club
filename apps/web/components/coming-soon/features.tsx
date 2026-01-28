@@ -39,33 +39,33 @@
 //         description: "Learn alongside ambitious developers building real things.",
 //     },
 // ];
-import { Target, Layers, Rocket, Users } from 'lucide-react'
+import { Target, Layers, Rocket, Users } from "lucide-react";
 const features = [
   {
     icon: <Target />,
-    title: 'Build What Matters',
+    title: "Build What Matters",
     description:
-      'No more todo apps. Work on projects that push your limits and look great on your portfolio.'
+      "No more todo apps. Work on projects that push your limits and look great on your portfolio.",
   },
   {
     icon: <Layers />,
-    title: 'Think in Systems',
+    title: "Think in Systems",
     description:
-      'Learn how top engineers break down complex problems. Understand architecture, not just syntax.'
+      "Learn how top engineers break down complex problems. Understand architecture, not just syntax.",
   },
   {
     icon: <Rocket />,
-    title: 'Ship Like a Pro',
+    title: "Ship Like a Pro",
     description:
-      'Write code that scales. Deploy with confidence. Learn patterns used at companies that matter.'
+      "Write code that scales. Deploy with confidence. Learn patterns used at companies that matter.",
   },
   {
     icon: <Users />,
-    title: 'Grow Together',
+    title: "Grow Together",
     description:
-      'Connect with builders who care about craft. Get feedback, share wins, and stay accountable.'
-  }
-]
+      "Connect with builders who care about craft. Get feedback, share wins, and stay accountable.",
+  },
+];
 const Features = () => {
   return (
     <section className="features">
@@ -76,15 +76,18 @@ const Features = () => {
         <div className="features-header">
           <p className="features-label">Why 10xcoder.club?</p>
           <h2 className="features-title">
-            Everything you need to accelerate your learning and stay up-to-date with the latest
-            technologies.
+            Everything you need to accelerate your learning and stay up-to-date
+            with the latest technologies.
           </h2>
         </div>
 
         {/* Feature grid */}
         <div className="features-grid">
           {features.map((feature, index) => (
-            <div key={feature.title} className={`feature-card animate-fade-up delay-${index + 5}`}>
+            <div
+              key={feature.title}
+              className={`feature-card animate-fade-up delay-${index + 5}`}
+            >
               <div className="feature-card-content">
                 <div className="feature-icon">{feature.icon}</div>
                 <h3 className="feature-title">{feature.title}</h3>
@@ -95,7 +98,7 @@ const Features = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Features
+export default Features;

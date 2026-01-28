@@ -1,47 +1,58 @@
-import { Badge } from '@workspace/ui/components/badge'
-import { Button } from '@workspace/ui/components/button'
-import { Card, CardContent } from '@workspace/ui/components/card'
-import { BookOpen, Video, GitFork, Star, Clock, ExternalLink } from 'lucide-react'
+import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
+import { Card, CardContent } from "@workspace/ui/components/card";
+import {
+  BookOpen,
+  Video,
+  GitFork,
+  Star,
+  Clock,
+  ExternalLink,
+} from "lucide-react";
 
 const resources = [
   {
-    type: 'video',
+    type: "video",
     icon: Video,
-    iconColor: 'text-blue-500',
-    iconBg: 'bg-blue-500/10',
-    title: 'Building a Design System from Scratch',
-    description: 'Learn how to create scalable, reusable component libraries with proper theming.',
-    tags: ['React', 'CSS', 'Architecture'],
-    level: 'Intermediate'
+    iconColor: "text-blue-500",
+    iconBg: "bg-blue-500/10",
+    title: "Building a Design System from Scratch",
+    description:
+      "Learn how to create scalable, reusable component libraries with proper theming.",
+    tags: ["React", "CSS", "Architecture"],
+    level: "Intermediate",
   },
   {
-    type: 'article',
+    type: "article",
     icon: BookOpen,
-    iconColor: 'text-green-500',
-    iconBg: 'bg-green-500/10',
-    title: 'Database Indexing Explained',
-    description: 'Deep dive into B-trees, hash indexes, and query optimization strategies.',
-    tags: ['Database', 'Performance'],
-    level: 'Advanced'
-  }
-]
+    iconColor: "text-green-500",
+    iconBg: "bg-green-500/10",
+    title: "Database Indexing Explained",
+    description:
+      "Deep dive into B-trees, hash indexes, and query optimization strategies.",
+    tags: ["Database", "Performance"],
+    level: "Advanced",
+  },
+];
 
 const templates = [
   {
-    title: 'Next.js SaaS Boilerplate',
-    description: 'Auth, payments, dashboard, emails — everything you need to launch.',
-    stack: ['Next.js 14', 'Prisma', 'Stripe', 'Tailwind'],
-    stars: '3.2k',
-    updated: '2 days ago'
+    title: "Next.js SaaS Boilerplate",
+    description:
+      "Auth, payments, dashboard, emails — everything you need to launch.",
+    stack: ["Next.js 14", "Prisma", "Stripe", "Tailwind"],
+    stars: "3.2k",
+    updated: "2 days ago",
   },
   {
-    title: 'Express API Starter',
-    description: 'REST API with auth, validation, rate limiting, and testing setup.',
-    stack: ['Node.js', 'Express', 'PostgreSQL', 'Jest'],
-    stars: '1.8k',
-    updated: '1 week ago'
-  }
-]
+    title: "Express API Starter",
+    description:
+      "REST API with auth, validation, rate limiting, and testing setup.",
+    stack: ["Node.js", "Express", "PostgreSQL", "Jest"],
+    stars: "1.8k",
+    updated: "1 week ago",
+  },
+];
 
 const ExamplePreview = () => {
   return (
@@ -74,7 +85,9 @@ const ExamplePreview = () => {
                       <div
                         className={`w-10 h-10 rounded-lg ${resource.iconBg} flex items-center justify-center shrink-0`}
                       >
-                        <resource.icon className={`w-5 h-5 ${resource.iconColor}`} />
+                        <resource.icon
+                          className={`w-5 h-5 ${resource.iconColor}`}
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-2">
@@ -83,13 +96,19 @@ const ExamplePreview = () => {
                           </h4>
                           <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
-                        <p className="text-sm text-muted-foreground mb-3">{resource.description}</p>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {resource.description}
+                        </p>
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="outline" className="text-xs">
                             {resource.level}
                           </Badge>
                           {resource.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
+                            <Badge
+                              key={tag}
+                              variant="secondary"
+                              className="text-xs"
+                            >
                               {tag}
                             </Badge>
                           ))}
@@ -124,11 +143,17 @@ const ExamplePreview = () => {
                         <span>{template.stars}</span>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {template.description}
+                    </p>
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         {template.stack.map((tech) => (
-                          <Badge key={tech} variant="secondary" className="text-xs">
+                          <Badge
+                            key={tech}
+                            variant="secondary"
+                            className="text-xs"
+                          >
                             {tech}
                           </Badge>
                         ))}
@@ -152,7 +177,7 @@ const ExamplePreview = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default ExamplePreview
+export default ExamplePreview;

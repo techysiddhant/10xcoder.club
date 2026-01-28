@@ -1,18 +1,18 @@
-import { XCircle, CheckCircle2 } from 'lucide-react'
+import { XCircle, CheckCircle2 } from "lucide-react";
 
 const problems = [
-  'Developers waste hours finding good resources',
-  'GitHub is full of unfinished or outdated templates',
-  'Tutorials are scattered and inconsistent',
-  'Quality varies wildly across sources'
-]
+  "Developers waste hours finding good resources",
+  "GitHub is full of unfinished or outdated templates",
+  "Tutorials are scattered and inconsistent",
+  "Quality varies wildly across sources",
+];
 
 const solutions = [
-  'Centralized, trusted learning material',
-  'Vetted, production-ready starter templates',
-  'Consistent quality across all resources',
-  '100% free and community-driven'
-]
+  "Centralized, trusted learning material",
+  "Vetted, production-ready starter templates",
+  "Consistent quality across all resources",
+  "100% free and community-driven",
+];
 
 const WhyThisExists = () => {
   return (
@@ -64,7 +64,7 @@ const WhyThisExists = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default WhyThisExists
+export default WhyThisExists;

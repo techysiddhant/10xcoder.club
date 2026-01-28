@@ -1,20 +1,20 @@
-import { Elysia } from 'elysia'
-import { rateLimit } from 'elysia-rate-limit'
-import { cors } from '@elysiajs/cors'
-import { logger } from 'elysia-logger'
-import { env } from '@/config/env'
-import { AuthOpenAPI } from './lib/auth-open-api'
-import openapi from '@elysiajs/openapi'
-import type { OpenAPIV3 } from 'openapi-types'
-import { scrapeRoutes } from './routes/scrape'
-import { resourcesRoutes } from './routes/resources'
-import { uploadRoutes } from './routes/upload'
-import { voteRoutes } from './routes/vote'
-import { initVoteSubscriber } from './lib/vote-subscriber'
-import { adminRoutes } from './routes/admin'
+import { Elysia } from "elysia";
+import { rateLimit } from "elysia-rate-limit";
+import { cors } from "@elysiajs/cors";
+import { logger } from "elysia-logger";
+import { env } from "@/config/env";
+import { AuthOpenAPI } from "./lib/auth-open-api";
+import openapi from "@elysiajs/openapi";
+import type { OpenAPIV3 } from "openapi-types";
+import { scrapeRoutes } from "./routes/scrape";
+import { resourcesRoutes } from "./routes/resources";
+import { uploadRoutes } from "./routes/upload";
+import { voteRoutes } from "./routes/vote";
+import { initVoteSubscriber } from "./lib/vote-subscriber";
+import { adminRoutes } from "./routes/admin";
 
 // Initialize shared vote subscriber for SSE (must complete before accepting requests)
-await initVoteSubscriber()
+await initVoteSubscriber();
 
 export const app = new Elysia()
 
@@ -23,106 +23,111 @@ export const app = new Elysia()
   })
   .use(
     logger({
-      level: env.LOG_LEVEL
-    })
+      level: env.LOG_LEVEL,
+    }),
   )
   .use(
     rateLimit({
       max: 60,
       duration: 60000,
       generator: (req, server) =>
-        req.headers.get('x-api-key') || server?.requestIP(req)?.address || '',
+        req.headers.get("x-api-key") || server?.requestIP(req)?.address || "",
       errorResponse: new Response(
         JSON.stringify({
           status: 429,
-          message: 'Too many requests - try again later'
+          message: "Too many requests - try again later",
         }),
-        { status: 429, headers: { 'Content-Type': 'application/json' } }
-      )
-    })
+        { status: 429, headers: { "Content-Type": "application/json" } },
+      ),
+    }),
   )
   .use(
     cors({
-      origin: env.CORS_ORIGIN?.split(',').map((s) => s.trim()) ?? true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      origin: env.CORS_ORIGIN?.split(",").map((s) => s.trim()) ?? true,
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       credentials: true,
-      allowedHeaders: ['Content-Type', 'Authorization']
-    })
+      allowedHeaders: ["Content-Type", "Authorization"],
+    }),
   )
   .use(
     openapi({
-      path: '/docs',
+      path: "/docs",
       documentation: {
         // Better Auth's generated schema is OpenAPI-like but doesn't match @elysiajs/openapi's
         // strict OpenAPI typings; cast at the integration boundary.
-        components: (await AuthOpenAPI.components) as unknown as OpenAPIV3.ComponentsObject,
-        paths: (await AuthOpenAPI.getPaths()) as unknown as OpenAPIV3.PathsObject<{}, {}>,
+        components:
+          (await AuthOpenAPI.components) as unknown as OpenAPIV3.ComponentsObject,
+        paths:
+          (await AuthOpenAPI.getPaths()) as unknown as OpenAPIV3.PathsObject<
+            {},
+            {}
+          >,
         info: {
-          title: '10xcoder.club API',
-          version: '1.0.0'
-        }
+          title: "10xcoder.club API",
+          version: "1.0.0",
+        },
       },
       exclude: {
-        paths: ['/']
+        paths: ["/"],
       },
       scalar: {
-        theme: 'kepler',
-        layout: 'classic',
+        theme: "kepler",
+        layout: "classic",
         defaultHttpClient: {
-          targetKey: 'js',
-          clientKey: 'fetch'
-        }
-      }
-    })
+          targetKey: "js",
+          clientKey: "fetch",
+        },
+      },
+    }),
   )
   .onError(({ code, error }) => {
     // Capture error in Sentry (async, doesn't block response)
     if (env.SENTRY_DSN) {
-      import('@/lib/sentry')
+      import("@/lib/sentry")
         .then(({ Sentry }) => {
           Sentry.captureException(error, {
-            tags: { errorCode: code }
-          })
+            tags: { errorCode: code },
+          });
         })
         .catch(() => {
           // Silently ignore Sentry failures to avoid disrupting error response
-        })
+        });
     }
 
     if (error instanceof Response) {
-      return error
+      return error;
     }
     return {
-      status: 'error',
+      status: "error",
       code,
-      message: error.toString()
-    }
+      message: error.toString(),
+    };
   })
-  .get('/', () => {
+  .get("/", () => {
     return {
-      status: 'Ok',
-      message: 'Server is running'
-    }
+      status: "Ok",
+      message: "Server is running",
+    };
   })
   .get(
-    '/health',
+    "/health",
     () => {
       return {
-        status: 'healthy',
-        timestamp: new Date().toISOString()
-      }
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+      };
     },
     {
       detail: {
-        tags: ['Health'],
-        summary: 'Health Check',
-        description: 'Returns the health status of the API server.'
-      }
-    }
+        tags: ["Health"],
+        summary: "Health Check",
+        description: "Returns the health status of the API server.",
+      },
+    },
   )
   .use(resourcesRoutes)
   .use(scrapeRoutes)
   .use(uploadRoutes)
   .use(voteRoutes)
-  .use(adminRoutes)
-export type App = typeof app
+  .use(adminRoutes);
+export type App = typeof app;
