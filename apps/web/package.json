@@ -12,6 +12,7 @@
     "ui:add": "../../scripts/web-ui-add.sh"
   },
   "dependencies": {
+    "@tanstack/react-form": "^1.28.0",
     "@workspace/schemas": "workspace:*",
     "@workspace/ui": "workspace:*",
     "class-variance-authority": "^0.7.1",
