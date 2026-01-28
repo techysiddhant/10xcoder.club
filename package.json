@@ -4,13 +4,14 @@
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@eslint/js": "^9.0.0",
-    "husky": "^9.1.7",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "eslint": "^9.0.0",
+    "husky": "^9.1.7",
     "lint-staged": "^16.2.0",
     "prettier": "^3.6.2",
     "turbo": "^2.6.0",
-    "typescript-eslint": "^8.39.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.39.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md,mdx,yml,yaml,css,scss,html}": [
