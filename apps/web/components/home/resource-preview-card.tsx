@@ -1,6 +1,6 @@
-import { BookOpen, Video, GitFork, Star, ExternalLink } from 'lucide-react'
-import { Card, CardContent } from '@workspace/ui/components/card'
-import { Badge } from '@workspace/ui/components/badge'
+import { BookOpen, Video, GitFork, Star, ExternalLink } from "lucide-react";
+import { Card, CardContent } from "@workspace/ui/components/card";
+import { Badge } from "@workspace/ui/components/badge";
 const ResourcePreviewCard = () => {
   return (
     <div className="relative">
@@ -26,7 +26,8 @@ const ResourcePreviewCard = () => {
               React Server Components Deep Dive
             </h3>
             <p className="text-sm text-muted-foreground mb-3">
-              Complete guide to RSC architecture, streaming, and data fetching patterns.
+              Complete guide to RSC architecture, streaming, and data fetching
+              patterns.
             </p>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-xs">
@@ -56,7 +57,9 @@ const ResourcePreviewCard = () => {
                 <span>2.4k</span>
               </div>
             </div>
-            <h3 className="font-semibold mb-2 text-foreground">SaaS Starter Kit</h3>
+            <h3 className="font-semibold mb-2 text-foreground">
+              SaaS Starter Kit
+            </h3>
             <p className="text-sm text-muted-foreground mb-3">
               Next.js 14, Auth, Stripe, Prisma — ready to fork and ship.
             </p>
@@ -85,14 +88,16 @@ const ResourcePreviewCard = () => {
                 <h3 className="font-medium text-sm truncate text-foreground">
                   System Design: Rate Limiting
                 </h3>
-                <p className="text-xs text-muted-foreground">Article · Intermediate</p>
+                <p className="text-xs text-muted-foreground">
+                  Article · Intermediate
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ResourcePreviewCard
+export default ResourcePreviewCard;

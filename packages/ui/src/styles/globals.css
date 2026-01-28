@@ -1,6 +1,6 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 /* Source paths for Tailwind to scan for classes */
 @source "../components/**/*.tsx";
@@ -190,7 +190,8 @@
   }
 
   .glow {
-    box-shadow: 0 0 30px -5px color-mix(in oklch, var(--primary) 40%, transparent);
+    box-shadow: 0 0 30px -5px
+      color-mix(in oklch, var(--primary) 40%, transparent);
   }
   .container {
     margin-inline: auto; /* center: true */

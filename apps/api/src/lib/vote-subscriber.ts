@@ -6,25 +6,25 @@
  * connections to avoid exhausting Redis connection slots at scale.
  */
 
-import Redis from 'ioredis'
-import { env } from '@/config/env'
-import { REDIS_KEY } from '@/constant'
-import { logger } from '@/lib/logger'
+import Redis from "ioredis";
+import { env } from "@/config/env";
+import { REDIS_KEY } from "@/constant";
+import { logger } from "@/lib/logger";
 
-const subscriberLogger = logger.child({ module: 'vote-subscriber' })
+const subscriberLogger = logger.child({ module: "vote-subscriber" });
 
 // In-memory client registry: maps clientId -> StreamController
-const clients = new Map<string, ReadableStreamDefaultController<string>>()
+const clients = new Map<string, ReadableStreamDefaultController<string>>();
 
 // Singleton Redis subscriber instance
-let subscriber: Redis | null = null
-let isInitialized = false
+let subscriber: Redis | null = null;
+let isInitialized = false;
 
 /**
  * Check if the vote subscriber is ready to accept clients.
  */
 export function isVoteSubscriberReady(): boolean {
-  return isInitialized
+  return isInitialized;
 }
 
 /**
@@ -35,8 +35,8 @@ export function isVoteSubscriberReady(): boolean {
  */
 export async function initVoteSubscriber(): Promise<void> {
   if (isInitialized) {
-    subscriberLogger.warn('Vote subscriber already initialized')
-    return
+    subscriberLogger.warn("Vote subscriber already initialized");
+    return;
   }
 
   subscriber = new Redis({
@@ -45,53 +45,59 @@ export async function initVoteSubscriber(): Promise<void> {
     password: env.REDIS_PASSWORD || undefined,
     retryStrategy: (times) => {
       // Exponential backoff with max 30 seconds
-      const delay = Math.min(times * 1000, 30000)
-      subscriberLogger.warn({ attempt: times, delayMs: delay }, 'Reconnecting vote subscriber...')
-      return delay
-    }
-  })
+      const delay = Math.min(times * 1000, 30000);
+      subscriberLogger.warn(
+        { attempt: times, delayMs: delay },
+        "Reconnecting vote subscriber...",
+      );
+      return delay;
+    },
+  });
 
-  subscriber.on('error', (err) => {
-    subscriberLogger.error({ error: err }, 'Vote subscriber Redis error')
-  })
+  subscriber.on("error", (err) => {
+    subscriberLogger.error({ error: err }, "Vote subscriber Redis error");
+  });
 
-  subscriber.on('connect', () => {
-    subscriberLogger.info('Vote subscriber connected to Redis')
-  })
+  subscriber.on("connect", () => {
+    subscriberLogger.info("Vote subscriber connected to Redis");
+  });
 
-  subscriber.on('message', (channel, message) => {
-    if (channel !== REDIS_KEY.VOTE_CHANNEL) return
+  subscriber.on("message", (channel, message) => {
+    if (channel !== REDIS_KEY.VOTE_CHANNEL) return;
 
     // Fan out to all connected clients
-    const messageWithNewlines = `data: ${message}\n\n`
+    const messageWithNewlines = `data: ${message}\n\n`;
 
     for (const [clientId, controller] of clients.entries()) {
       try {
-        controller.enqueue(messageWithNewlines)
+        controller.enqueue(messageWithNewlines);
       } catch (error) {
         // Client disconnected or stream closed - clean up
-        subscriberLogger.debug({ clientId }, 'Removing stale client')
-        clients.delete(clientId)
+        subscriberLogger.debug({ clientId }, "Removing stale client");
+        clients.delete(clientId);
       }
     }
-  })
+  });
 
   // Subscribe to vote channel with Promise wrapper
   return new Promise<void>((resolve, reject) => {
     subscriber!.subscribe(REDIS_KEY.VOTE_CHANNEL, (err) => {
       if (err) {
-        subscriberLogger.error({ error: err }, 'Failed to subscribe to vote channel')
+        subscriberLogger.error(
+          { error: err },
+          "Failed to subscribe to vote channel",
+        );
         // Clean up on failure
-        subscriber?.quit().catch(() => {})
-        subscriber = null
-        reject(err)
+        subscriber?.quit().catch(() => {});
+        subscriber = null;
+        reject(err);
       } else {
-        subscriberLogger.info('Subscribed to vote channel')
-        isInitialized = true
-        resolve()
+        subscriberLogger.info("Subscribed to vote channel");
+        isInitialized = true;
+        resolve();
       }
-    })
-  })
+    });
+  });
 }
 
 /**
@@ -102,15 +108,21 @@ export async function initVoteSubscriber(): Promise<void> {
  */
 export function addVoteClient(
   clientId: string,
-  controller: ReadableStreamDefaultController<string>
+  controller: ReadableStreamDefaultController<string>,
 ): boolean {
   if (!isInitialized) {
-    subscriberLogger.warn({ clientId }, 'Cannot add client - subscriber not ready')
-    return false
+    subscriberLogger.warn(
+      { clientId },
+      "Cannot add client - subscriber not ready",
+    );
+    return false;
   }
-  clients.set(clientId, controller)
-  subscriberLogger.debug({ clientId, totalClients: clients.size }, 'Vote client added')
-  return true
+  clients.set(clientId, controller);
+  subscriberLogger.debug(
+    { clientId, totalClients: clients.size },
+    "Vote client added",
+  );
+  return true;
 }
 
 /**
@@ -118,8 +130,11 @@ export function addVoteClient(
  * @param clientId The client ID to remove
  */
 export function removeVoteClient(clientId: string): void {
-  clients.delete(clientId)
-  subscriberLogger.debug({ clientId, totalClients: clients.size }, 'Vote client removed')
+  clients.delete(clientId);
+  subscriberLogger.debug(
+    { clientId, totalClients: clients.size },
+    "Vote client removed",
+  );
 }
 
 /**
@@ -127,7 +142,7 @@ export function removeVoteClient(clientId: string): void {
  * Useful for monitoring/debugging.
  */
 export function getVoteClientCount(): number {
-  return clients.size
+  return clients.size;
 }
 
 /**
@@ -137,14 +152,14 @@ export function getVoteClientCount(): number {
 export async function shutdownVoteSubscriber(): Promise<void> {
   if (subscriber) {
     try {
-      await subscriber.unsubscribe(REDIS_KEY.VOTE_CHANNEL)
-      await subscriber.quit()
-      subscriber = null
-      isInitialized = false
-      clients.clear()
-      subscriberLogger.info('Vote subscriber shut down')
+      await subscriber.unsubscribe(REDIS_KEY.VOTE_CHANNEL);
+      await subscriber.quit();
+      subscriber = null;
+      isInitialized = false;
+      clients.clear();
+      subscriberLogger.info("Vote subscriber shut down");
     } catch (error) {
-      subscriberLogger.error({ error }, 'Error shutting down vote subscriber')
+      subscriberLogger.error({ error }, "Error shutting down vote subscriber");
     }
   }
 }

@@ -9,12 +9,12 @@ import {
   Link,
   Section,
   Tailwind,
-  Text
-} from '@react-email/components'
+  Text,
+} from "@react-email/components";
 
 interface MagicLinkEmailProps {
-  email: string
-  url: string
+  email: string;
+  url: string;
 }
 
 /**
@@ -23,27 +23,36 @@ interface MagicLinkEmailProps {
  */
 function isUrlSafe(url: string): boolean {
   try {
-    const parsed = new URL(url)
+    const parsed = new URL(url);
     // Only allow https (or http for localhost in development)
-    const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'
-    if (parsed.protocol !== 'https:' && !(isLocalhost && parsed.protocol === 'http:')) {
-      console.error(`[MagicLinkEmail] Blocked unsafe URL scheme: ${parsed.protocol}`)
-      return false
+    const isLocalhost =
+      parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    if (
+      parsed.protocol !== "https:" &&
+      !(isLocalhost && parsed.protocol === "http:")
+    ) {
+      console.error(
+        `[MagicLinkEmail] Blocked unsafe URL scheme: ${parsed.protocol}`,
+      );
+      return false;
     }
     // Reject URLs with embedded credentials
     if (parsed.username || parsed.password) {
-      console.error('[MagicLinkEmail] Blocked URL with embedded credentials')
-      return false
+      console.error("[MagicLinkEmail] Blocked URL with embedded credentials");
+      return false;
     }
-    return true
+    return true;
   } catch {
-    console.error(`[MagicLinkEmail] Invalid URL format: ${url}`)
-    return false
+    console.error(`[MagicLinkEmail] Invalid URL format: ${url}`);
+    return false;
   }
 }
 
-export default function MagicLinkEmail({ email, url }: Readonly<MagicLinkEmailProps>) {
-  const safeUrl = isUrlSafe(url) ? url : undefined
+export default function MagicLinkEmail({
+  email,
+  url,
+}: Readonly<MagicLinkEmailProps>) {
+  const safeUrl = isUrlSafe(url) ? url : undefined;
 
   return (
     <Html>
@@ -52,7 +61,9 @@ export default function MagicLinkEmail({ email, url }: Readonly<MagicLinkEmailPr
         <Body className="font-sans py-[40px] bg-[#f3f4f6]">
           <Container className="bg-white rounded-[16px] mx-auto p-[48px] max-w-[500px] shadow-sm">
             <Section className="mb-[32px]">
-              <Text className="text-[24px] font-bold text-[#f59e0b] m-0">10xCoder.club</Text>
+              <Text className="text-[24px] font-bold text-[#f59e0b] m-0">
+                10xCoder.club
+              </Text>
             </Section>
             <Section>
               <Heading className="text-[28px] font-bold text-[#111827] m-0 mb-[24px]">
@@ -62,8 +73,8 @@ export default function MagicLinkEmail({ email, url }: Readonly<MagicLinkEmailPr
                 Hey there,
               </Text>
               <Text className="text-[16px] leading-[24px] text-[#4b5563] m-0 mb-[24px]">
-                Click the button below to sign in to your 10xCoder.club account. This magic link
-                will expire in 10 minutes.
+                Click the button below to sign in to your 10xCoder.club account.
+                This magic link will expire in 10 minutes.
               </Text>
               <Section className="mb-[32px] mt-4">
                 {safeUrl ? (
@@ -80,13 +91,16 @@ export default function MagicLinkEmail({ email, url }: Readonly<MagicLinkEmailPr
                 )}
               </Section>
               <Text className="text-[14px] leading-[20px] text-[#6b7280] m-0 mb-[16px]">
-                If you didn't request this email, you can safely ignore it. Someone may have typed
-                your email address by mistake.
+                If you didn't request this email, you can safely ignore it.
+                Someone may have typed your email address by mistake.
               </Text>
               <Hr className="border-[#e5e7eb] my-[32px]" />
               <Text className="text-[14px] leading-[20px] text-[#6b7280] m-0">
-                Need help?{' '}
-                <Link href="mailto:support@10xcoder.club" className="text-[#f59e0b] no-underline">
+                Need help?{" "}
+                <Link
+                  href="mailto:support@10xcoder.club"
+                  className="text-[#f59e0b] no-underline"
+                >
                   Contact our support team
                 </Link>
               </Text>
@@ -103,10 +117,10 @@ export default function MagicLinkEmail({ email, url }: Readonly<MagicLinkEmailPr
         </Body>
       </Tailwind>
     </Html>
-  )
+  );
 }
 
 MagicLinkEmail.PreviewProps = {
-  email: 'johndoe@example.com',
-  url: 'https://10xcoder.club/api/auth/magic-link/verify?token=abc123'
-}
+  email: "johndoe@example.com",
+  url: "https://10xcoder.club/api/auth/magic-link/verify?token=abc123",
+};

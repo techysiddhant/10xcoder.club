@@ -1,4 +1,8 @@
 {
-  "*.{ts,tsx,js,jsx}": ["prettier --write", "eslint --fix"],
-  "*.{json,md,mdx,css,scss}": ["prettier --write"]
+  "*.{js,jsx,ts,tsx,json,md,mdx,yml,yaml,css,scss,html}": ["prettier --write"],
+  "apps/web/**/*.{js,jsx,ts,tsx}": ["bun --cwd apps/web run lint -- --fix"],
+  "apps/api/**/*.{js,jsx,ts,tsx}": ["bun --cwd apps/api run lint -- --fix"],
+  "packages/ui/**/*.{js,jsx,ts,tsx}": [
+    "bun --cwd packages/ui run lint -- --fix"
+  ]
 }

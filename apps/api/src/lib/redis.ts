@@ -1,5 +1,5 @@
-import Redis from 'ioredis'
-import { env } from '@/config/env'
+import Redis from "ioredis";
+import { env } from "@/config/env";
 
 export const redis = new Redis({
   host: env.REDIS_HOST,
@@ -7,27 +7,29 @@ export const redis = new Redis({
   password: env.REDIS_PASSWORD || undefined,
   maxRetriesPerRequest: 3,
   enableReadyCheck: true,
-  lazyConnect: true
-})
+  lazyConnect: true,
+});
 
-redis.on('connect', () => {
-  console.log('🟢 Redis connected')
-})
+redis.on("connect", () => {
+  console.log("🟢 Redis connected");
+});
 
-redis.on('error', (err) => {
-  console.error('🔴 Redis connection error:', err.message)
-})
+redis.on("error", (err) => {
+  console.error("🔴 Redis connection error:", err.message);
+});
 
 export async function connectRedis(): Promise<void> {
   try {
-    await redis.connect()
+    await redis.connect();
   } catch (err) {
-    console.error('❌ Failed to connect to Redis')
-    console.error(`   Host: ${env.REDIS_HOST}:${env.REDIS_PORT}`)
+    console.error("❌ Failed to connect to Redis");
+    console.error(`   Host: ${env.REDIS_HOST}:${env.REDIS_PORT}`);
     if (err instanceof Error) {
-      console.error(`   Error: ${err.message}`)
+      console.error(`   Error: ${err.message}`);
     }
-    console.error('\n📝 Please ensure Redis is running and check your .env configuration.')
-    process.exit(1)
+    console.error(
+      "\n📝 Please ensure Redis is running and check your .env configuration.",
+    );
+    process.exit(1);
   }
 }

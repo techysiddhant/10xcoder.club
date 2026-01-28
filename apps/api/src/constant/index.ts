@@ -1,12 +1,12 @@
 // Log levels for convenience
 export const LogLevel = {
-  TRACE: 'trace',
-  DEBUG: 'debug',
-  INFO: 'info',
-  WARN: 'warn',
-  ERROR: 'error',
-  FATAL: 'fatal'
-} as const
+  TRACE: "trace",
+  DEBUG: "debug",
+  INFO: "info",
+  WARN: "warn",
+  ERROR: "error",
+  FATAL: "fatal",
+} as const;
 
 /**
  * Redis key constants for consistent key naming across the application
@@ -32,7 +32,7 @@ export const REDIS_KEY = {
   VOTE_DOWNVOTES: (resourceId: string) => `vote:downvotes:${resourceId}`, // Set of user IDs who downvoted
   UPVOTE_COUNT: (resourceId: string) => `vote:upcount:${resourceId}`,
   DOWNVOTE_COUNT: (resourceId: string) => `vote:downcount:${resourceId}`,
-  VOTE_CHANNEL: 'vote:events', // Pub/Sub channel for SSE
+  VOTE_CHANNEL: "vote:events", // Pub/Sub channel for SSE
 
   // Rate limiting
   RATE_LIMIT: (ip: string) => `rate_limit:${ip}`,
@@ -44,8 +44,8 @@ export const REDIS_KEY = {
   MAGIC_LINK: (token: string) => `verify:magic:${token}`,
 
   // Locks
-  LOCK: (resourceName: string) => `lock:${resourceName}`
-} as const
+  LOCK: (resourceName: string) => `lock:${resourceName}`,
+} as const;
 
 // Cache TTL values in seconds
 export const CACHE_TTL = {
@@ -54,36 +54,38 @@ export const CACHE_TTL = {
   RESOURCE: 60 * 5, // 5 minutes
   RESOURCES_LIST: 60 * 2, // 2 minutes
   RATE_LIMIT: 60, // 1 minute
-  VERIFY_TOKEN: 60 * 60 * 24 // 24 hours
-} as const
+  VERIFY_TOKEN: 60 * 60 * 24, // 24 hours
+} as const;
 
 // ==========================================
 // Resource List Query Cache Key Generator
 // ==========================================
 interface ResourceListQuery {
-  cursor?: string
-  limit?: number
-  resourceType?: string
-  language?: 'english' | 'hindi'
-  tag?: string
-  techStack?: string
-  search?: string
+  cursor?: string;
+  limit?: number;
+  resourceType?: string;
+  language?: "english" | "hindi";
+  tag?: string;
+  techStack?: string;
+  search?: string;
 }
 
 export function generateResourcesCacheKey(query: ResourceListQuery): string {
-  const parts = ['resources']
+  const parts = ["resources"];
   // Encode values to prevent ambiguous keys when values contain colons or special chars
-  if (query.cursor) parts.push(`cursor:${encodeURIComponent(query.cursor)}`)
-  if (query.limit) parts.push(`limit:${query.limit}`)
-  if (query.resourceType) parts.push(`type:${encodeURIComponent(query.resourceType)}`)
-  if (query.language) parts.push(`lang:${encodeURIComponent(query.language)}`)
-  if (query.tag) parts.push(`tag:${encodeURIComponent(query.tag)}`)
-  if (query.techStack) parts.push(`tech:${encodeURIComponent(query.techStack)}`)
-  if (query.search) parts.push(`search:${encodeURIComponent(query.search)}`)
-  return parts.join(':')
+  if (query.cursor) parts.push(`cursor:${encodeURIComponent(query.cursor)}`);
+  if (query.limit) parts.push(`limit:${query.limit}`);
+  if (query.resourceType)
+    parts.push(`type:${encodeURIComponent(query.resourceType)}`);
+  if (query.language) parts.push(`lang:${encodeURIComponent(query.language)}`);
+  if (query.tag) parts.push(`tag:${encodeURIComponent(query.tag)}`);
+  if (query.techStack)
+    parts.push(`tech:${encodeURIComponent(query.techStack)}`);
+  if (query.search) parts.push(`search:${encodeURIComponent(query.search)}`);
+  return parts.join(":");
 }
 
 // Queue names constant
 export const QUEUE_NAMES = {
-  VOTE_SYNC: 'vote-sync'
-} as const
+  VOTE_SYNC: "vote-sync",
+} as const;

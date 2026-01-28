@@ -187,10 +187,10 @@ Edit schemas in `packages/schemas/src/index.ts`. These Zod schemas are used by b
 
 ```typescript
 // Example usage in apps
-import { z, UserSchema } from '@workspace/schemas'
+import { z, UserSchema } from "@workspace/schemas";
 
 // Get inferred type
-type User = z.infer<typeof UserSchema>
+type User = z.infer<typeof UserSchema>;
 ```
 
 ---

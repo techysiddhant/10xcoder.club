@@ -3,29 +3,33 @@
  * CRUD operations for admin-managed resource types
  */
 
-import { db } from '@/db'
-import { resourceType } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { db } from "@/db";
+import { resourceType } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export type ResourceTypeInput = {
-  name: string
-  label: string
-  icon?: string
-}
+  name: string;
+  label: string;
+  icon?: string;
+};
 
 /**
  * Get all resource types
  */
 export async function getAllResourceTypes() {
-  return db.select().from(resourceType).orderBy(resourceType.name)
+  return db.select().from(resourceType).orderBy(resourceType.name);
 }
 
 /**
  * Get a resource type by name
  */
 export async function getResourceTypeByName(name: string) {
-  const result = await db.select().from(resourceType).where(eq(resourceType.name, name)).limit(1)
-  return result[0] ?? null
+  const result = await db
+    .select()
+    .from(resourceType)
+    .where(eq(resourceType.name, name))
+    .limit(1);
+  return result[0] ?? null;
 }
 
 /**
@@ -34,15 +38,15 @@ export async function getResourceTypeByName(name: string) {
  */
 export async function createResourceType(input: ResourceTypeInput) {
   try {
-    const result = await db.insert(resourceType).values(input).returning()
-    return result[0] ?? null
+    const result = await db.insert(resourceType).values(input).returning();
+    return result[0] ?? null;
   } catch (error) {
-    const dbError = error as { code?: string; constraint?: string }
+    const dbError = error as { code?: string; constraint?: string };
     // Postgres unique violation code
-    if (dbError.code === '23505') {
-      throw new Error(`Resource type with name "${input.name}" already exists`)
+    if (dbError.code === "23505") {
+      throw new Error(`Resource type with name "${input.name}" already exists`);
     }
-    throw error
+    throw error;
   }
 }
 
@@ -50,15 +54,18 @@ export async function createResourceType(input: ResourceTypeInput) {
  * Update a resource type
  * Returns null if not found, throws Error on empty input or name conflict
  */
-export async function updateResourceType(id: string, input: Partial<ResourceTypeInput>) {
+export async function updateResourceType(
+  id: string,
+  input: Partial<ResourceTypeInput>,
+) {
   // Filter out undefined values to avoid writing undefined to DB
   const cleanedInput = Object.fromEntries(
-    Object.entries(input).filter(([, value]) => value !== undefined)
-  ) as Partial<ResourceTypeInput>
+    Object.entries(input).filter(([, value]) => value !== undefined),
+  ) as Partial<ResourceTypeInput>;
 
   // Guard against empty input after filtering
   if (Object.keys(cleanedInput).length === 0) {
-    throw new Error('No fields provided to update')
+    throw new Error("No fields provided to update");
   }
 
   // Check name uniqueness if name is being updated
@@ -67,10 +74,12 @@ export async function updateResourceType(id: string, input: Partial<ResourceType
       .select({ id: resourceType.id })
       .from(resourceType)
       .where(eq(resourceType.name, cleanedInput.name))
-      .limit(1)
+      .limit(1);
 
     if (existing.length > 0 && existing[0]?.id !== id) {
-      throw new Error(`Resource type with name "${cleanedInput.name}" already exists`)
+      throw new Error(
+        `Resource type with name "${cleanedInput.name}" already exists`,
+      );
     }
   }
   // Perform update with DB-level unique constraint handling as backup for race conditions
@@ -79,15 +88,17 @@ export async function updateResourceType(id: string, input: Partial<ResourceType
       .update(resourceType)
       .set(cleanedInput)
       .where(eq(resourceType.id, id))
-      .returning()
-    return result[0] ?? null
+      .returning();
+    return result[0] ?? null;
   } catch (error) {
-    const dbError = error as { code?: string }
+    const dbError = error as { code?: string };
     // Postgres unique violation code
-    if (dbError.code === '23505') {
-      throw new Error(`Resource type with name "${cleanedInput.name}" already exists`)
+    if (dbError.code === "23505") {
+      throw new Error(
+        `Resource type with name "${cleanedInput.name}" already exists`,
+      );
     }
-    throw error
+    throw error;
   }
 }
 
@@ -95,8 +106,11 @@ export async function updateResourceType(id: string, input: Partial<ResourceType
  * Delete a resource type
  */
 export async function deleteResourceType(id: string) {
-  const result = await db.delete(resourceType).where(eq(resourceType.id, id)).returning()
-  return result[0] ?? null
+  const result = await db
+    .delete(resourceType)
+    .where(eq(resourceType.id, id))
+    .returning();
+  return result[0] ?? null;
 }
 
 /**

@@ -1,27 +1,30 @@
-import { Send, Search, CheckCircle, Sparkles } from 'lucide-react'
+import { Send, Search, CheckCircle, Sparkles } from "lucide-react";
 
 const steps = [
   {
     icon: Send,
-    title: 'Community Submits',
-    description: "Developers submit resources or templates they've found valuable."
+    title: "Community Submits",
+    description:
+      "Developers submit resources or templates they've found valuable.",
   },
   {
     icon: Search,
-    title: 'Quality Review',
-    description: 'Submissions are reviewed for quality, accuracy, and usefulness.'
+    title: "Quality Review",
+    description:
+      "Submissions are reviewed for quality, accuracy, and usefulness.",
   },
   {
     icon: CheckCircle,
-    title: 'Selective Publishing',
-    description: 'Only high-value, practical entries are published to the library.'
+    title: "Selective Publishing",
+    description:
+      "Only high-value, practical entries are published to the library.",
   },
   {
     icon: Sparkles,
-    title: 'Continuous Evolution',
-    description: 'The library grows and improves with community contributions.'
-  }
-]
+    title: "Continuous Evolution",
+    description: "The library grows and improves with community contributions.",
+  },
+];
 
 const HowCurationWorks = () => {
   return (
@@ -32,7 +35,8 @@ const HowCurationWorks = () => {
             How curation works
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Every resource is reviewed and selected to ensure you only get the best.
+            Every resource is reviewed and selected to ensure you only get the
+            best.
           </p>
         </div>
 
@@ -49,7 +53,9 @@ const HowCurationWorks = () => {
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 relative z-10">
                     <step.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="font-semibold mb-2 text-foreground">{step.title}</h3>
+                  <h3 className="font-semibold mb-2 text-foreground">
+                    {step.title}
+                  </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {step.description}
                   </p>
@@ -60,7 +66,7 @@ const HowCurationWorks = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default HowCurationWorks
+export default HowCurationWorks;
