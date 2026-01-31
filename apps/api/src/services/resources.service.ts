@@ -7,7 +7,7 @@ import {
   techStack,
   resourceToTags,
   resourceToTechStack,
-} from "@/db/schema";
+} from "@workspace/database";
 import {
   eq,
   and,

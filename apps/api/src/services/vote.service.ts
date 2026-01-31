@@ -1,6 +1,6 @@
 import { redis } from "@/lib/redis";
 import { db } from "@/db";
-import { userVote, resource } from "@/db/schema";
+import { userVote, resource } from "@workspace/database";
 import { eq, and, inArray } from "drizzle-orm";
 import { QUEUE_NAMES, REDIS_KEY } from "@/constant";
 import { voteQueue } from "@/lib/queue";

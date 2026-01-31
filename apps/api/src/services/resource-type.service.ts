@@ -4,7 +4,7 @@
  */
 
 import { db } from "@/db";
-import { resourceType } from "@/db/schema";
+import { resourceType } from "@workspace/database";
 import { eq } from "drizzle-orm";
 
 export type ResourceTypeInput = {

@@ -5,6 +5,8 @@
     "baseUrl": ".",
     "paths": {
       "@workspace/schemas*": ["../../packages/schemas/src/index.ts"],
+      "@workspace/database": ["../../packages/database/src/index.ts"],
+      "@workspace/database/*": ["../../packages/database/src/*"],
       "@/*": ["src/*"]
     },
     "jsx": "react-jsx",

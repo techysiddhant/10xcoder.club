@@ -1,5 +1,5 @@
 import { db } from "..";
-import { resourceType } from "../schema";
+import { resourceType } from "@workspace/database";
 import { INITIAL_TYPES } from "./resourceType";
 let exitCode = 0;
 try {

@@ -22,3 +22,15 @@ export function sanitizeRedirectUrl(url: string | null | undefined): string {
 
   return "/";
 }
+
+export const uploadToS3 = async (file: File, uploadUrl: string) => {
+  const res = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": file.type,
+    },
+    body: file,
+  });
+
+  if (!res.ok) throw new Error("Upload failed");
+};
