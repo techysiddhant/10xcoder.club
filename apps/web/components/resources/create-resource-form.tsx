@@ -80,13 +80,20 @@ const CreateResourceForm = ({
 
   const { mutate: uploadImageMutation, isPending: isUploadImageLoading } =
     useMutation({
-      mutationFn: uploadImage,
-      onSuccess: async (data) => {
-        const fileToUpload = imageFile;
-        if (!fileToUpload) {
-          form.setFieldValue("image", () => "");
-          return;
-        }
+      mutationFn: ({
+        fileName,
+        fileType,
+        fileSize,
+        folder,
+      }: {
+        fileName: string;
+        fileType: string;
+        fileSize: number;
+        folder: string;
+        file: File;
+      }) => uploadImage({ fileName, fileType, fileSize, folder }),
+      onSuccess: async (data, variables) => {
+        const fileToUpload = variables.file;
         try {
           await uploadToS3(fileToUpload, data.data.uploadUrl);
           form.setFieldValue("image", () => data.data.key);
@@ -161,6 +168,7 @@ const CreateResourceForm = ({
         fileType: file.type,
         fileSize: file.size,
         folder: "resources",
+        file,
       });
     }
   };
