@@ -4,7 +4,7 @@
  */
 
 import { db } from "@/db";
-import { resourceType, tag, techStack } from "@/db/schema";
+import { resourceType, tag, techStack } from "@workspace/database";
 
 /**
  * Shape of the resource options returned by getResourceOptions

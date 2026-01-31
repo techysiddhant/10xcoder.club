@@ -6,7 +6,8 @@
 @source "../components/**/*.tsx";
 @source "../../../apps/web/app/**/*.tsx";
 @source "../../../apps/web/components/**/*.tsx";
-
+@source "../../../../apps/web/node_modules/@blocknote/shadcn";
+/* @source "../node_modules/@blocknote/shadcn"; */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -135,6 +136,22 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* BlockNote-specific styles for proper shadcn integration */
+  .bn-shadcn * {
+    @apply border-border outline-ring/50;
+  }
+
+  /* BlockNote keyboard navigation focus states - using correct selectors */
+  .bn-suggestion-menu-item[aria-selected="true"] {
+    background-color: var(--accent) !important;
+    color: var(--accent-foreground) !important;
+  }
+
+  .bn-suggestion-menu-item:hover {
+    background-color: var(--accent) !important;
+    color: var(--accent-foreground) !important;
   }
 
   /* .glass-card {

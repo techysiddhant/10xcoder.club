@@ -14,7 +14,10 @@ import { initVoteSubscriber } from "./lib/vote-subscriber";
 import { adminRoutes } from "./routes/admin";
 
 // Initialize shared vote subscriber for SSE (must complete before accepting requests)
-await initVoteSubscriber();
+// Skip when generating OpenAPI/types in CI or scripts.
+if (!process.env.GENERATE_OPENAPI) {
+  await initVoteSubscriber();
+}
 
 export const app = new Elysia()
 

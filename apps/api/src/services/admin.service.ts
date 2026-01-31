@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { resource } from "@/db/schema";
+import { resource } from "@workspace/database";
 import { eq, desc, isNull, and, sql, ilike, or } from "drizzle-orm";
 import {
   getEmbedding,

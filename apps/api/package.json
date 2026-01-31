@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "bun run build:binary",
     "build:binary": "bun build --compile --minify-whitespace --minify-syntax --target bun-linux-x64 --outfile server.js src/index.ts",
+    "generate:openapi": "bun run scripts/generate-openapi.ts",
     "start": "./server.js",
     "clean": "rm -rf dist server.js"
   },
@@ -20,6 +21,7 @@
     "@google/genai": "^1.37.0",
     "@react-email/components": "1.0.3",
     "@sentry/bun": "^10.35.0",
+    "@workspace/database": "workspace:*",
     "@workspace/schemas": "workspace:*",
     "better-auth": "^1.4.10",
     "bullmq": "^5.66.5",

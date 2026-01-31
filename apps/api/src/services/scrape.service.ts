@@ -4,7 +4,7 @@
  */
 
 import { db } from "@/db";
-import { account } from "@/db/schema";
+import { account } from "@workspace/database";
 import { redis } from "@/lib/redis";
 import { getProviderForUrl } from "@/lib/providers";
 import type { ScrapedResource } from "@/types";

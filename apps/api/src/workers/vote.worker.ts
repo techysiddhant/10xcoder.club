@@ -1,6 +1,6 @@
 import { Worker, Job } from "bullmq";
 import { db } from "@/db";
-import { resource, userVote } from "@/db/schema";
+import { resource, userVote } from "@workspace/database";
 import { eq, and, sql } from "drizzle-orm";
 import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
