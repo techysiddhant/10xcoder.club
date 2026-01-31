@@ -1,4 +1,5 @@
 import { z, ResourceLanguageSchema } from "@workspace/schemas";
+import type { ResourceType as DBResourceType } from "@workspace/database";
 
 // Zod schema for URL validation
 export const resourceInputUrlSchema = z.object({
@@ -41,9 +42,8 @@ export type ResourceCreateInput = z.infer<typeof resourceCreateSchema>;
 /** Client create payload; matches API create body. Server maps resourceType → NewResource.resourceTypeId. */
 export type ResourceCreateClient = ResourceCreateInput;
 
-export type ResourceType = {
-  id: string;
-  name: string;
-  label: string;
-  icon: string | null;
-};
+/** Web shape for resource type; derived from DB model so it stays in sync. */
+export type ResourceType = Pick<
+  DBResourceType,
+  "id" | "name" | "label" | "icon"
+>;

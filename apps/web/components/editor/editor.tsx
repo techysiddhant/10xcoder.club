@@ -36,9 +36,16 @@ function parseInitialContent(content?: string) {
   } catch {
     // If it's not valid JSON, treat it as plain text and convert to BlockNote format
     return [
+      // {
+      //   type: "paragraph",
+      //   content: content,
+      // },
       {
+        id: crypto.randomUUID(),
         type: "paragraph",
-        content: content,
+        props: {},
+        content: [{ type: "text", text: content }],
+        children: [],
       },
     ];
   }

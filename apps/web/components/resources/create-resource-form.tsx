@@ -1,7 +1,11 @@
 "use client";
-import { ResourceCreateClient, resourceCreateSchema } from "@/lib/schema";
+import {
+  ResourceCreateClient,
+  resourceCreateSchema,
+  ResourceType,
+} from "@/lib/schema";
 import { useForm } from "@tanstack/react-form";
-import { ResourceAutoFillData, ResourceType } from "@workspace/database";
+import { ResourceAutoFillData } from "@workspace/database";
 import { ResourceLanguage } from "@workspace/schemas";
 import { useEffect, useRef, useState } from "react";
 import { Field, FieldError, FieldGroup } from "@workspace/ui/components/field";

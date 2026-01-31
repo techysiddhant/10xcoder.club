@@ -1,10 +1,13 @@
 import CreateResource from "@/components/resources/create-resource";
+import { Suspense } from "react";
 
 const ResourcesPage = () => {
   return (
     <div className="mt-24">
       ResourcesPage
-      <CreateResource />
+      <Suspense fallback={<div>Loading...</div>}>
+        <CreateResource />
+      </Suspense>
     </div>
   );
 };
