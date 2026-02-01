@@ -28,7 +28,7 @@ import CreateResourceForm from "./create-resource-form";
 import { authClient } from "@/lib/auth-client";
 
 const CreateResource = () => {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const [open, setOpen] = useQueryState(
     "createResource",
     parseAsBoolean.withDefault(false),
@@ -36,7 +36,7 @@ const CreateResource = () => {
   const [step, setStep] = useState<"url" | "details">("url");
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && !session?.user) {
+    if (isOpen && !isPending && !session?.user) {
       toast.error("Sign in to submit a resource");
       return;
     }
@@ -46,12 +46,12 @@ const CreateResource = () => {
 
   // Enforce auth when sheet is opened via createResource query param on mount (without going through handleOpenChange)
   useEffect(() => {
-    if (open && !session?.user) {
+    if (open && !isPending && !session?.user) {
       toast.error("Sign in to submit a resource");
       setOpen(false);
       resetForm();
     }
-  }, [open, session?.user]);
+  }, [open, isPending, session?.user]);
 
   const [autoFillResourceDetailsData, setAutoFillResourceDetailsData] =
     useState<any>(null);
@@ -101,7 +101,7 @@ const CreateResource = () => {
         <Button
           className="gap-2"
           onClick={(e) => {
-            if (!session?.user) {
+            if (!isPending && !session?.user) {
               e.preventDefault();
               e.stopPropagation();
               toast.error("Sign in to submit a resource");

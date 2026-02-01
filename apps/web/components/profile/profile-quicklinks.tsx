@@ -21,6 +21,7 @@ const ProfileQuickLinks = () => {
       </CardHeader>
       <CardContent className="space-y-3">
         <button
+          type="button"
           onClick={() => router.push("/my-submissions")}
           className="w-full cursor-pointer flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/30 hover:bg-muted/50 transition-colors group"
         >
@@ -39,6 +40,7 @@ const ProfileQuickLinks = () => {
         </button>
 
         <button
+          type="button"
           disabled
           // onClick={() => router.push('/my-interview-experiences')}
           className="w-full cursor-not-allowed flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/30 hover:bg-muted/50 transition-colors group"

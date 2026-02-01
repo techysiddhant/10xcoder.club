@@ -18,10 +18,7 @@ const Profile = () => {
     }
   }, [session, isPending, router]);
 
-  if (!session) {
-    return null;
-  }
-
+  // Show loading skeleton while session is resolving; only treat as unauthenticated once not pending
   if (isPending) {
     return (
       <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
@@ -31,6 +28,11 @@ const Profile = () => {
       </div>
     );
   }
+
+  if (!session) {
+    return null;
+  }
+
   return (
     <main className="pt-24 pb-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">

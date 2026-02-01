@@ -34,6 +34,7 @@ const Resources = () => {
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
+  // API supports single resourceType; use first selected type for consistency with backend
   const filterPayload = useMemo(
     () => ({
       resourceType: selectedTypes?.[0],
