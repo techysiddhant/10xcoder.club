@@ -2,6 +2,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3Client, S3_BUCKET } from "@/lib/s3";
 import { logger } from "@/lib/logger";
+import { env } from "@/config/env";
 
 // Allowed file types
 const ALLOWED_TYPES = [
@@ -30,6 +31,8 @@ interface PresignedUrlResult {
   uploadUrl: string;
   key: string;
   expiresIn: number;
+  /** Public image URL (CDN + key). Present when folder is "profiles". */
+  imageUrl?: string;
 }
 
 // Error types for distinguishing validation vs internal errors
@@ -96,13 +99,19 @@ export async function getPresignedUploadUrl(
   try {
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn });
 
+    const data: PresignedUrlResult = {
+      uploadUrl,
+      key,
+      expiresIn,
+    };
+    if (folder === "profiles") {
+      const cdnBase = env.CDN_URL.replace(/\/$/, "");
+      data.imageUrl = `${cdnBase}/${key}`;
+    }
+
     return {
       success: true,
-      data: {
-        uploadUrl,
-        key,
-        expiresIn,
-      },
+      data,
     };
   } catch (error) {
     logger.error({ err: error }, "Failed to generate presigned URL");

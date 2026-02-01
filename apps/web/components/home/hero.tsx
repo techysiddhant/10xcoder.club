@@ -1,8 +1,12 @@
+"use client";
 import { Button } from "@workspace/ui/components/button";
 import { ArrowRight, Plus } from "lucide-react";
 import ResourcePreviewCard from "./resource-preview-card";
+import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
 
 const Hero = () => {
+  const { data: session } = authClient.useSession();
   return (
     <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
       {/* Background */}
@@ -28,17 +32,29 @@ const Hero = () => {
           </p>
 
           <div className="opacity-0 animate-fade-up delay-3 flex flex-col sm:flex-row gap-3">
-            <Button size="lg" className="h-12 px-6 font-semibold gap-2">
-              Explore Resources
-              <ArrowRight className="w-4 h-4" />
+            <Button asChild size="lg" className="h-12 px-6 font-semibold gap-2">
+              <Link href="/resources">
+                Explore Resources
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </Button>
             <Button
               variant="outline"
               size="lg"
               className="h-12 px-6 font-semibold gap-2 group"
+              asChild
             >
-              <Plus className="w-4 h-4" />
-              Contribute
+              <Link
+                href={
+                  session
+                    ? "/resources?createResource=true"
+                    : `/auth?mode=signin&redirectUrl=${encodeURIComponent("/resources?createResource=true")}`
+                }
+              >
+                <Plus className="w-4 h-4" />
+                Contribute
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </Button>
           </div>
 

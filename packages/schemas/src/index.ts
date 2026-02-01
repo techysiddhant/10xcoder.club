@@ -72,3 +72,26 @@ export const DEFAULT_USER_NAMES = [
   "username",
 ] as const;
 export type DefaultUserName = (typeof DEFAULT_USER_NAMES)[number];
+
+/**
+ * Profile update (display name, username) for validation
+ */
+export const ProfileUpdateSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Display name is required.")
+    .max(80, "Display name must be at most 80 characters."),
+  username: z
+    .string()
+    .max(30, "Username must be at most 30 characters.")
+    .regex(
+      /^[a-z0-9_]*$/,
+      "Only lowercase letters, numbers, and underscores allowed.",
+    )
+    .refine(
+      (val) =>
+        val === "" || !DEFAULT_USER_NAMES.includes(val as DefaultUserName),
+      "This username is reserved.",
+    ),
+});
+export type ProfileUpdate = z.infer<typeof ProfileUpdateSchema>;

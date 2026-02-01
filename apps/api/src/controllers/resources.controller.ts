@@ -106,8 +106,8 @@ export const getResources = async ({
     limit?: number;
     resourceType?: string;
     language?: "english" | "hindi";
-    tag?: string;
-    techStack?: string;
+    tag?: string | string[];
+    techStack?: string | string[];
     search?: string;
   };
   userId?: string; // Optional: from logged-in user

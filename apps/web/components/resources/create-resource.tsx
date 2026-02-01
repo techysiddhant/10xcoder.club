@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { resourceInputUrlSchema } from "@/lib/schema";
 import {
   Sheet,
@@ -25,13 +25,34 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { autoFillResourceDetails } from "@/lib/http";
 import CreateResourceForm from "./create-resource-form";
+import { authClient } from "@/lib/auth-client";
 
 const CreateResource = () => {
+  const { data: session, isPending } = authClient.useSession();
   const [open, setOpen] = useQueryState(
     "createResource",
     parseAsBoolean.withDefault(false),
   );
   const [step, setStep] = useState<"url" | "details">("url");
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen && !isPending && !session?.user) {
+      toast.error("Sign in to submit a resource");
+      return;
+    }
+    setOpen(isOpen);
+    if (!isOpen) resetForm();
+  };
+
+  // Enforce auth when sheet is opened via createResource query param on mount (without going through handleOpenChange)
+  useEffect(() => {
+    if (open && !isPending && !session?.user) {
+      toast.error("Sign in to submit a resource");
+      setOpen(false);
+      resetForm();
+    }
+  }, [open, isPending, session?.user]);
+
   const [autoFillResourceDetailsData, setAutoFillResourceDetailsData] =
     useState<any>(null);
   const [detailsFormPending, setDetailsFormPending] = useState(false);
@@ -75,17 +96,20 @@ const CreateResource = () => {
   };
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(isOpen) => {
-        setOpen(isOpen);
-        if (!isOpen) resetForm();
-      }}
-    >
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <Button className="gap-2">
+        <Button
+          className="gap-2"
+          onClick={(e) => {
+            if (!isPending && !session?.user) {
+              e.preventDefault();
+              e.stopPropagation();
+              toast.error("Sign in to submit a resource");
+            }
+          }}
+        >
           <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Submit Resource</span>
+          <span className="hidden sm:inline">Add Resource</span>
           <span className="sm:hidden">Submit</span>
         </Button>
       </SheetTrigger>

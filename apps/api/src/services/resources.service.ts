@@ -101,8 +101,8 @@ interface ListResourcesInput {
   limit?: number;
   resourceType?: string;
   language?: "english" | "hindi";
-  tag?: string;
-  techStack?: string;
+  tag?: string | string[];
+  techStack?: string | string[];
   search?: string;
   userId?: string; // Optional: to check if user has upvoted
 }
@@ -445,21 +445,54 @@ function decodeCursor(cursor: string): { createdAt: Date; id: string } | null {
   }
 }
 
+/**
+ * Normalize tag/techStack to string[]. Accepts:
+ * - Comma-separated: ?tag=react,node,vue
+ * - Repeated params: ?tag=react&tag=node (from clients that send arrays)
+ */
+function normalizeToStringArray(
+  value: string | string[] | undefined,
+): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (Array.isArray(value)) {
+    const flat = value.flatMap((v) =>
+      v
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    );
+    return flat.length ? flat : undefined;
+  }
+  const parts = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length ? parts : undefined;
+}
+
 export async function getAllResources(query: ListResourcesInput) {
   const {
     cursor,
     limit = 20,
     resourceType,
     language,
-    tag: tagName,
-    techStack: techStackName,
+    tag: tagParam,
+    techStack: techStackParam,
     search,
     userId,
   } = query;
 
+  const tagNames = normalizeToStringArray(tagParam);
+  const techStackNames = normalizeToStringArray(techStackParam);
+
   // Try to get from cache first (only for non-search queries and anonymous users)
   // Skip cache for authenticated users since responses include per-user fields (userVote)
-  const cacheKey = generateResourcesCacheKey(query);
+  // Use canonicalized tag/techStack so equivalent queries (e.g. ?tag=react,node vs ?tag=react&tag=node) share the same key
+  const cacheKey = generateResourcesCacheKey({
+    ...query,
+    tag: tagNames?.length ? tagNames : undefined,
+    techStack: techStackNames?.length ? techStackNames : undefined,
+  });
   if (!search && !userId) {
     const cached = await redis.get(cacheKey);
     if (cached) {
@@ -563,37 +596,39 @@ export async function getAllResources(query: ListResourcesInput) {
   // Base query for resources
   let resourceIds: string[] | undefined;
 
-  // Filter by tag name if provided
-  if (tagName) {
-    const tagResult = await db
-      .select()
+  // Filter by tag names if provided (OR: resource has any of the tags)
+  if (tagNames?.length) {
+    const tagResults = await db
+      .select({ id: tag.id })
       .from(tag)
-      .where(eq(tag.name, tagName))
-      .limit(1);
-    if (tagResult.length > 0 && tagResult[0]) {
+      .where(inArray(tag.name, tagNames));
+    const tagIds = tagResults.map((t) => t.id);
+    if (tagIds.length > 0) {
       const taggedResources = await db
         .select({ resourceId: resourceToTags.resourceId })
         .from(resourceToTags)
-        .where(eq(resourceToTags.tagId, tagResult[0].id));
-      resourceIds = taggedResources.map((r) => r.resourceId);
+        .where(inArray(resourceToTags.tagId, tagIds));
+      resourceIds = [...new Set(taggedResources.map((r) => r.resourceId))];
     } else {
       resourceIds = [];
     }
   }
 
-  // Filter by tech stack name if provided
-  if (techStackName) {
-    const techResult = await db
-      .select()
+  // Filter by tech stack names if provided (OR: resource has any of the tech stacks)
+  if (techStackNames?.length) {
+    const techResults = await db
+      .select({ id: techStack.id })
       .from(techStack)
-      .where(eq(techStack.name, techStackName))
-      .limit(1);
-    if (techResult.length > 0 && techResult[0]) {
+      .where(inArray(techStack.name, techStackNames));
+    const techIds = techResults.map((t) => t.id);
+    if (techIds.length > 0) {
       const techResources = await db
         .select({ resourceId: resourceToTechStack.resourceId })
         .from(resourceToTechStack)
-        .where(eq(resourceToTechStack.techStackId, techResult[0].id));
-      const techResourceIds = techResources.map((r) => r.resourceId);
+        .where(inArray(resourceToTechStack.techStackId, techIds));
+      const techResourceIds = [
+        ...new Set(techResources.map((r) => r.resourceId)),
+      ];
 
       if (resourceIds !== undefined) {
         resourceIds = resourceIds.filter((id) => techResourceIds.includes(id));
@@ -612,7 +647,12 @@ export async function getAllResources(query: ListResourcesInput) {
     // Build the query with optional resourceIds filter
     let vectorQuery;
     if (resourceIds !== undefined && resourceIds.length > 0) {
-      // Apply tag/techStack filter in the vector search query
+      // Apply tag/techStack filter in the vector search query.
+      // Use ARRAY[$2, $3]::text[] so each ID is one param; ANY($array) with inline array expands to invalid ANY(($2,$3)::text[]).
+      const idList = sql.join(
+        resourceIds.map((id) => sql`${id}`),
+        sql`, `,
+      );
       vectorQuery = sql`
                 SELECT id, 1 - (embedding <=> ${JSON.stringify(searchEmbedding)}::vector) as similarity
                 FROM resource
@@ -620,7 +660,7 @@ export async function getAllResources(query: ListResourcesInput) {
                   AND status = 'approved'
                   AND is_published = true
                   AND embedding IS NOT NULL
-                  AND id = ANY(${resourceIds}::text[])
+                  AND id = ANY(ARRAY[${idList}]::text[])
                 ORDER BY embedding <=> ${JSON.stringify(searchEmbedding)}::vector
                 LIMIT ${limit + 1}
             `;

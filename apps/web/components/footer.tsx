@@ -21,7 +21,7 @@ const Footer = () => {
           {/* Links */}
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
             <a
-              href="#resources"
+              href="/resources"
               className="hover:text-foreground transition-colors"
             >
               Resources
@@ -33,7 +33,7 @@ const Footer = () => {
               Templates
             </a>
             <a
-              href="#contribute"
+              href="https://github.com/techysiddhant/10xcoder.club/blob/main/README.md"
               className="hover:text-foreground transition-colors"
             >
               Contribute

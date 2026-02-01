@@ -112,14 +112,15 @@ export const createResourceSchema = {
 };
 
 // Get all resources schema (cursor-based pagination for infinite scroll)
+// tag and techStack: comma-separated (?tag=a,b,c) or repeated (?tag=a&tag=b) both accepted
 export const getResourcesSchema = {
   query: t.Object({
     cursor: t.Optional(t.String()),
     limit: t.Optional(t.Numeric({ minimum: 1, maximum: 100, default: 20 })),
     resourceType: t.Optional(t.String()),
     language: t.Optional(t.Union([t.Literal("english"), t.Literal("hindi")])),
-    tag: t.Optional(t.String()),
-    techStack: t.Optional(t.String()),
+    tag: t.Optional(t.Union([t.String(), t.Array(t.String())])),
+    techStack: t.Optional(t.Union([t.String(), t.Array(t.String())])),
     search: t.Optional(t.String()),
   }),
   detail: {

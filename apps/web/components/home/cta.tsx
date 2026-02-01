@@ -1,7 +1,11 @@
+"use client";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@workspace/ui/components/button";
 import { ArrowRight, Plus } from "lucide-react";
+import Link from "next/link";
 
 const CTA = () => {
+  const { data: session } = authClient.useSession();
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Background glow */}
@@ -25,17 +29,29 @@ const CTA = () => {
             <Button
               size="lg"
               className="h-14 px-8 text-base font-semibold gap-2 glow"
+              asChild
             >
-              Explore the Library
-              <ArrowRight className="w-4 h-4" />
+              <Link href="/resources">
+                Explore the Library
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </Button>
             <Button
               variant="outline"
               size="lg"
               className="h-14 px-8 text-base font-semibold gap-2"
+              asChild
             >
-              <Plus className="w-4 h-4" />
-              Submit a Resource
+              <Link
+                href={
+                  session
+                    ? "/resources?createResource=true"
+                    : `/auth?mode=signin&redirectUrl=${encodeURIComponent("/resources?createResource=true")}`
+                }
+              >
+                <Plus className="w-4 h-4" />
+                Submit a Resource
+              </Link>
             </Button>
           </div>
 

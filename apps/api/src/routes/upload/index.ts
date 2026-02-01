@@ -33,14 +33,23 @@ export const uploadRoutes = new Elysia({ prefix: "/api/upload" })
         return errorResponse("VALIDATION_ERROR", result.error);
       }
 
-      // Return uploadUrl and key for client
-      // Client uploads directly to uploadUrl, then passes key to another API
-      return {
+      // Return uploadUrl and key for client. For folder "profiles", also return imageUrl for updating user avatar.
+      const response: {
+        status: number;
+        uploadUrl: string;
+        key: string;
+        expiresIn: number;
+        imageUrl?: string;
+      } = {
         status: HttpStatusEnum.HTTP_200_OK,
         uploadUrl: result.data.uploadUrl,
         key: result.data.key,
         expiresIn: result.data.expiresIn,
       };
+      if (result.data.imageUrl) {
+        response.imageUrl = result.data.imageUrl;
+      }
+      return response;
     },
     {
       body: t.Object({
@@ -59,7 +68,7 @@ export const uploadRoutes = new Elysia({ prefix: "/api/upload" })
         tags: ["Upload"],
         summary: "Get presigned URL for direct S3 upload",
         description:
-          'Returns a presigned S3 URL and key for direct file upload from client. Folder must be "resources" or "profiles". Max: 2MB. Types: JPEG, PNG, JPG, WebP.',
+          'Returns a presigned S3 URL and key for direct file upload from client. Folder must be "resources" or "profiles". Max: 2MB. Types: JPEG, PNG, JPG, WebP. For "profiles", also returns imageUrl for updating user avatar.',
       },
       response: {
         200: t.Object({
@@ -67,6 +76,7 @@ export const uploadRoutes = new Elysia({ prefix: "/api/upload" })
           uploadUrl: t.String(),
           key: t.String(),
           expiresIn: t.Number(),
+          imageUrl: t.Optional(t.String()),
         }),
         400: ErrorResponseSchema,
         401: ErrorResponseSchema,

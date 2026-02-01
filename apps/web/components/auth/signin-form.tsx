@@ -84,9 +84,7 @@ const SignInForm = ({ onSwitchMode }: SignInFormProps) => {
           callbackURL: `${publicEnv.NEXT_PUBLIC_APP_URL}${safeRedirectUrl}`,
         },
         {
-          onSuccess: () => {
-            toast.success("Sign in successful");
-          },
+          // Don't toast onSuccess here – user is redirected to GitHub; toast after callback when session exists
           onError: (error) => {
             toast.error(error?.error?.message || "Something went wrong");
           },

@@ -65,9 +65,29 @@ interface ResourceListQuery {
   limit?: number;
   resourceType?: string;
   language?: "english" | "hindi";
-  tag?: string;
-  techStack?: string;
+  tag?: string | string[];
+  techStack?: string | string[];
   search?: string;
+}
+
+function normalizeToStringArray(
+  value: string | string[] | undefined,
+): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (Array.isArray(value)) {
+    const flat = value.flatMap((v) =>
+      v
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    );
+    return flat.length ? flat : undefined;
+  }
+  const parts = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length ? parts : undefined;
 }
 
 export function generateResourcesCacheKey(query: ResourceListQuery): string {
@@ -78,9 +98,22 @@ export function generateResourcesCacheKey(query: ResourceListQuery): string {
   if (query.resourceType)
     parts.push(`type:${encodeURIComponent(query.resourceType)}`);
   if (query.language) parts.push(`lang:${encodeURIComponent(query.language)}`);
-  if (query.tag) parts.push(`tag:${encodeURIComponent(query.tag)}`);
-  if (query.techStack)
-    parts.push(`tech:${encodeURIComponent(query.techStack)}`);
+  const tags = normalizeToStringArray(query.tag);
+  if (tags?.length)
+    parts.push(
+      `tag:${tags
+        .map((t) => encodeURIComponent(t))
+        .sort()
+        .join(",")}`,
+    );
+  const tech = normalizeToStringArray(query.techStack);
+  if (tech?.length)
+    parts.push(
+      `tech:${tech
+        .map((t) => encodeURIComponent(t))
+        .sort()
+        .join(",")}`,
+    );
   if (query.search) parts.push(`search:${encodeURIComponent(query.search)}`);
   return parts.join(":");
 }

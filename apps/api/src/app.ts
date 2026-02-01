@@ -74,7 +74,7 @@ export const app = new Elysia()
         paths: ["/"],
       },
       scalar: {
-        theme: "kepler",
+        theme: "moon",
         layout: "classic",
         defaultHttpClient: {
           targetKey: "js",
