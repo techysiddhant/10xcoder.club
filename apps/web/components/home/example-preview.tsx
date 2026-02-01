@@ -9,6 +9,7 @@ import {
   Clock,
   ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 
 const resources = [
   {
@@ -171,8 +172,8 @@ const ExamplePreview = () => {
         </div>
 
         <div className="text-center mt-12">
-          <Button variant="outline" size="lg" className="font-semibold">
-            Browse All Resources
+          <Button asChild variant="outline" size="lg" className="font-semibold">
+            <Link href="/resources">Browse All Resources</Link>
           </Button>
         </div>
       </div>
