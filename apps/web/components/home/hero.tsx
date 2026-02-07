@@ -13,7 +13,7 @@ const Hero = () => {
       <div className="absolute inset-0 bg-dot-pattern opacity-50" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
 
-      <div className="container mx-auto relative z-10 px-6 py-20">
+      <div className="container mx-auto relative z-10 px-6 py-0">
         <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
           <div className="opacity-0 animate-fade-up">
             <p className="text-sm font-medium text-primary mb-4 tracking-wide uppercase">
