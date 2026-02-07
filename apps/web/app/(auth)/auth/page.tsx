@@ -4,6 +4,14 @@ import { ArrowLeft } from "lucide-react";
 import ThemeToggle from "@/components/theme-toggle";
 import AuthPage from "./auth";
 import Logo from "@/components/logo";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Login",
+  description:
+    "Sign in to 10xCoder.club to save resources, submit your own, and join the community of developers learning and building.",
+};
+
 const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex">

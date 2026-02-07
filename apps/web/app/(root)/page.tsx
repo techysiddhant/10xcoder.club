@@ -5,7 +5,6 @@ import Hero from "@/components/home/hero";
 import HowCurationWorks from "@/components/home/how-curation-work";
 import WhatYoullFind from "@/components/home/what-youll-find";
 import WhyThisExists from "@/components/home/why-this-exists";
-
 const page = () => {
   return (
     <>
