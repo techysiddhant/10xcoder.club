@@ -28,7 +28,7 @@ const staticPages: MetadataRoute.Sitemap = [
 ];
 
 const getResourcesParams = {
-  limit: 500,
+  limit: 100,
   resourceType: undefined as undefined,
   language: undefined as undefined,
   tag: undefined as undefined,
@@ -36,12 +36,16 @@ const getResourcesParams = {
   search: undefined as undefined,
 };
 
+/** Cap pagination so the sitemap build cannot run forever if the API keeps returning hasMore. */
+const maxIterations = 500;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let resourceUrls: MetadataRoute.Sitemap = [];
   try {
     const allIds: string[] = [];
     let cursor: string | undefined = undefined;
     let hasMore = true;
+    let iteration = 0;
     while (hasMore) {
       const res = await getResources({
         ...getResourcesParams,
@@ -57,6 +61,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const nextCursor = body?.nextCursor ?? null;
       hasMore = Boolean(body?.hasMore && nextCursor);
       cursor = nextCursor ?? undefined;
+      if (!body) {
+        hasMore = false;
+      }
+      iteration += 1;
+      if (iteration >= maxIterations) {
+        console.warn(
+          `[sitemap] Pagination limit (${maxIterations}) reached; stopping. Resources included: ${allIds.length}.`,
+        );
+        break;
+      }
     }
     if (allIds.length > 0) {
       resourceUrls = allIds.map((id) => ({
