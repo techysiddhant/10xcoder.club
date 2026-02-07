@@ -161,7 +161,7 @@ const UserSubmissions = ({
   const canEdit = (resource: ResourceListItem) =>
     resource.status !== "approved";
   const canDelete = (resource: ResourceListItem) =>
-    resource.status !== "approved";
+    resource.status !== "approved" && !resource.isPublished;
 
   const router = useRouter();
 

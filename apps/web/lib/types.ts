@@ -43,6 +43,8 @@ export interface ResourceListItem {
   tags: ResourceTagRef[];
   techStack: ResourceTagRef[];
   creator: ResourceCreatorRef;
+  /** When true, backend blocks deletion; UI should disable delete for published items */
+  isPublished: boolean;
 }
 
 /** Response shape of GET /api/resources */
