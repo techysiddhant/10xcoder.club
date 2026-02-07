@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "react-hot-toast";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { GoogleTagManager } from "@next/third-parties/google";
+import { publicEnv } from "@/env/public";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -30,6 +32,9 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-title" content="10xcoder" />
       </head>
+      <GoogleTagManager
+        gtmId={publicEnv.NEXT_PUBLIC_GA_MEASUREMENT_ID as string}
+      />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

@@ -12,6 +12,7 @@
     "ui:add": "../../scripts/web-ui-add.sh"
   },
   "dependencies": {
+    "@next/third-parties": "^16.1.6",
     "@tanstack/react-form": "^1.28.0",
     "@tanstack/react-query": "^5.90.20",
     "@tanstack/react-query-next-experimental": "^5.91.0",
@@ -20,6 +21,7 @@
     "axios": "^1.13.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "html-react-parser": "^5.2.15",
     "isomorphic-dompurify": "^2.35.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
@@ -28,7 +30,6 @@
     "react-dom": "19.2.3",
     "react-hot-toast": "^2.6.0",
     "react-intersection-observer": "^10.0.2",
-    "html-react-parser": "^5.2.15",
     "shadcn": "^3.7.0",
     "tailwind-merge": "^3.4.0"
   },
