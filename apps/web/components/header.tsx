@@ -12,11 +12,7 @@ import {
   DrawerTrigger,
 } from "@workspace/ui/components/drawer";
 import { useState } from "react";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@workspace/ui/components/avatar";
+import { sendGAEvent } from "@next/third-parties/google";
 const Header = () => {
   const { data: session, isPending } = authClient.useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -51,12 +47,28 @@ const Header = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="font-medium hidden sm:block"
+                  className="font-medium hidden sm:flex items-center"
                   asChild
+                  onClick={() =>
+                    sendGAEvent("event", "sign_in_click", {
+                      button_name: "sign_in",
+                      page_location: window.location.pathname,
+                    })
+                  }
                 >
                   <Link href="/auth?mode=signin">Sign In</Link>
                 </Button>
-                <Button size="sm" className="font-medium" asChild>
+                <Button
+                  size="sm"
+                  className="font-medium"
+                  asChild
+                  onClick={() =>
+                    sendGAEvent("event", "get_started_click", {
+                      button_name: "get_started",
+                      page_location: window.location.pathname,
+                    })
+                  }
+                >
                   <Link href="/auth?mode=signup">Get Started</Link>
                 </Button>
               </>
