@@ -1,5 +1,5 @@
 {
-  "name": "10xcoder",
+  "name": "10xcoder.club",
   "short_name": "10xcoder",
   "icons": [
     {
@@ -15,7 +15,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#FACC14",
-  "background_color": "#FACC14",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
   "display": "standalone"
 }
