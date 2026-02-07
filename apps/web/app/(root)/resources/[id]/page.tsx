@@ -7,18 +7,22 @@ const getResource = cache(async (resourceId: string) => {
   return response.data?.data;
 });
 export async function generateStaticParams() {
-  const res = await getResources({
-    limit: 100,
-    cursor: undefined,
-    resourceType: undefined,
-    language: undefined,
-    tag: undefined,
-    techStack: undefined,
-    search: undefined,
-  });
-  const list = res.data?.data;
-  if (!Array.isArray(list) || list.length === 0) return [];
-  return list.map(({ id }: { id: string }) => ({ id }));
+  try {
+    const res = await getResources({
+      limit: 100,
+      cursor: undefined,
+      resourceType: undefined,
+      language: undefined,
+      tag: undefined,
+      techStack: undefined,
+      search: undefined,
+    });
+    const list = res.data?.data;
+    if (!Array.isArray(list) || list.length === 0) return [];
+    return list.map(({ id }: { id: string }) => ({ id }));
+  } catch {
+    return [];
+  }
 }
 const DEFAULT_METADATA = {
   title: "Resource | 10xCoder.club",
