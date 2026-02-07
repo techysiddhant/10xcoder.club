@@ -124,10 +124,10 @@ export default function RootLayout({
             </ThemeProvider>
           </NuqsAdapter>
         </QueryProvider>
+        {publicEnv.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <GoogleAnalytics gaId={publicEnv.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        )}
       </body>
-      {publicEnv.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-        <GoogleAnalytics gaId={publicEnv.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
-      )}
     </html>
   );
 }
