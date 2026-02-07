@@ -169,8 +169,21 @@ export const resourcesRoutes = new Elysia({ prefix: "/api/resources" })
     },
   })
 
-  // GET /api/resources/:id - Get single resource (public)
-  .get("/:id", handlers.getResource, schemas.getResourceByIdSchema)
+  // GET /api/resources/:id - Get single resource (public, or owner can view own any status)
+  .get(
+    "/:id",
+    async ({ params, set, request }) => {
+      let userId: string | undefined;
+      try {
+        const session = await auth.api.getSession({ headers: request.headers });
+        userId = session?.user?.id;
+      } catch {
+        // User not logged in - that's fine
+      }
+      return handlers.getResource({ params, set, userId });
+    },
+    schemas.getResourceByIdSchema,
+  )
 
   // POST /api/resources - Create resource (authenticated)
   .post("/", handlers.create, {
