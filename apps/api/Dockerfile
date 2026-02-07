@@ -19,6 +19,7 @@ ENV NODE_ENV=production
 COPY package.json bun.lock tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
+COPY packages/api-types/package.json ./packages/api-types/
 COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/database/package.json ./packages/database/
 COPY packages/ui/package.json ./packages/ui/
