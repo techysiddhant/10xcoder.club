@@ -20,6 +20,7 @@ COPY package.json bun.lock tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 COPY packages/schemas/package.json ./packages/schemas/
+COPY packages/database/package.json ./packages/database/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
@@ -31,6 +32,7 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # --- Copy source files ---
 COPY apps/api ./apps/api
 COPY packages/schemas ./packages/schemas
+COPY packages/database ./packages/database
 
 # --- Build compiled binary for linux/amd64 (glibc) ---
 RUN cd apps/api && bun build \
