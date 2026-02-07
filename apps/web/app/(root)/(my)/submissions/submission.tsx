@@ -47,6 +47,12 @@ const Submission = () => {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { data: session, isPending } = authClient.useSession();
 
+  useLayoutEffect(() => {
+    if (!session && !isPending) {
+      router.push("/auth?mode=signin&redirectUrl=/submissions");
+    }
+  }, [session, isPending, router]);
+
   const {
     data: submissions,
     isLoading,
@@ -71,6 +77,7 @@ const Submission = () => {
       });
       return res.data;
     },
+    enabled: !!session,
   });
   const { data: optionsData } = useQuery({
     queryKey: ["resourceOptions"],
@@ -87,6 +94,22 @@ const Submission = () => {
       ).data;
     },
   });
+
+  // Auth guard: resolve session before showing data UI
+  if (isPending) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
+        <div className="w-full max-w-md space-y-6">
+          <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
+
   if (isLoading) {
     return (
       <main className="pt-24 pb-16">
@@ -131,26 +154,7 @@ const Submission = () => {
       </main>
     );
   }
-  useLayoutEffect(() => {
-    if (!session && !isPending) {
-      router.push("/auth?mode=signin&redirectUrl=/submissions");
-    }
-  }, [session, isPending, router]);
 
-  // Show loading skeleton while session is resolving; only treat as unauthenticated once not pending
-  if (isPending) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
-        <div className="w-full max-w-md space-y-6">
-          <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return null;
-  }
   return (
     <main className="pt-24 pb-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -181,7 +185,18 @@ const Submission = () => {
 
         {/* Submissions Table */}
         <UserSubmissions
-          data={submissions}
+          data={
+            submissions ?? {
+              data: [],
+              kpis: {
+                total: 0,
+                approved: 0,
+                pending: 0,
+                rejected: 0,
+              },
+              meta: { total: 0, page: page, limit: limit },
+            }
+          }
           // onEdit={handleEdit}
           // onDelete={handleDelete}
           searchQuery={searchQuery}

@@ -67,3 +67,5 @@ export const getUserSubmissions = ({
       resourceType,
     },
   });
+
+export const deleteResource = (id: string) => api.delete(`/resources/${id}`);

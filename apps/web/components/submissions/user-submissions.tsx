@@ -26,7 +26,7 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import { ResourceListItem } from "@/lib/types";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 import {
   Dialog,
@@ -68,6 +68,9 @@ import {
   PaginationPrevious,
 } from "@workspace/ui/components/pagination";
 import { useRouter } from "next/navigation";
+import { deleteResource } from "@/lib/http";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 const statusConfig: Record<
   ResourceStatus,
   {
@@ -114,7 +117,7 @@ interface UserSubmissionsProps {
   setLimit: (value: number) => void;
   resourceTypes: { id: string; name: string; label: string }[];
 }
-const ITEMS_PER_PAGE = 10;
+
 const UserSubmissions = ({
   data,
   resourceTypes,
@@ -130,33 +133,30 @@ const UserSubmissions = ({
   setLimit,
 }: UserSubmissionsProps) => {
   const resources = data.data;
-  const filteredResources = useMemo(() => {
-    return resources.filter((resource) => {
-      const matchesStatus =
-        selectedStatus === "all" || resource.status === selectedStatus;
-      const matchesType =
-        selectedTypes === "all" || resource.resourceType === selectedTypes;
-      const matchesSearch =
-        searchQuery === "" ||
-        resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (resource.description || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
-      return matchesStatus && matchesType && matchesSearch;
-    });
-  }, [resources, selectedStatus, selectedTypes, searchQuery]);
-
-  const totalPages = Math.ceil(filteredResources.length / ITEMS_PER_PAGE);
-  const paginatedResources = useMemo(() => {
-    const startIndex = (page - 1) * ITEMS_PER_PAGE;
-    return filteredResources.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredResources, page]);
+  const { total: totalCount, page: currentPage, limit: pageSize } = data.meta;
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const getResourceTypeLabel = (type: string) => {
     return resourceTypes.find((t) => t.name === type)?.label ?? type;
   };
-  const pendingCount = resources.filter((r) => r.status === "pending").length;
-  const approvedCount = resources.filter((r) => r.status === "approved").length;
-  const rejectedCount = resources.filter((r) => r.status === "rejected").length;
+  const queryClient = useQueryClient();
+  const { mutateAsync: deleteResourceMutation } = useMutation({
+    mutationFn: async (id: string) => await deleteResource(id),
+    onSuccess: () => {
+      toast.success("Resource deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["user-submissions"] });
+    },
+    onError: (error) => {
+      toast.error(
+        (error as any)?.response?.data?.message || "Failed to delete resource",
+      );
+    },
+  });
+  const {
+    pending: pendingCount,
+    approved: approvedCount,
+    rejected: rejectedCount,
+    total: kpiTotal,
+  } = data.kpis;
 
   const canEdit = (resource: ResourceListItem) =>
     resource.status !== "approved";
@@ -181,7 +181,7 @@ const UserSubmissions = ({
     router.push(`/resources/${resource.id}/edit`);
   };
   const onDelete = (resource: ResourceListItem) => {
-    router.push(`/resources/${resource.id}/delete`);
+    deleteResourceMutation(resource.id);
   };
   return (
     <div className="space-y-6">
@@ -194,7 +194,7 @@ const UserSubmissions = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{resources.length}</p>
+            <p className="text-2xl font-bold">{kpiTotal}</p>
           </CardContent>
         </Card>
         <Card>
@@ -252,7 +252,10 @@ const UserSubmissions = ({
             </div>
             <Select
               value={selectedStatus}
-              onValueChange={(v) => setSelectedStatus(v as SubmissionStatus)}
+              onValueChange={(v) => {
+                setSelectedStatus(v as SubmissionStatus);
+                setPage(1);
+              }}
             >
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
@@ -267,7 +270,10 @@ const UserSubmissions = ({
 
             <Select
               value={selectedTypes}
-              onValueChange={(v) => setSelectedTypes(v)}
+              onValueChange={(v) => {
+                setSelectedTypes(v);
+                setPage(1);
+              }}
             >
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by type" />
@@ -308,7 +314,7 @@ const UserSubmissions = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedResources.length === 0 ? (
+                {resources.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={5}
@@ -318,7 +324,7 @@ const UserSubmissions = ({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedResources.map((resource) => {
+                  resources.map((resource) => {
                     const config = getStatusConfig(resource.status);
                     const StatusIcon = config.icon;
                     // const isRejected = resource.status === 'rejected' && resource.rejectionReason;
@@ -550,9 +556,9 @@ const UserSubmissions = ({
           {totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
               <p className="text-sm text-muted-foreground">
-                Showing {(page - 1) * ITEMS_PER_PAGE + 1} to{" "}
-                {Math.min(page * ITEMS_PER_PAGE, filteredResources.length)} of{" "}
-                {filteredResources.length} submissions
+                Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount}{" "}
+                submissions
               </p>
               <Pagination>
                 <PaginationContent>
@@ -561,11 +567,11 @@ const UserSubmissions = ({
                       href="#"
                       onClick={(e) => {
                         e.preventDefault();
-                        if (page > 1) setPage(page - 1);
+                        if (currentPage > 1) setPage(currentPage - 1);
                       }}
-                      aria-disabled={page === 1}
+                      aria-disabled={currentPage === 1}
                       className={
-                        page === 1
+                        currentPage === 1
                           ? "pointer-events-none opacity-50"
                           : "cursor-pointer"
                       }
@@ -575,18 +581,18 @@ const UserSubmissions = ({
                     let pageNum: number;
                     if (totalPages <= 5) {
                       pageNum = i + 1;
-                    } else if (page <= 3) {
+                    } else if (currentPage <= 3) {
                       pageNum = i + 1;
-                    } else if (page >= totalPages - 2) {
+                    } else if (currentPage >= totalPages - 2) {
                       pageNum = totalPages - 4 + i;
                     } else {
-                      pageNum = page - 2 + i;
+                      pageNum = currentPage - 2 + i;
                     }
                     return (
                       <PaginationItem key={pageNum}>
                         <PaginationLink
                           href="#"
-                          isActive={pageNum === page}
+                          isActive={pageNum === currentPage}
                           onClick={(e) => {
                             e.preventDefault();
                             setPage(pageNum);
@@ -603,11 +609,11 @@ const UserSubmissions = ({
                       href="#"
                       onClick={(e) => {
                         e.preventDefault();
-                        if (page < totalPages) setPage(page + 1);
+                        if (currentPage < totalPages) setPage(currentPage + 1);
                       }}
-                      aria-disabled={page === totalPages}
+                      aria-disabled={currentPage === totalPages}
                       className={
-                        page === totalPages
+                        currentPage === totalPages
                           ? "pointer-events-none opacity-50"
                           : "cursor-pointer"
                       }
