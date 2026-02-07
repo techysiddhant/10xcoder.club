@@ -44,3 +44,26 @@ export const getResources = (params: GetResourcesParams) =>
   });
 
 export const getResourceById = (id: string) => api.get(`/resources/${id}`);
+
+export const getUserSubmissions = ({
+  page,
+  limit,
+  status,
+  search,
+  resourceType,
+}: {
+  page: number;
+  limit: number;
+  status: "approved" | "rejected" | "pending" | "all";
+  search: string;
+  resourceType: string;
+}) =>
+  api.get(`/resources/my`, {
+    params: {
+      page,
+      limit,
+      ...(status !== "all" && { status }),
+      search,
+      resourceType,
+    },
+  });

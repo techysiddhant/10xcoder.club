@@ -367,6 +367,67 @@ export async function getResourceById(id: string) {
 }
 
 // ==========================================
+// Get Resource By ID For View (public or owner)
+// When userId is set, returns resource if approved+published OR createdBy === userId.
+// When userId is falsy, returns only approved + published.
+// ==========================================
+export async function getResourceByIdForView(id: string, userId?: string) {
+  const visibilityCondition = userId
+    ? or(
+        and(eq(resource.status, "approved"), eq(resource.isPublished, true)),
+        eq(resource.createdBy, userId),
+      )
+    : and(eq(resource.status, "approved"), eq(resource.isPublished, true));
+
+  const result = await db.query.resource.findFirst({
+    where: and(
+      eq(resource.id, id),
+      isNull(resource.deletedAt),
+      visibilityCondition,
+    ),
+    with: {
+      resourceType: true,
+      resourceToTags: {
+        with: {
+          tag: true,
+        },
+      },
+      resourceToTechStack: {
+        with: {
+          techStack: true,
+        },
+      },
+      creator: {
+        columns: {
+          id: true,
+          name: true,
+          image: true,
+          username: true,
+        },
+      },
+    },
+  });
+
+  if (!result) return null;
+
+  // Transform to flatten tags, techStack and resourceType
+  const {
+    resourceToTags: rtt,
+    resourceToTechStack: rtts,
+    resourceType: rt,
+    ...rest
+  } = result;
+  return {
+    ...rest,
+    image: transformImageUrl(rest.image),
+    resourceType: rt.name,
+    resourceTypeId: rest.resourceTypeId,
+    tags: rtt.map((r) => r.tag),
+    techStack: rtts.map((r) => r.techStack),
+  };
+}
+
+// ==========================================
 // Get Public Resource By ID (approved + published only)
 // ==========================================
 export async function getPublicResourceById(id: string) {

@@ -10,11 +10,13 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo & Copyright */}
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-primary text-primary-foreground font-mono font-bold text-xs flex items-center justify-center rounded">
+            <div className="w-7 h-7 bg-primary text-black font-mono font-bold text-xs flex items-center justify-center rounded">
               10x
             </div>
             <span className="text-sm text-muted-foreground">
-              © {currentYear} 10xcoder.club
+              © {currentYear} 10xcoder
+              <span className="size-1 text-xl mx-0.5 rounded-full bg-primary inline-block"></span>
+              club
             </span>
           </div>
 

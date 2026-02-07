@@ -1,13 +1,25 @@
 "use client";
 import { Button } from "@workspace/ui/components/button";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Menu } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import UserProfileDropdown from "./user-profile-dropdown";
 import Logo from "./logo";
 
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from "@workspace/ui/components/drawer";
+import { useState } from "react";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar";
 const Header = () => {
   const { data: session, isPending } = authClient.useSession();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass">
       <div className="container mx-auto px-6">
@@ -39,7 +51,7 @@ const Header = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="font-medium"
+                  className="font-medium hidden sm:block"
                   asChild
                 >
                   <Link href="/auth?mode=signin">Sign In</Link>
@@ -49,6 +61,29 @@ const Header = () => {
                 </Button>
               </>
             )}
+            <div className="flex md:hidden items-center gap-2">
+              <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <DrawerTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent className="px-4 pb-8">
+                  <div className="space-y-1 mb-4">
+                    <Link
+                      href="/resources"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <BookOpen className="h-5 w-5 text-primary" />
+                      </div>
+                      <span className="font-medium">Resources</span>
+                    </Link>
+                  </div>
+                </DrawerContent>
+              </Drawer>
+            </div>
           </div>
         </div>
       </div>

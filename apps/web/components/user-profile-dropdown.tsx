@@ -98,7 +98,7 @@ const UserProfileDropdown = () => {
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link
-            href="/my-submissions"
+            href="/submissions"
             className="flex items-center gap-2 cursor-pointer"
           >
             <FileText className="w-4 h-4" />

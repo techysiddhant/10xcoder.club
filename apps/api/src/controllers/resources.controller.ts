@@ -1,6 +1,6 @@
 import {
   createResource,
-  getPublicResourceById,
+  getResourceByIdForView,
   getAllResources,
   updateResource,
   deleteResource,
@@ -135,17 +135,19 @@ export const getResources = async ({
 };
 
 // ==========================================
-// Get Resource By ID (Public - approved + published only)
+// Get Resource By ID (Public or owner: approved+published, or own resource any status)
 // ==========================================
 
 export const getResource = async ({
   params,
   set,
+  userId,
 }: {
   params: { id: string };
   set: Context["set"];
+  userId?: string;
 }) => {
-  const result = await getPublicResourceById(params.id);
+  const result = await getResourceByIdForView(params.id, userId);
 
   if (!result) {
     set.status = HttpStatusEnum.HTTP_404_NOT_FOUND;
