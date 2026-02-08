@@ -39,6 +39,7 @@ services:
       # Auth
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       API_URL: ${API_URL}
+      CORS_ORIGIN: ${CORS_ORIGIN}
       # GitHub OAuth
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
@@ -70,16 +71,16 @@ services:
     depends_on:
       - db
     networks: [app_net]
-    restart: 'no'
-    profiles: ['migrate']
+    restart: "no"
+    profiles: ["migrate"]
 
   nginx:
     image: nginx:alpine
     container_name: ${NGINX_CONTAINER_NAME:-10xcoder_nginx}
     restart: unless-stopped
     ports:
-      - '80:80'
-      - '443:443'
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/ssl/cloudflare:/etc/ssl/cloudflare:ro

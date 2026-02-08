@@ -20,8 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(publicEnv.NEXT_PUBLIC_APP_URL),
   title: {
-    default:
-      "10xCoder.club | Curated developer resources to learn, build, and ship faster",
+    default: "10xCoder.club",
     template: "%s | 10xCoder.club",
   },
   description:

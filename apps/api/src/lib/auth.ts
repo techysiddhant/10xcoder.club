@@ -160,8 +160,9 @@ export const auth = betterAuth({
   },
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.API_URL,
-  trustedOrigins: env.CORS_ORIGIN?.split(",").map((s) => s.trim()) ?? [
-    env.API_URL,
-  ],
+  basePath: "/api/auth",
+  trustedOrigins: env.CORS_ORIGIN?.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean) ?? [env.API_URL],
   appName: "10xCoder.club",
 });
