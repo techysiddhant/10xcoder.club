@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   title: "Login",
   description:
     "Sign in to 10xCoder.club to save resources, submit your own, and join the community of developers learning and building.",
+
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 const Auth = () => {
