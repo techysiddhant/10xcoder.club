@@ -18,12 +18,12 @@ const staticPages: MetadataRoute.Sitemap = [
     changeFrequency: "daily",
     priority: 0.9,
   },
-  {
-    url: `${BASE}/auth`,
-    lastModified: new Date(),
-    changeFrequency: "monthly",
-    priority: 0.8,
-  },
+  // {
+  //   url: `${BASE}/auth`,
+  //   lastModified: new Date(),
+  //   changeFrequency: "monthly",
+  //   priority: 0.8,
+  // },
 ];
 
 const getResourcesParams = {

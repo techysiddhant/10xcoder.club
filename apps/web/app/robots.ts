@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/profile", "/submissions"],
+        disallow: ["/admin", "/profile", "/submissions", "/auth"],
       },
     ],
     sitemap: `${(publicEnv.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "")}/sitemap.xml`,
