@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -8,6 +9,7 @@ import {
   index,
   jsonb,
   vector,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { user } from "./user";
 import { resourceType } from "./resourceType";
@@ -50,9 +52,9 @@ export type ResourceMetadata = {
 export const resource = pgTable(
   "resource",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+    id: uuid("id")
+      .default(sql`uuidv7()`)
+      .primaryKey(),
     title: text("title").notNull(),
     description: text("description"),
     url: text("url").notNull(),
@@ -60,7 +62,7 @@ export const resource = pgTable(
     credits: text("credits"), // Original author/source attribution
     creditsUrl: text("credits_url"), // Original author profile url
     // Categorization (FK to resource_type.id)
-    resourceTypeId: text("resource_type_id")
+    resourceTypeId: uuid("resource_type_id")
       .notNull()
       .references(() => resourceType.id),
     language: languageEnum("language").default("english").notNull(),

@@ -1,9 +1,11 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   text,
   timestamp,
   uniqueIndex,
   pgEnum,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { user } from "./user";
 import { resource } from "./resource";
@@ -13,13 +15,13 @@ export const voteTypeEnum = pgEnum("vote_type", ["upvote", "downvote"]);
 export const userVote = pgTable(
   "user_vote",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+    id: uuid("id")
+      .default(sql`uuidv7()`)
+      .primaryKey(),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    resourceId: text("resource_id")
+    resourceId: uuid("resource_id")
       .notNull()
       .references(() => resource.id, { onDelete: "cascade" }),
     type: voteTypeEnum("type").notNull(), // 'upvote' or 'downvote'

@@ -1,9 +1,10 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const resourceType = pgTable("resource_type", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+  id: uuid("id")
+    .default(sql`uuidv7()`)
+    .primaryKey(),
   name: text("name").notNull().unique(), // Slug: "video", "blog"
   label: text("label").notNull(), // Display: "Video", "Blog Article"
   icon: text("icon"), // Optional icon name for UI
