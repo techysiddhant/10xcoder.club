@@ -1,6 +1,6 @@
 services:
   db:
-    image: pgvector/pgvector:pg15
+    image: pgvector/pgvector:pg18
     container_name: ${DB_CONTAINER_NAME:-10xcoder_db}
     restart: unless-stopped
     environment:
