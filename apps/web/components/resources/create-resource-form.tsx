@@ -123,10 +123,15 @@ const CreateResourceForm = ({
         createResource({
           ...resource,
         }),
-      onSuccess: (data) => {
-        toast.success("Resource created successfully");
+      onSuccess: (response) => {
+        toast.success("Resource added successfully");
         form.reset();
-        router.push(`/resources/${data.data.id}`);
+        const id = response.data.id;
+        if (id) {
+          router.push(`/resources/${id}`);
+        } else {
+          router.push("/resources/submission");
+        }
       },
       onError: (error) => {
         toast.error("Failed to create resource. Please try again.");
