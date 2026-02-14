@@ -3,8 +3,14 @@ import ResourceDetail from "./resource-detail";
 import { getResourceById, getResources } from "@/lib/http";
 import type { ResourceTagRef } from "@/lib/types";
 const getResource = cache(async (resourceId: string) => {
-  const response = await getResourceById(resourceId);
-  return response.data?.data;
+  try {
+    const response = await getResourceById(resourceId);
+    return response.data?.data;
+  } catch {
+    // API returns 404 for missing resources; axios throws. Return undefined so
+    // generateMetadata can fall back to DEFAULT_METADATA and the page can render.
+    return undefined;
+  }
 });
 export async function generateStaticParams() {
   try {

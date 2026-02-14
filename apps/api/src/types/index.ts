@@ -69,6 +69,18 @@ export interface BlogMetadata {
   publishedAt?: string;
 }
 
+export interface RobotsDiagnostics {
+  fetched: boolean;
+  pageAllowed: boolean | null;
+  imageAllowed: boolean | null;
+  source: string;
+  reason?: string;
+}
+
+export interface GenericMetadata {
+  robots?: RobotsDiagnostics;
+}
+
 // Platform-specific resource interfaces
 export interface YouTubeVideoResource extends ScrapedResourceBase {
   platform: "youtube";
@@ -99,7 +111,7 @@ export interface HashnodeResource extends ScrapedResourceBase {
 
 export interface GenericResource extends ScrapedResourceBase {
   platform: "generic";
-  metadata: Record<string, never>;
+  metadata: GenericMetadata;
 }
 
 // Discriminated union of all resource types

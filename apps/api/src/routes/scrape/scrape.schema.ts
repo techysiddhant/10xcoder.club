@@ -13,7 +13,7 @@ const ScrapedResourceSchema = t.Object({
   title: t.String(),
   description: t.String(),
   url: t.String({ format: "uri" }),
-  image: t.String({ format: "uri" }),
+  image: t.Union([t.String({ format: "uri" }), t.Literal("")]),
   credits: t.String(),
   resourceType: t.Union([
     t.Literal("video"),
@@ -64,6 +64,16 @@ const ScrapedResourceSchema = t.Object({
     // Blog
     readingTime: t.Optional(t.Number()),
     publishedAt: t.Optional(t.String()),
+    // Generic robots diagnostics (non-blocking)
+    robots: t.Optional(
+      t.Object({
+        fetched: t.Boolean(),
+        pageAllowed: t.Nullable(t.Boolean()),
+        imageAllowed: t.Nullable(t.Boolean()),
+        source: t.String(),
+        reason: t.Optional(t.String()),
+      }),
+    ),
   }),
 });
 

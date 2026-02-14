@@ -168,9 +168,27 @@ const ResourceDetail = ({ id }: { id: string }) => {
           Back to Resources
         </Button>
 
+        {/* Pending Notice */}
+        {res.status === "pending" && (
+          <Card className="mb-6 p-0 border-yellow-500/30 bg-yellow-500/5">
+            <CardContent className="p-4 flex items-start gap-3">
+              <Clock className="w-5 h-5 text-yellow-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-yellow-600 mb-1">
+                  Under Review
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  This resource is pending review. It will be visible to
+                  everyone once approved.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Rejection Notice */}
         {res.status === "rejected" && res.rejectionReason && (
-          <Card className="mb-6 border-red-500/30 bg-red-500/5">
+          <Card className="mb-6 p-0 border-red-500/30 bg-red-500/5">
             <CardContent className="p-4 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />
               <div>
