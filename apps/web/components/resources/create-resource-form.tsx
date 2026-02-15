@@ -318,7 +318,7 @@ const CreateResourceForm = ({
                 <FieldLabel htmlFor="description-editor">
                   Description
                 </FieldLabel>
-                <div className="w-full min-h-[300px] border border-border rounded-2xl overflow-hidden">
+                <div className="w-full min-h-[300px] overflow-hidden">
                   <PrMarkdownEditor
                     value={field.state.value ?? ""}
                     onChange={(content) => field.handleChange(content)}

@@ -37,12 +37,8 @@ const markdownComponents: Components = {
       {children}
     </blockquote>
   ),
-  code: ({ children, className, ...props }) => {
-    const { inline, node } = props as {
-      inline?: boolean;
-      node?: { parent?: { type?: string } };
-    };
-    const isBlock = inline === false || node?.parent?.type === "pre";
+  code: ({ children, className }) => {
+    const isBlock = /\blanguage-/.test(className ?? "");
     if (isBlock) {
       return (
         <code className="block rounded-md bg-muted p-3 text-sm overflow-x-auto whitespace-pre">

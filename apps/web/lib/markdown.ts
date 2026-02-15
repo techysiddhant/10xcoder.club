@@ -27,7 +27,7 @@ export function markdownToText(markdown: string, maxLength = 180): string {
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
     // headings/list markers/blockquote/task markers
     .replace(
-      /^\s{0,3}(#{1,6}\s+|>\s+|- \[.\]\s+|- \s+|\*\s+|\+\s+|\d+\.\s+)/gm,
+      /^\s{0,3}(#{1,6}\s+|>\s+|-\s\[.\]\s+|-\s+|\*\s+|\+\s+|\d+\.\s+)/gm,
       "",
     )
     // bold/italic/strikethrough markers
