@@ -195,7 +195,7 @@ const CreateResource = () => {
 
                     <Button
                       type="submit"
-                      className="w-full gap-2"
+                      className="w-full gap-2 cursor-pointer"
                       disabled={
                         urlForm.state.isSubmitting ||
                         isAutoFillResourceDetailsLoading
@@ -231,14 +231,14 @@ const CreateResource = () => {
                 <Button
                   variant="outline"
                   onClick={() => setStep("url")}
-                  className="flex-1"
+                  className="flex-1 cursor-pointer"
                 >
                   Back
                 </Button>
                 <Button
                   type="submit"
                   form="create-resource-details-form"
-                  className="flex-1 gap-2"
+                  className="flex-1 gap-2 cursor-pointer"
                   disabled={detailsFormPending}
                 >
                   {detailsFormPending ? (

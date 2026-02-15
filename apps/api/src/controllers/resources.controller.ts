@@ -27,6 +27,12 @@ type UserAuth = {
 const DEFAULT_LIMIT = 20;
 const MAX_USER_RESOURCES_LIMIT = 100;
 const MAX_PUBLIC_LIMIT = 50;
+const UUID_V4_TO_V8_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isValidUuid(id: string): boolean {
+  return UUID_V4_TO_V8_PATTERN.test(id);
+}
 
 // ==========================================
 // Get User's Own Resource by ID (any status)
@@ -41,6 +47,11 @@ export const getMyResourceById = async ({
   user: UserAuth;
   set: Context["set"];
 }) => {
+  if (!isValidUuid(params.id)) {
+    set.status = HttpStatusEnum.HTTP_404_NOT_FOUND;
+    return errorResponse("NOT_FOUND", "Resource not found", 404);
+  }
+
   const result = await getUserResourceById(params.id, user.id);
 
   if (!result) {
@@ -147,6 +158,11 @@ export const getResource = async ({
   set: Context["set"];
   userId?: string;
 }) => {
+  if (!isValidUuid(params.id)) {
+    set.status = HttpStatusEnum.HTTP_404_NOT_FOUND;
+    return errorResponse("NOT_FOUND", "Resource not found", 404);
+  }
+
   const result = await getResourceByIdForView(params.id, userId);
 
   if (!result) {
