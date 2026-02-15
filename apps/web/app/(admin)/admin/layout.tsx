@@ -2,7 +2,7 @@ import React from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminShellLayout from "@/components/admin/admin-auth-provider";
-import { publicEnv } from "@/env/public";
+import { serverEnv } from "@/env/server";
 
 type AdminSession = {
   user?: {
@@ -19,16 +19,13 @@ async function getAdminSession(): Promise<AdminSession> {
   }
 
   try {
-    const response = await fetch(
-      `${publicEnv.NEXT_PUBLIC_API_URL}/api/auth/get-session`,
-      {
-        method: "GET",
-        headers: {
-          Cookie: cookieHeader,
-        },
-        cache: "no-store",
+    const response = await fetch(`${serverEnv.API_URL}/api/auth/get-session`, {
+      method: "GET",
+      headers: {
+        Cookie: cookieHeader,
       },
-    );
+      cache: "no-store",
+    });
 
     if (!response.ok) {
       return null;

@@ -347,8 +347,12 @@ const ResourceTable = () => {
 
   const handleApprove = async (id: string) => {
     if (!id) return;
-    await updateStatusMutation({ id, status: "approved" });
-    setConfirmDialog({ open: false, resourceId: "" });
+    try {
+      await updateStatusMutation({ id, status: "approved" });
+      setConfirmDialog({ open: false, resourceId: "" });
+    } catch {
+      // Toast feedback is already handled by mutation onError.
+    }
   };
 
   const handleReject = async () => {
@@ -358,19 +362,27 @@ const ResourceTable = () => {
       toast.error("Please provide a rejection reason");
       return;
     }
-    await updateStatusMutation({
-      id: rejectDialog.resourceId,
-      status: "rejected",
-      reason,
-    });
-    setRejectDialog({ open: false, resourceId: "" });
-    setRejectionReason("");
+    try {
+      await updateStatusMutation({
+        id: rejectDialog.resourceId,
+        status: "rejected",
+        reason,
+      });
+      setRejectDialog({ open: false, resourceId: "" });
+      setRejectionReason("");
+    } catch {
+      // Toast feedback is already handled by mutation onError.
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteDialog.resourceId) return;
-    await deleteResourceMutation(deleteDialog.resourceId);
-    setDeleteDialog({ open: false, resourceId: "", title: "" });
+    try {
+      await deleteResourceMutation(deleteDialog.resourceId);
+      setDeleteDialog({ open: false, resourceId: "", title: "" });
+    } catch {
+      // Toast feedback is already handled by mutation onError.
+    }
   };
 
   const clearFilters = () => {
@@ -823,7 +835,10 @@ const ResourceTable = () => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isMutating}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => handleApprove(confirmDialog.resourceId)}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleApprove(confirmDialog.resourceId);
+              }}
               disabled={isMutating}
             >
               Approve
@@ -899,7 +914,10 @@ const ResourceTable = () => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isMutating}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleDelete();
+              }}
               disabled={isMutating}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
