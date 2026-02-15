@@ -45,7 +45,8 @@ const settingsItems = [
 
 const AdminSidebar = () => {
   const pathname = usePathname();
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) =>
+    path === "/admin" ? pathname === path : pathname.startsWith(path);
   const router = useRouter();
   const handleSignOut = () => {
     toast.promise(

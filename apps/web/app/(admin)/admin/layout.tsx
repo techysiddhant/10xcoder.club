@@ -1,7 +1,7 @@
 import React from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import AdminShellLayout from "@/components/admin/admin-auth-provider";
+import AdminShellLayout from "@/components/admin/admin-layout";
 import { serverEnv } from "@/env/server";
 
 type AdminSession = {
