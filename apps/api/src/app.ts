@@ -84,6 +84,11 @@ export const app = new Elysia()
     }),
   )
   .onError(({ code, error }) => {
+    const isProduction = env.NODE_ENV === "production";
+
+    // Always log full server-side error details for debugging/alerting.
+    console.error("Unhandled API error", { code, error });
+
     // Capture error in Sentry (async, doesn't block response)
     if (env.SENTRY_DSN) {
       import("@/lib/sentry")
@@ -100,10 +105,15 @@ export const app = new Elysia()
     if (error instanceof Response) {
       return error;
     }
+
+    const safeMessage = isProduction
+      ? "Something went wrong. Please try again later."
+      : error.toString();
+
     return {
       status: "error",
       code,
-      message: error.toString(),
+      message: safeMessage,
     };
   })
   .get("/", () => {
