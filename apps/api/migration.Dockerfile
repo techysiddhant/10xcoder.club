@@ -6,9 +6,7 @@ WORKDIR /app
 RUN apk add --no-cache postgresql-client
 
 # Copy only what migrations need
-COPY apps/api/src/db ./src/db
 COPY apps/api/drizzle ./drizzle
-COPY apps/api/tsconfig.json ./tsconfig.json
 
 # Create minimal package.json safely
 RUN cat <<'EOF' > package.json
@@ -27,6 +25,7 @@ EOF
 RUN bun install --no-save
 
 # Drizzle config
+RUN mkdir -p src
 RUN cat <<'EOF' > src/drizzle.config.ts
 import { defineConfig } from "drizzle-kit";
 
@@ -35,7 +34,6 @@ if (!process.env.DATABASE_URL) {
 }
 
 export default defineConfig({
-  schema: "./src/db/schema",
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {

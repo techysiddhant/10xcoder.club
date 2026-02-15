@@ -2,12 +2,13 @@ name: Build and Push to GHCR
 
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
     paths:
-      - 'apps/api/**'
-      - 'packages/schemas/**'
-      - 'package.json'
-      - 'bun.lock'
+      - "apps/api/**"
+      - "packages/schemas/**"
+      - "package.json"
+      - "bun.lock"
+  workflow_dispatch:
 
 concurrency:
   group: build-push
