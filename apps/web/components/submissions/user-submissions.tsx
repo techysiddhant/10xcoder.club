@@ -360,7 +360,7 @@ const UserSubmissions = ({
                                 {config.label}
                               </span>
                             </Badge>
-                            {/* {isRejected && (
+                            {resource.status === "rejected" && (
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button
@@ -369,7 +369,9 @@ const UserSubmissions = ({
                                     className="h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
                                   >
                                     <Info className="h-3 w-3 mr-1" />
-                                    <span className="hidden sm:inline">Why?</span>
+                                    <span className="hidden sm:inline">
+                                      Why?
+                                    </span>
                                   </Button>
                                 </DialogTrigger>
                                 <DialogContent className="sm:max-w-md">
@@ -379,18 +381,25 @@ const UserSubmissions = ({
                                       Rejection Reason
                                     </DialogTitle>
                                     <DialogDescription className="text-left pt-2">
-                                      Your submission "<span className="font-medium text-foreground">{resource.title}</span>" was rejected for the following reason:
+                                      Your submission "
+                                      <span className="font-medium text-foreground">
+                                        {resource.title}
+                                      </span>
+                                      " was rejected for the following reason:
                                     </DialogDescription>
                                   </DialogHeader>
                                   <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mt-2">
-                                    <p className="text-sm text-foreground">{resource.rejectionReason}</p>
+                                    <p className="text-sm text-foreground">
+                                      {resource.reason}
+                                    </p>
                                   </div>
                                   <p className="text-xs text-muted-foreground mt-2">
-                                    You can edit and resubmit this resource to address the feedback above.
+                                    You can edit and resubmit this resource to
+                                    address the feedback above.
                                   </p>
                                 </DialogContent>
                               </Dialog>
-                            )} */}
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>

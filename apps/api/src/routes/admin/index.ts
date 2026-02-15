@@ -31,6 +31,7 @@ export const adminRoutes = new Elysia({ prefix: "/api/admin" })
         ]),
       ),
       search: t.Optional(t.String()),
+      resourceType: t.Optional(t.String()),
     }),
     adminAuth: true,
     detail: {

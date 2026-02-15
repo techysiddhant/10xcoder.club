@@ -53,6 +53,7 @@ export const listResources = async ({
     limit?: number;
     status?: "approved" | "rejected" | "pending";
     search?: string;
+    resourceType?: string;
   };
   set: Context["set"];
 }) => {
@@ -62,6 +63,7 @@ export const listResources = async ({
       limit: query.limit ?? 20,
       status: query.status,
       search: query.search,
+      resourceType: query.resourceType,
     });
 
     if ("success" in result && result.success === false) {

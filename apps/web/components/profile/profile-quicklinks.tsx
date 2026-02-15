@@ -22,7 +22,7 @@ const ProfileQuickLinks = () => {
       <CardContent className="space-y-3">
         <button
           type="button"
-          onClick={() => router.push("/my-submissions")}
+          onClick={() => router.push("/submissions")}
           className="w-full cursor-pointer flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/30 hover:bg-muted/50 transition-colors group"
         >
           <div className="flex items-center gap-3">

@@ -45,6 +45,7 @@ export interface ResourceListItem {
   creator: ResourceCreatorRef;
   /** When true, backend blocks deletion; UI should disable delete for published items */
   isPublished: boolean;
+  reason?: string | null;
 }
 
 /** Response shape of GET /api/resources */
