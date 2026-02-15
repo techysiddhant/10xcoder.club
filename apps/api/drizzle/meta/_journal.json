@@ -29,6 +29,13 @@
       "when": 1769000000000,
       "tag": "0003_uuidv7_resource_domain",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1769001000000,
+      "tag": "0004_fine_description_limit",
+      "breakpoints": true
     }
   ]
 }

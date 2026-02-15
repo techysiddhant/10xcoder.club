@@ -2,6 +2,7 @@ import { cache } from "react";
 import ResourceDetail from "./resource-detail";
 import { getResourceById, getResources } from "@/lib/http";
 import type { ResourceTagRef } from "@/lib/types";
+import { markdownToText } from "@/lib/markdown";
 const getResource = cache(async (resourceId: string) => {
   try {
     const response = await getResourceById(resourceId);
@@ -32,13 +33,16 @@ export async function generateStaticParams() {
 }
 const DEFAULT_METADATA = {
   title: "Resource | 10xCoder.club",
+  description: "Explore curated resources on 10xCoder.club.",
   keywords: "" as string,
   openGraph: {
     title: "Resource | 10xCoder.club",
+    description: "Explore curated resources on 10xCoder.club.",
     images: [] as string[],
   },
   twitter: {
     title: "Resource | 10xCoder.club",
+    description: "Explore curated resources on 10xCoder.club.",
     images: [] as string[],
   },
 };
@@ -54,6 +58,9 @@ export async function generateMetadata({
     return DEFAULT_METADATA;
   }
   const title = resource.title ?? DEFAULT_METADATA.title;
+  const description =
+    markdownToText(resource.description ?? "", 180) ||
+    DEFAULT_METADATA.description;
   const tags = Array.isArray(resource.tags)
     ? resource.tags
         .map((t: ResourceTagRef | string) =>
@@ -66,13 +73,16 @@ export async function generateMetadata({
   const images = image ? [image] : [];
   return {
     title,
+    description,
     keywords,
     openGraph: {
       title,
+      description,
       images,
     },
     twitter: {
       title,
+      description,
       images,
     },
   };

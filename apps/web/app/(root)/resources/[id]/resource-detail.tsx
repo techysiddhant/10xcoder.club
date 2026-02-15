@@ -31,9 +31,8 @@ import {
   Wrench,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import parse from "html-react-parser";
-import DOMPurify from "isomorphic-dompurify";
 import { AspectRatio } from "@workspace/ui/components/aspect-ratio";
+import { MarkdownRenderer } from "@/components/editor/markdown-renderer";
 function format(date: Date, pattern: string): string {
   if (pattern === "MMM d, yyyy") {
     return new Intl.DateTimeFormat("en-US", {
@@ -265,14 +264,10 @@ const ResourceDetail = ({ id }: { id: string }) => {
 
             {/* Description */}
             <div
-              className="prose prose-sm dark:prose-invert max-w-none mb-6"
+              className="max-w-none mb-6 text-[15px] leading-7"
               // dangerouslySetInnerHTML={{ __html: res.description ?? '' }}
             >
-              {parse(
-                DOMPurify.sanitize(res.description ?? "", {
-                  USE_PROFILES: { html: true },
-                }),
-              )}
+              <MarkdownRenderer content={res.description ?? ""} />
             </div>
 
             {/* Tech Stack */}

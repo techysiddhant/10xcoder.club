@@ -10,6 +10,8 @@ import {
   jsonb,
   vector,
   uuid,
+  check,
+  varchar,
 } from "drizzle-orm/pg-core";
 import { user } from "./user";
 import { resourceType } from "./resourceType";
@@ -96,6 +98,10 @@ export const resource = pgTable(
     deletedAt: timestamp("deleted_at"),
   },
   (table) => [
+    check(
+      "resource_description_max_5000_chk",
+      sql`${table.description} IS NULL OR char_length(${table.description}) <= 5000`,
+    ),
     index("resource_status_idx").on(table.status),
     index("resource_created_by_idx").on(table.createdBy),
     index("resource_deleted_at_idx").on(table.deletedAt),

@@ -86,7 +86,7 @@ const ResourceListSchema = t.Array(ResourceListItemSchema);
 export const createResourceSchema = {
   body: t.Object({
     title: t.String({ minLength: 1, maxLength: 200 }),
-    description: t.Optional(t.String({ maxLength: 2000 })),
+    description: t.Optional(t.String({ maxLength: 5000 })),
     url: t.String({ format: "uri" }),
     image: t.Optional(t.String()),
     credits: t.Optional(t.String({ maxLength: 500 })),
@@ -167,7 +167,7 @@ export const updateResourceSchema = {
   }),
   body: t.Object({
     title: t.Optional(t.String({ minLength: 1, maxLength: 200 })),
-    description: t.Optional(t.String({ maxLength: 2000 })),
+    description: t.Optional(t.String({ maxLength: 5000 })),
     url: t.Optional(t.String({ format: "uri" })),
     image: t.Optional(t.String()),
     credits: t.Optional(t.String({ maxLength: 500 })),

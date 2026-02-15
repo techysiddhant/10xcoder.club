@@ -25,7 +25,8 @@ import { createResource, resourceOptions, uploadImage } from "@/lib/http";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { uploadToS3 } from "@/lib/utils";
 import toast from "react-hot-toast";
-import { Editor } from "../editor/dynamic-editor";
+// import { Editor } from "../editor/dynamic-editor";
+import { PrMarkdownEditor } from "../editor/pr-markdown-editor";
 import { useRouter } from "next/navigation";
 interface CreateResourceFormProps {
   resourceAutoFillData: ResourceAutoFillData;
@@ -126,11 +127,11 @@ const CreateResourceForm = ({
       onSuccess: (response) => {
         toast.success("Resource added successfully");
         form.reset();
-        const id = response.data.id;
+        const id = response.data?.id;
         if (id) {
           router.push(`/resources/${id}`);
         } else {
-          router.push("/resources/submission");
+          router.push("/submissions");
         }
       },
       onError: (error) => {
@@ -305,20 +306,38 @@ const CreateResourceForm = ({
         <form.Field
           name="description"
           children={(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
+            const descriptionLength = (field.state.value ?? "").length;
+            const descriptionOverLimit = descriptionLength > 5000;
+            const showDescriptionError =
+              (field.state.meta.isTouched || descriptionOverLimit) &&
+              !field.state.meta.isValid;
             return (
-              <Field data-invalid={isInvalid}>
+              <Field
+                data-invalid={showDescriptionError || descriptionOverLimit}
+              >
                 <FieldLabel htmlFor="description-editor">
                   Description
                 </FieldLabel>
-                <div className="w-full min-h-[300px] border border-border rounded-2xl overflow-hidden">
-                  <Editor
+                <div className="w-full min-h-[300px] overflow-hidden">
+                  <PrMarkdownEditor
+                    value={field.state.value ?? ""}
+                    onChange={(content) => field.handleChange(content)}
+                    onBlur={field.handleBlur}
+                    disabled={isPending}
+                  />
+                  {/* <Editor
                     initialContent={field.state.value}
                     onChange={(content) => field.handleChange(content)}
-                  />
+                  /> */}
                 </div>
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                {descriptionOverLimit && (
+                  <p className="text-destructive text-sm">
+                    Description must be at most 5000 characters.
+                  </p>
+                )}
+                {showDescriptionError && (
+                  <FieldError errors={field.state.meta.errors} />
+                )}
               </Field>
             );
           }}

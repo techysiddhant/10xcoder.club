@@ -27,6 +27,24 @@ type UserAuth = {
 const DEFAULT_LIMIT = 20;
 const MAX_USER_RESOURCES_LIMIT = 100;
 const MAX_PUBLIC_LIMIT = 50;
+const UUID_V4_TO_V8_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isValidUuid(id: string): boolean {
+  return UUID_V4_TO_V8_PATTERN.test(id);
+}
+
+function notFoundResourceResponse(set: Context["set"]) {
+  set.status = HttpStatusEnum.HTTP_404_NOT_FOUND;
+  return errorResponse("NOT_FOUND", "Resource not found", 404);
+}
+
+function validateResourceIdOrNotFound(id: string, set: Context["set"]) {
+  if (!isValidUuid(id)) {
+    return notFoundResourceResponse(set);
+  }
+  return null;
+}
 
 // ==========================================
 // Get User's Own Resource by ID (any status)
@@ -41,11 +59,15 @@ export const getMyResourceById = async ({
   user: UserAuth;
   set: Context["set"];
 }) => {
+  const invalidIdResponse = validateResourceIdOrNotFound(params.id, set);
+  if (invalidIdResponse) {
+    return invalidIdResponse;
+  }
+
   const result = await getUserResourceById(params.id, user.id);
 
   if (!result) {
-    set.status = HttpStatusEnum.HTTP_404_NOT_FOUND;
-    return errorResponse("NOT_FOUND", "Resource not found", 404);
+    return notFoundResourceResponse(set);
   }
 
   return {
@@ -147,11 +169,15 @@ export const getResource = async ({
   set: Context["set"];
   userId?: string;
 }) => {
+  const invalidIdResponse = validateResourceIdOrNotFound(params.id, set);
+  if (invalidIdResponse) {
+    return invalidIdResponse;
+  }
+
   const result = await getResourceByIdForView(params.id, userId);
 
   if (!result) {
-    set.status = HttpStatusEnum.HTTP_404_NOT_FOUND;
-    return errorResponse("NOT_FOUND", "Resource not found", 404);
+    return notFoundResourceResponse(set);
   }
 
   return {
@@ -239,6 +265,11 @@ export const update = async ({
   user: UserAuth;
   set: Context["set"];
 }) => {
+  const invalidIdResponse = validateResourceIdOrNotFound(params.id, set);
+  if (invalidIdResponse) {
+    return invalidIdResponse;
+  }
+
   const result = await updateResource(
     params.id,
     { ...body, credits: body.credits },
@@ -284,6 +315,11 @@ export const remove = async ({
   user: UserAuth;
   set: Context["set"];
 }) => {
+  const invalidIdResponse = validateResourceIdOrNotFound(params.id, set);
+  if (invalidIdResponse) {
+    return invalidIdResponse;
+  }
+
   const result = await deleteResource(params.id, user.id);
 
   if ("error" in result) {
@@ -320,6 +356,11 @@ export const restore = async ({
   user: UserAuth;
   set: Context["set"];
 }) => {
+  const invalidIdResponse = validateResourceIdOrNotFound(params.id, set);
+  if (invalidIdResponse) {
+    return invalidIdResponse;
+  }
+
   const result = await restoreResource(params.id, user.id);
 
   if ("error" in result) {
@@ -338,8 +379,7 @@ export const restore = async ({
   }
 
   if (!result.data) {
-    set.status = HttpStatusEnum.HTTP_404_NOT_FOUND;
-    return errorResponse("NOT_FOUND", "Resource not found", 404);
+    return notFoundResourceResponse(set);
   }
 
   return {

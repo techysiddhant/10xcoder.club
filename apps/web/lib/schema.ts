@@ -17,7 +17,7 @@ export const resourceCreateSchema = z.object({
     .max(200, "Title must be at most 200 characters."),
   description: z
     .string()
-    .max(2000, "Description must be at most 2000 characters.")
+    .max(5000, "Description must be at most 5000 characters.")
     .optional()
     .or(z.literal("")),
   url: z.string().min(1, "URL is required.").url("Please enter a valid URL."),
