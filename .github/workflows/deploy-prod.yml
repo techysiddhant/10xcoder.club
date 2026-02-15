@@ -2,9 +2,9 @@ name: Deploy Production
 
 on:
   workflow_run:
-    workflows: ['Build and Push to GHCR']
+    workflows: ["Build and Push to GHCR"]
     types: [completed]
-    branches: ['main']
+    branches: ["main"]
 
 concurrency:
   group: deploy-production
@@ -47,7 +47,9 @@ jobs:
             docker-compose.yml,
             nginx,
             .env,
-            scripts
+            scripts,
+            apps/api/migration.Dockerfile,
+            apps/api/drizzle
           target: /home/${{ secrets.USERNAME }}/10xcoder-prod
 
       # ----------------------------------------------------------------------
@@ -92,7 +94,15 @@ jobs:
             done
 
             echo "🧪 Running migrations"
-            docker compose --profile migrate run --rm migrate || true
+            docker compose --profile migrate run --rm migrate
+
+            echo "🔍 Verifying required migrations in DB"
+            MISSING_TAGS=$(docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT string_agg(tag, ',') FROM (SELECT unnest(ARRAY['0003_uuidv7_resource_domain','0004_fine_description_limit']) AS tag EXCEPT SELECT \"tag\" FROM drizzle.__drizzle_migrations) t;")
+            if [ -n "$MISSING_TAGS" ]; then
+              echo "❌ Missing required migrations: $MISSING_TAGS"
+              exit 1
+            fi
+            echo "✅ Required migrations are present"
 
             echo "🗑️ Cleaning old images"
             docker image prune -f || true
