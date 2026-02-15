@@ -98,7 +98,7 @@ jobs:
 
             echo "🔍 Verifying required migrations in DB"
             set +e
-            PSQL_OUTPUT=$(docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT string_agg(tag, ',') FROM (SELECT unnest(ARRAY['0003_uuidv7_resource_domain','0004_fine_description_limit']) AS tag EXCEPT SELECT \"tag\" FROM drizzle.__drizzle_migrations) t;")
+            PSQL_OUTPUT=$(docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT string_agg(check_name, ',') FROM (SELECT 'resource_type_id_uuidv7_default' AS check_name WHERE NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resource_type' AND column_name = 'id' AND data_type = 'uuid' AND column_default ILIKE '%uuidv7%') UNION ALL SELECT 'resource_description_max_5000_chk' AS check_name WHERE NOT EXISTS (SELECT 1 FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid JOIN pg_namespace n ON n.oid = t.relnamespace WHERE n.nspname = 'public' AND t.relname = 'resource' AND c.conname = 'resource_description_max_5000_chk')) checks;")
             PSQL_STATUS=$?
             set -e
             if [ "$PSQL_STATUS" -ne 0 ]; then
@@ -107,10 +107,10 @@ jobs:
             fi
             MISSING_TAGS="$PSQL_OUTPUT"
             if [ -n "$MISSING_TAGS" ]; then
-              echo "❌ Missing required migrations: $MISSING_TAGS"
+              echo "❌ Missing required migration effects: $MISSING_TAGS"
               exit 1
             fi
-            echo "✅ Required migrations are present"
+            echo "✅ Required migration effects are present"
 
             echo "🗑️ Cleaning old images"
             docker image prune -f || true
