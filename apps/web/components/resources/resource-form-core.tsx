@@ -7,7 +7,6 @@ import {
 } from "@/lib/schema";
 import { useForm } from "@tanstack/react-form";
 import { ResourceAutoFillData } from "@workspace/database";
-import { ResourceLanguage } from "@workspace/schemas";
 import { useEffect, useRef, useState } from "react";
 import { Field, FieldError, FieldGroup } from "@workspace/ui/components/field";
 import { FieldLabel } from "@workspace/ui/components/field";
@@ -65,7 +64,7 @@ const ResourceFormCore = ({
       description: initialValues?.description || undefined,
       credits: initialValues?.credits || undefined,
       resourceType: initialValues?.resourceType || "",
-      language: (initialValues?.language as ResourceLanguage) ?? "english",
+      language: initialValues?.language ?? "english",
       image: initialValues?.image ?? "",
       tags: initialValues?.tags ?? [],
       techStack: initialValues?.techStack ?? [],
@@ -151,6 +150,21 @@ const ResourceFormCore = ({
     if (isPending) return;
     const file = e.target.files?.[0];
     if (file) {
+      const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        toast.error("Image must be under 5 MB.");
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
+      }
+      if (!file.type.startsWith("image/")) {
+        toast.error("Only image files are allowed.");
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
+      }
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {

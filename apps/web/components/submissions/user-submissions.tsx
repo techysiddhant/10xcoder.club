@@ -158,9 +158,7 @@ const UserSubmissions = ({
     total: kpiTotal,
   } = data.kpis;
 
-  const canEdit = (resource: ResourceListItem) =>
-    resource.status !== "approved" && !resource.isPublished;
-  const canDelete = (resource: ResourceListItem) =>
+  const canModify = (resource: ResourceListItem) =>
     resource.status !== "approved" && !resource.isPublished;
 
   const router = useRouter();
@@ -442,7 +440,7 @@ const UserSubmissions = ({
                               </Tooltip>
                             </TooltipProvider>
 
-                            {canEdit(resource) ? (
+                            {canModify(resource) ? (
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -474,14 +472,14 @@ const UserSubmissions = ({
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    Cannot edit approved resources
+                                    Cannot edit approved or published resources
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
                             )}
 
                             {/* Delete Button */}
-                            {canDelete(resource) ? (
+                            {canModify(resource) ? (
                               <AlertDialog>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -546,7 +544,8 @@ const UserSubmissions = ({
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    Cannot delete published resources
+                                    Cannot delete approved or published
+                                    resources
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>

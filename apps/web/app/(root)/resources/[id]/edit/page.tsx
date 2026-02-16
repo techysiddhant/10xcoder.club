@@ -21,14 +21,34 @@ import { authClient } from "@/lib/auth-client";
 import { getResourceById } from "@/lib/http";
 import EditResourceForm from "@/components/resources/edit-resource-form";
 
-const VALID_RESOURCE_TYPES = new Set(["video", "blog", "tool", "repo"]);
-const VALID_LANGUAGES = new Set(["english", "hindi"]);
+const VALID_RESOURCE_TYPES: ResourceAutoFillData["resourceType"][] = [
+  "video",
+  "blog",
+  "tool",
+  "repo",
+];
+const VALID_LANGUAGES: ResourceAutoFillData["language"][] = [
+  "english",
+  "hindi",
+];
+
+const isValidResourceType = (
+  value: unknown,
+): value is ResourceAutoFillData["resourceType"] =>
+  typeof value === "string" &&
+  VALID_RESOURCE_TYPES.includes(value as ResourceAutoFillData["resourceType"]);
+
+const isValidLanguage = (
+  value: unknown,
+): value is ResourceAutoFillData["language"] =>
+  typeof value === "string" &&
+  VALID_LANGUAGES.includes(value as ResourceAutoFillData["language"]);
 
 const toEditableValues = (resource: any): ResourceAutoFillData => {
-  const resourceType = VALID_RESOURCE_TYPES.has(resource?.resourceType)
+  const resourceType = isValidResourceType(resource?.resourceType)
     ? resource.resourceType
     : "blog";
-  const language = VALID_LANGUAGES.has(resource?.language)
+  const language = isValidLanguage(resource?.language)
     ? resource.language
     : "english";
 
@@ -55,7 +75,7 @@ const toEditableValues = (resource: any): ResourceAutoFillData => {
       method: "og_meta",
       cached: true,
     },
-  } as ResourceAutoFillData;
+  };
 };
 
 const EditResourcePage = () => {

@@ -25,6 +25,26 @@ const EditResourceForm = ({
 }: EditResourceFormProps) => {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const patchResourceCache = (
+    queryKey: readonly unknown[],
+    value: ResourceCreateClient,
+  ) => {
+    queryClient.setQueryData(queryKey, (existing: any) => {
+      if (!existing || typeof existing !== "object") {
+        return existing;
+      }
+      return {
+        ...existing,
+        title: value.title,
+        description: value.description,
+        image: value.image,
+        credits: value.credits,
+        resourceType: value.resourceType,
+        language: value.language,
+        url: value.url,
+      };
+    });
+  };
 
   const { mutateAsync: updateResourceMutation, isPending: isUpdatingResource } =
     useMutation({
@@ -35,8 +55,19 @@ const EditResourceForm = ({
   const handleSubmit = async (value: ResourceCreateClient) => {
     try {
       await updateResourceMutation(value);
+      patchResourceCache(["resource-detail-edit", resourceId], value);
+      patchResourceCache(["resource-detail", resourceId], value);
+      patchResourceCache(["resource", resourceId], value);
       toast.success("Resource updated successfully");
-      await queryClient.invalidateQueries({ queryKey: ["user-submissions"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["user-submissions"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["resource-detail-edit", resourceId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["resource-detail", resourceId],
+        }),
+      ]);
       onSuccess?.();
       if (!onSuccess) {
         router.push("/submissions");
