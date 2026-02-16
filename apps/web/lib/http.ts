@@ -69,3 +69,43 @@ export const getUserSubmissions = ({
   });
 
 export const deleteResource = (id: string) => api.delete(`/resources/${id}`);
+
+export const getAdminResources = ({
+  page,
+  limit,
+  status,
+  search,
+  resourceType,
+}: {
+  page: number;
+  limit: number;
+  status: "approved" | "rejected" | "pending" | "all";
+  search: string;
+  resourceType: string;
+}) =>
+  api.get(`/admin/resources`, {
+    params: {
+      page,
+      limit,
+      ...(status !== "all" && { status }),
+      ...(search.trim() && { search }),
+      ...(resourceType !== "all" && { resourceType }),
+    },
+  });
+
+export const updateAdminResourceStatus = ({
+  id,
+  status,
+  reason,
+}: {
+  id: string;
+  status: "approved" | "rejected";
+  reason?: string;
+}) =>
+  api.patch(`/admin/resources/${id}/status`, {
+    status,
+    ...(reason ? { reason } : {}),
+  });
+
+export const deleteAdminResource = (id: string) =>
+  api.delete(`/admin/resources/${id}`);

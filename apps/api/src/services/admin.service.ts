@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { resource } from "@workspace/database";
+import { resource, resourceType } from "@workspace/database";
 import { eq, desc, isNull, and, sql, ilike, or } from "drizzle-orm";
 import {
   getEmbedding,
@@ -12,6 +12,7 @@ interface AdminListResourcesInput {
   limit?: number;
   status?: "approved" | "rejected" | "pending";
   search?: string;
+  resourceType?: string;
 }
 
 interface UpdateResourceStatusInput {
@@ -31,7 +32,13 @@ function escapeLikePattern(value: string): string {
 // Get All Resources (Admin - includes all statuses)
 // ==========================================
 export async function adminGetAllResources(query: AdminListResourcesInput) {
-  const { page = 1, limit = 20, status, search } = query;
+  const {
+    page = 1,
+    limit = 20,
+    status,
+    search,
+    resourceType: resourceTypeName,
+  } = query;
   // Clamp page and limit to avoid negative offsets or division by zero
   const pageClamped = Math.max(1, page);
   const limitClamped = Math.max(1, limit);
@@ -55,6 +62,28 @@ export async function adminGetAllResources(query: AdminListResourcesInput) {
     );
   }
 
+  if (resourceTypeName) {
+    const matchedType = await db.query.resourceType.findFirst({
+      where: eq(resourceType.name, resourceTypeName),
+      columns: { id: true },
+    });
+
+    // Resource type doesn't exist, so return empty dataset for this filter.
+    if (!matchedType?.id) {
+      return {
+        data: [],
+        meta: {
+          total: 0,
+          page: pageClamped,
+          limit: limitClamped,
+          totalPages: 0,
+        },
+      };
+    }
+
+    conditions.push(eq(resource.resourceTypeId, matchedType.id));
+  }
+
   // Get total count
   const countResult = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -74,6 +103,7 @@ export async function adminGetAllResources(query: AdminListResourcesInput) {
       resourceToTechStack: {
         with: { techStack: true },
       },
+      resourceType: true,
       creator: {
         columns: {
           id: true,
@@ -90,13 +120,21 @@ export async function adminGetAllResources(query: AdminListResourcesInput) {
   });
 
   // Transform response
-  const data = resources.map((r) => ({
-    ...r,
-    tags: r.resourceToTags.map((rt) => rt.tag),
-    techStack: r.resourceToTechStack.map((rts) => rts.techStack),
-    resourceToTags: undefined,
-    resourceToTechStack: undefined,
-  }));
+  const data = resources.map((r) => {
+    const {
+      resourceToTags: rtt,
+      resourceToTechStack: rtts,
+      resourceType: rt,
+      ...rest
+    } = r;
+    return {
+      ...rest,
+      resourceType: rt?.name ?? null,
+      resourceTypeLabel: rt?.label ?? null,
+      tags: rtt.map((item) => item.tag),
+      techStack: rtts.map((item) => item.techStack),
+    };
+  });
 
   return {
     data,
