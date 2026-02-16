@@ -159,7 +159,7 @@ const UserSubmissions = ({
   } = data.kpis;
 
   const canEdit = (resource: ResourceListItem) =>
-    resource.status !== "approved";
+    resource.status !== "approved" && !resource.isPublished;
   const canDelete = (resource: ResourceListItem) =>
     resource.status !== "approved" && !resource.isPublished;
 

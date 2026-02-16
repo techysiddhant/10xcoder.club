@@ -13,7 +13,7 @@ const page = () => {
       <HowCurationWorks />
       <WhyThisExists />
       <ExamplePreview />
-      <BuiltByDevelopers />
+      {/* <BuiltByDevelopers /> */}
       <CTA />
     </>
   );

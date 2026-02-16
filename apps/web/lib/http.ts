@@ -10,6 +10,11 @@ export const resourceOptions = () => api.get(`/resources/options`);
 export const createResource = (resource: ResourceCreateClient) =>
   api.post(`/resources`, { ...resource });
 
+export const updateResource = (
+  id: string,
+  resource: Partial<ResourceCreateClient>,
+) => api.put(`/resources/${id}`, { ...resource });
+
 export const uploadImage = ({
   fileName,
   fileType,
