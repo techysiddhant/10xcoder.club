@@ -91,7 +91,7 @@ export type ResourceAutoFillData = {
   image: string;
   credits: string;
   resourceType: "video" | "blog" | "tool" | "repo";
-  language: "english";
+  language: "english" | "hindi";
   tags: string[];
   techStack: string[];
   _meta: ResourceAutoFillMeta;
