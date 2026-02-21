@@ -38,20 +38,6 @@ export function ReadMoreDescription({
 
   if (!content?.trim()) return null;
 
-  const collapsedFadeStyle =
-    showToggle && !isExpanded
-      ? {
-          WebkitMaskImage:
-            "linear-gradient(to bottom, rgba(0,0,0,1) 58%, rgba(0,0,0,0.35) 82%, rgba(0,0,0,0) 100%)",
-          maskImage:
-            "linear-gradient(to bottom, rgba(0,0,0,1) 58%, rgba(0,0,0,0.35) 82%, rgba(0,0,0,0) 100%)",
-          WebkitMaskRepeat: "no-repeat",
-          maskRepeat: "no-repeat",
-          WebkitMaskSize: "100% 100%",
-          maskSize: "100% 100%",
-        }
-      : undefined;
-
   return (
     <div className={cn("relative", className)}>
       <div
@@ -70,11 +56,7 @@ export function ReadMoreDescription({
             : undefined
         }
       >
-        <div
-          ref={contentRef}
-          className="max-w-none text-[15px] leading-7"
-          style={collapsedFadeStyle}
-        >
+        <div ref={contentRef} className="max-w-none text-[15px] leading-7">
           <MarkdownRenderer content={content} />
         </div>
       </div>

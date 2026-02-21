@@ -36,10 +36,11 @@ export const VoteCounter = ({
   useEffect(() => {
     if (value === prevRef.current) return;
 
-    const dir = value > prevRef.current ? "up" : "down";
+    const old = prevRef.current;
+    const dir = value > old ? "up" : "down";
     setState((prev) => ({
       current: value,
-      previous: prevRef.current,
+      previous: old,
       direction: dir,
       animKey: prev.animKey + 1,
     }));
@@ -60,7 +61,7 @@ export const VoteCounter = ({
       <span
         aria-hidden="true"
         className={cn(
-          "invisible block px-px text-xs font-semibold tabular-nums",
+          "invisible block px-px  font-semibold tabular-nums",
           className,
         )}
       >

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 import { useInView } from "react-intersection-observer";
-import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 
 import ResourceFilter from "@/components/resources/resource-filter";
 import ResourceGrid from "@/components/resources/resource-grid";
@@ -13,72 +12,18 @@ import { useResources } from "@/hooks/use-resources";
 import { Loader2 } from "lucide-react";
 import CreateResource from "@/components/resources/create-resource";
 import { useVote } from "@/hooks/use-vote";
-import type {
-  GetResourcesResponse,
-  ResourceDetailItem,
-  ResourceListItem,
-} from "@/lib/types";
+import type { ResourceListItem } from "@/lib/types";
+import {
+  applyVoteChange,
+  clampVoteCount,
+  mapApiVoteToUiVote,
+} from "@/lib/vote-utils";
+import { useVoteCache } from "@/hooks/use-vote-cache";
 
 const FILTER_DEBOUNCE_MS = 400;
 
-const mapApiVoteToUiVote = (
-  userVote: ResourceListItem["userVote"],
-): "up" | "down" | null => {
-  if (userVote === "upvote") return "up";
-  if (userVote === "downvote") return "down";
-  return null;
-};
-
-const mapUiVoteToApiVote = (
-  userVote: "up" | "down" | null,
-): ResourceListItem["userVote"] => {
-  if (userVote === "up") return "upvote";
-  if (userVote === "down") return "downvote";
-  return null;
-};
-
-const clampVoteCount = (count: number) => Math.max(0, count);
-
-const applyVoteChange = (
-  resource: ResourceListItem,
-  nextVote: "up" | "down" | null,
-): ResourceListItem => {
-  const prevVote = mapApiVoteToUiVote(resource.userVote);
-  let upvotes = clampVoteCount(resource.upvoteCount);
-  let downvotes = clampVoteCount(resource.downvoteCount);
-
-  if (prevVote === nextVote) {
-    return resource;
-  }
-
-  if (prevVote === "up") upvotes = Math.max(0, upvotes - 1);
-  if (prevVote === "down") downvotes = Math.max(0, downvotes - 1);
-  if (nextVote === "up") upvotes += 1;
-  if (nextVote === "down") downvotes += 1;
-
-  return {
-    ...resource,
-    userVote: mapUiVoteToApiVote(nextVote),
-    upvoteCount: clampVoteCount(upvotes),
-    downvoteCount: clampVoteCount(downvotes),
-  };
-};
-
-const applyVoteChangeToDetail = (
-  resource: ResourceDetailItem,
-  nextVote: "up" | "down" | null,
-): ResourceDetailItem => {
-  const next = applyVoteChange(resource, nextVote);
-  return {
-    ...resource,
-    userVote: next.userVote,
-    upvoteCount: next.upvoteCount,
-    downvoteCount: next.downvoteCount,
-  };
-};
-
 const Resources = () => {
-  const queryClient = useQueryClient();
+  const { patchResourcesCache, patchResourceDetailCache } = useVoteCache();
   const { submitVote } = useVote();
   const [searchQuery, setSearchQuery] = useQueryState(
     "q",
@@ -144,47 +89,6 @@ const Resources = () => {
     return data.pages.flatMap((page) => page.data);
   }, [data]);
 
-  const patchResourcesCache = useCallback(
-    (
-      resourceId: string,
-      updater: (resource: ResourceListItem) => ResourceListItem,
-    ) => {
-      queryClient.setQueriesData<InfiniteData<GetResourcesResponse>>(
-        { queryKey: ["resources"] },
-        (current) => {
-          if (!current) return current;
-
-          return {
-            ...current,
-            pages: current.pages.map((page) => ({
-              ...page,
-              data: page.data.map((resource) =>
-                resource.id === resourceId ? updater(resource) : resource,
-              ),
-            })),
-          };
-        },
-      );
-    },
-    [queryClient],
-  );
-
-  const patchResourceDetailCache = useCallback(
-    (
-      resourceId: string,
-      updater: (resource: ResourceDetailItem) => ResourceDetailItem,
-    ) => {
-      queryClient.setQueryData<ResourceDetailItem | undefined>(
-        ["resource", resourceId],
-        (current) => {
-          if (!current) return current;
-          return updater(current);
-        },
-      );
-    },
-    [queryClient],
-  );
-
   const handleVote = useCallback(
     (id: string, vote: "up" | "down" | null) => {
       const previousResource = resources.find((resource) => resource.id === id);
@@ -197,7 +101,7 @@ const Resources = () => {
 
       patchResourcesCache(id, (resource) => applyVoteChange(resource, vote));
       patchResourceDetailCache(id, (resource) =>
-        applyVoteChangeToDetail(resource, vote),
+        applyVoteChange(resource, vote),
       );
 
       void submitVote({ resourceId: id, targetVote })

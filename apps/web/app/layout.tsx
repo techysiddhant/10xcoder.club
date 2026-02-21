@@ -7,7 +7,6 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { publicEnv } from "@/env/public";
-import { VoteStreamProvider } from "@/components/providers/vote-stream-provider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

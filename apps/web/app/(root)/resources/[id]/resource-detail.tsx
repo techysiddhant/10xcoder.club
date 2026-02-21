@@ -1,13 +1,8 @@
 "use client";
 import { getResourceById } from "@/lib/http";
-import type {
-  GetResourcesResponse,
-  ResourceDetailItem,
-  ResourceListItem,
-  ResourcePlaylistItem,
-} from "@/lib/types";
+import type { ResourceDetailItem, ResourcePlaylistItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { InfiniteData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Avatar,
   AvatarFallback,
@@ -37,10 +32,13 @@ import { useRouter } from "next/navigation";
 import { AspectRatio } from "@workspace/ui/components/aspect-ratio";
 import { ReadMoreDescription } from "@/components/resources/read-more-description";
 import { useVote } from "@/hooks/use-vote";
-import { useCallback } from "react";
 import { VoteCounter } from "@/components/resources/vote-counter";
 import { VoteArrowIcon } from "@/components/resources/vote-arrow-icon";
-import toast from "react-hot-toast";
+import {
+  createOptimisticVoteUpdater,
+  useVoteCache,
+} from "@/hooks/use-vote-cache";
+import { clampVoteCount, mapApiVoteToUiVote } from "@/lib/vote-utils";
 function format(date: Date, pattern: string): string {
   if (pattern === "MMM d, yyyy") {
     return new Intl.DateTimeFormat("en-US", {
@@ -76,10 +74,8 @@ const statusColors = {
   rejected: "bg-red-500/10 text-red-600 border-red-500/20",
 };
 
-const clampVoteCount = (count: number) => Math.max(0, count);
-
 const ResourceDetail = ({ id }: { id: string }) => {
-  const queryClient = useQueryClient();
+  const { patchResourcesCache, patchResourceDetailCache } = useVoteCache();
   const { submitVote } = useVote();
   const {
     data: resource,
@@ -93,42 +89,9 @@ const ResourceDetail = ({ id }: { id: string }) => {
       getResourceById(id).then((res) => res.data.data as ResourceDetailItem),
   });
   const router = useRouter();
-  const patchResourceCache = useCallback(
-    (updater: (existing: ResourceDetailItem) => ResourceDetailItem) => {
-      queryClient.setQueryData<ResourceDetailItem | undefined>(
-        ["resource", id],
-        (existing) => {
-          if (!existing) return existing;
-          return updater(existing);
-        },
-      );
-    },
-    [id, queryClient],
-  );
-  const patchResourcesCache = useCallback(
-    (
-      resourceId: string,
-      updater: (resource: ResourceListItem) => ResourceListItem,
-    ) => {
-      queryClient.setQueriesData<InfiniteData<GetResourcesResponse>>(
-        { queryKey: ["resources"] },
-        (current) => {
-          if (!current) return current;
-
-          return {
-            ...current,
-            pages: current.pages.map((page) => ({
-              ...page,
-              data: page.data.map((resource) =>
-                resource.id === resourceId ? updater(resource) : resource,
-              ),
-            })),
-          };
-        },
-      );
-    },
-    [queryClient],
-  );
+  const patchResourceCache = (
+    updater: (existing: ResourceDetailItem) => ResourceDetailItem,
+  ) => patchResourceDetailCache(id, updater);
 
   if (isError) {
     return (
@@ -192,12 +155,7 @@ const ResourceDetail = ({ id }: { id: string }) => {
 
   const res = resource!;
   const Icon = typeIcons[res.resourceType] ?? BookOpen;
-  const userVote: "up" | "down" | null =
-    res.userVote === "upvote"
-      ? "up"
-      : res.userVote === "downvote"
-        ? "down"
-        : null;
+  const userVote = mapApiVoteToUiVote(res.userVote);
   const upvoteCount = clampVoteCount(res.upvoteCount ?? 0);
   const downvoteCount = clampVoteCount(res.downvoteCount ?? 0);
   const handleVote = (voteType: "up" | "down") => {
@@ -211,48 +169,9 @@ const ResourceDetail = ({ id }: { id: string }) => {
       downvoteCount,
     };
 
-    patchResourceCache((existing) => {
-      let nextUpvotes = clampVoteCount(existing.upvoteCount);
-      let nextDownvotes = clampVoteCount(existing.downvoteCount);
-
-      if (userVote === "up") nextUpvotes = Math.max(0, nextUpvotes - 1);
-      if (userVote === "down") nextDownvotes = Math.max(0, nextDownvotes - 1);
-      if (nextVote === "up") nextUpvotes += 1;
-      if (nextVote === "down") nextDownvotes += 1;
-
-      return {
-        ...existing,
-        userVote:
-          nextVote === "up"
-            ? "upvote"
-            : nextVote === "down"
-              ? "downvote"
-              : null,
-        upvoteCount: clampVoteCount(nextUpvotes),
-        downvoteCount: clampVoteCount(nextDownvotes),
-      };
-    });
-    patchResourcesCache(id, (existing) => {
-      let nextUpvotes = clampVoteCount(existing.upvoteCount);
-      let nextDownvotes = clampVoteCount(existing.downvoteCount);
-
-      if (userVote === "up") nextUpvotes = Math.max(0, nextUpvotes - 1);
-      if (userVote === "down") nextDownvotes = Math.max(0, nextDownvotes - 1);
-      if (nextVote === "up") nextUpvotes += 1;
-      if (nextVote === "down") nextDownvotes += 1;
-
-      return {
-        ...existing,
-        userVote:
-          nextVote === "up"
-            ? "upvote"
-            : nextVote === "down"
-              ? "downvote"
-              : null,
-        upvoteCount: clampVoteCount(nextUpvotes),
-        downvoteCount: clampVoteCount(nextDownvotes),
-      };
-    });
+    const optimisticUpdater = createOptimisticVoteUpdater(userVote, nextVote);
+    patchResourceCache(optimisticUpdater);
+    patchResourcesCache(id, optimisticUpdater);
 
     void submitVote({ resourceId: id, targetVote })
       .then((result) => {
@@ -270,7 +189,6 @@ const ResourceDetail = ({ id }: { id: string }) => {
         }));
       })
       .catch(() => {
-        toast.error("Failed to vote. Please try again.");
         patchResourceCache((existing) => ({
           ...existing,
           userVote: previousState.userVote,
