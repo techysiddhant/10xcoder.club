@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 import { useInView } from "react-intersection-observer";
+import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 
 import ResourceFilter from "@/components/resources/resource-filter";
 import ResourceGrid from "@/components/resources/resource-grid";
@@ -12,7 +13,7 @@ import { useResources } from "@/hooks/use-resources";
 import { Loader2 } from "lucide-react";
 import CreateResource from "@/components/resources/create-resource";
 import { useVote } from "@/hooks/use-vote";
-import type { ResourceListItem } from "@/lib/types";
+import type { GetResourcesResponse, ResourceListItem } from "@/lib/types";
 import {
   applyVoteChange,
   clampVoteCount,
@@ -23,6 +24,7 @@ import { useVoteCache } from "@/hooks/use-vote-cache";
 const FILTER_DEBOUNCE_MS = 400;
 
 const Resources = () => {
+  const queryClient = useQueryClient();
   const { patchResourcesCache, patchResourceDetailCache } = useVoteCache();
   const { submitVote } = useVote();
   const [searchQuery, setSearchQuery] = useQueryState(
@@ -91,10 +93,23 @@ const Resources = () => {
 
   const handleVote = useCallback(
     (id: string, vote: "up" | "down" | null) => {
-      const previousResource = resources.find((resource) => resource.id === id);
-      if (!previousResource) return;
+      const resourcesSnapshots = queryClient.getQueriesData<
+        InfiniteData<GetResourcesResponse>
+      >({
+        queryKey: ["resources"],
+      });
+      const liveResource = resourcesSnapshots
+        .flatMap(([, queryData]) => queryData?.pages ?? [])
+        .flatMap((page) => page.data)
+        .find((resource) => resource.id === id);
+      if (!liveResource) return;
 
-      const currentVote = mapApiVoteToUiVote(previousResource.userVote);
+      const rollbackSnapshot = {
+        userVote: liveResource.userVote,
+        upvoteCount: clampVoteCount(liveResource.upvoteCount),
+        downvoteCount: clampVoteCount(liveResource.downvoteCount),
+      };
+      const currentVote = mapApiVoteToUiVote(liveResource.userVote);
       const targetVote = vote ?? currentVote;
 
       if (!targetVote) return;
@@ -128,21 +143,21 @@ const Resources = () => {
             resource: ResourceListItem,
           ): ResourceListItem => ({
             ...resource,
-            userVote: previousResource.userVote,
-            upvoteCount: clampVoteCount(previousResource.upvoteCount),
-            downvoteCount: clampVoteCount(previousResource.downvoteCount),
+            userVote: rollbackSnapshot.userVote,
+            upvoteCount: rollbackSnapshot.upvoteCount,
+            downvoteCount: rollbackSnapshot.downvoteCount,
           });
 
           patchResourcesCache(id, rollbackVoteState);
           patchResourceDetailCache(id, (resource) => ({
             ...resource,
-            userVote: previousResource.userVote,
-            upvoteCount: clampVoteCount(previousResource.upvoteCount),
-            downvoteCount: clampVoteCount(previousResource.downvoteCount),
+            userVote: rollbackSnapshot.userVote,
+            upvoteCount: rollbackSnapshot.upvoteCount,
+            downvoteCount: rollbackSnapshot.downvoteCount,
           }));
         });
     },
-    [patchResourceDetailCache, patchResourcesCache, resources, submitVote],
+    [patchResourceDetailCache, patchResourcesCache, queryClient, submitVote],
   );
 
   const handleResourceCreate = useCallback(() => {
