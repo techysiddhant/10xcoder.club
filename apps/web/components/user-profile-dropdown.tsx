@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@workspace/ui/components/dropdown-menu";
-import { FileText, LogOut, User } from "lucide-react";
+import { FileText, LogOut, Settings, User } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -111,7 +111,21 @@ const UserProfileDropdown = () => {
                         <span>My Experiences</span>
                     </Link>
                 </DropdownMenuItem> */}
-        <DropdownMenuSeparator />
+        {user.role === "ADMIN" && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link
+                href="/admin/resources"
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Admin Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
+
         <DropdownMenuItem
           //   onClick={handleSignOut}
           onSelect={handleSignOut}
