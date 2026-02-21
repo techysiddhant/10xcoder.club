@@ -2,6 +2,13 @@ import { api } from "./api";
 import { ResourceCreateClient } from "./schema";
 import { GetResourcesParams } from "./types";
 
+export type VoteResponse = {
+  status: number;
+  userVote: "upvote" | "downvote" | null;
+  upvotes: number;
+  downvotes: number;
+};
+
 export const autoFillResourceDetails = (url: string) =>
   api.post(`/scrape`, { url });
 
@@ -49,6 +56,12 @@ export const getResources = (params: GetResourcesParams) =>
   });
 
 export const getResourceById = (id: string) => api.get(`/resources/${id}`);
+
+export const upvoteResource = (resourceId: string) =>
+  api.post<VoteResponse>(`/vote/${resourceId}/upvote`);
+
+export const downvoteResource = (resourceId: string) =>
+  api.post<VoteResponse>(`/vote/${resourceId}/downvote`);
 
 export const getUserSubmissions = ({
   page,

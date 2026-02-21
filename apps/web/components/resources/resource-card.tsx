@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useMemo } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import {
@@ -14,14 +14,14 @@ import {
   GraduationCap,
   Podcast,
   ExternalLink,
-  ArrowBigUp,
-  ArrowBigDown,
   User,
 } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
 import { useRouter } from "next/navigation";
 import type { ResourceListItem } from "@/lib/types";
 import Link from "next/link";
+import { VoteCounter } from "./vote-counter";
+import { VoteArrowIcon } from "./vote-arrow-icon";
 
 interface ResourceCardProps {
   resource: ResourceListItem;
@@ -46,96 +46,15 @@ const typeColors: Record<string, string> = {
   podcast: "bg-cyan-500/10 text-cyan-500",
 };
 
-// Animated counter component with smooth spring-like animation
-const AnimatedCounter = ({
-  value,
-  color,
-}: {
-  value: number;
-  color: string;
-}) => {
-  const [displayValue, setDisplayValue] = useState(value);
-  const [prevDisplayValue, setPrevDisplayValue] = useState(value);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [direction, setDirection] = useState<"up" | "down">("up");
-  const prevValue = useRef(value);
-
-  useEffect(() => {
-    if (value !== prevValue.current) {
-      setPrevDisplayValue(prevValue.current);
-      setDirection(value > prevValue.current ? "up" : "down");
-      setIsAnimating(true);
-
-      const timer = setTimeout(() => {
-        setDisplayValue(value);
-        setIsAnimating(false);
-      }, 200);
-
-      prevValue.current = value;
-      return () => clearTimeout(timer);
-    }
-  }, [value]);
-
-  return (
-    <div className="relative h-4 overflow-hidden w-8 flex items-center justify-center">
-      <span
-        className={cn(
-          "absolute transition-all duration-200 ease-out font-medium text-xs tabular-nums",
-          isAnimating && direction === "up" && "-translate-y-full opacity-0",
-          isAnimating && direction === "down" && "translate-y-full opacity-0",
-          !isAnimating && "translate-y-0 opacity-100",
-          color,
-        )}
-      >
-        {isAnimating ? prevDisplayValue : displayValue}
-      </span>
-      {isAnimating && (
-        <span
-          className={cn(
-            "absolute font-medium text-xs tabular-nums transition-all duration-200 ease-out",
-            direction === "up"
-              ? "translate-y-full opacity-0 animate-[slideInUp_0.2s_ease-out_forwards]"
-              : "-translate-y-full opacity-0 animate-[slideInDown_0.2s_ease-out_forwards]",
-            color,
-          )}
-        >
-          {value}
-        </span>
-      )}
-    </div>
-  );
-};
-
 const ResourceCard = ({ resource, onVote }: ResourceCardProps) => {
   const router = useRouter();
-  // Map API vote format to component format
-  const initialVote =
-    resource.userVote === "upvote"
-      ? "up"
-      : resource.userVote === "downvote"
-        ? "down"
-        : null;
-  const [userVote, setUserVote] = useState<"up" | "down" | null>(initialVote);
-  const [upvoteCount, setUpvoteCount] = useState(resource.upvoteCount);
-  const [downvoteCount, setDownvoteCount] = useState(resource.downvoteCount);
-
-  // Resync state when resource changes (e.g. after vote or refetch) so we don't rely on remount
-  useEffect(() => {
-    setUserVote(
-      resource.userVote === "upvote"
-        ? "up"
-        : resource.userVote === "downvote"
-          ? "down"
-          : null,
-    );
-    setUpvoteCount(resource.upvoteCount);
-    setDownvoteCount(resource.downvoteCount);
-  }, [
-    resource.id,
-    resource.userVote,
-    resource.upvoteCount,
-    resource.downvoteCount,
-  ]);
+  const userVote: "up" | "down" | null = useMemo(() => {
+    if (resource.userVote === "upvote") return "up";
+    if (resource.userVote === "downvote") return "down";
+    return null;
+  }, [resource.userVote]);
+  const upvoteCount = resource.upvoteCount;
+  const downvoteCount = resource.downvoteCount;
 
   const Icon = typeIcons[resource.resourceType] || BookOpen;
   const colorClass = typeColors[resource.resourceType] || typeColors.article;
@@ -149,32 +68,14 @@ const ResourceCard = ({ resource, onVote }: ResourceCardProps) => {
     if (userVote === voteType) {
       // Clicking the same vote again removes it
       newVote = null;
-      if (voteType === "up") {
-        setUpvoteCount((prev) => prev - 1);
-      } else {
-        setDownvoteCount((prev) => prev - 1);
-      }
     } else if (userVote === null) {
       // No previous vote, add new vote
       newVote = voteType;
-      if (voteType === "up") {
-        setUpvoteCount((prev) => prev + 1);
-      } else {
-        setDownvoteCount((prev) => prev + 1);
-      }
     } else {
       // Switching vote
       newVote = voteType;
-      if (voteType === "up") {
-        setUpvoteCount((prev) => prev + 1);
-        setDownvoteCount((prev) => prev - 1);
-      } else {
-        setUpvoteCount((prev) => prev - 1);
-        setDownvoteCount((prev) => prev + 1);
-      }
     }
 
-    setUserVote(newVote);
     onVote(resource.id, newVote);
   };
 
@@ -301,27 +202,23 @@ const ResourceCard = ({ resource, onVote }: ResourceCardProps) => {
               aria-label="Upvote resource"
               aria-pressed={userVote === "up"}
               className={cn(
-                "group/vote flex items-center gap-1 rounded-full px-2.5 py-1 transition-all duration-200",
-                "active:scale-95",
+                "group/vote cursor-pointer inline-flex items-center gap-1.5 rounded-lg border px-1.5 py-1.5 transition-all duration-200",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95",
                 userVote === "up"
-                  ? "bg-emerald-500 text-white shadow-sm"
-                  : "bg-muted/50 hover:bg-emerald-500/10 text-muted-foreground hover:text-emerald-600",
+                  ? "border-primary/40 bg-[#10141a] text-primary shadow-sm"
+                  : "border-[#242a33] bg-[#10141a] text-[#f5f7fa] hover:border-[#323a46] hover:bg-[#131821]",
               )}
             >
-              <ArrowBigUp
+              <VoteArrowIcon
+                direction="up"
+                active={userVote === "up"}
                 className={cn(
-                  "w-4 h-4 transition-all duration-200",
-                  userVote === "up"
-                    ? "fill-white"
-                    : "group-hover/vote:fill-emerald-500/20",
+                  "h-4 w-4 transition-all duration-200",
+                  userVote !== "up" && "group-hover/vote:scale-110",
                 )}
-                aria-hidden
               />
               <span aria-hidden="true">
-                <AnimatedCounter
-                  value={upvoteCount}
-                  color={userVote === "up" ? "text-white" : "text-inherit"}
-                />
+                <VoteCounter value={upvoteCount} className="text-[#f5f7fa]" />
               </span>
               <span className="sr-only" aria-live="polite">
                 {upvoteCount} upvotes
@@ -335,27 +232,23 @@ const ResourceCard = ({ resource, onVote }: ResourceCardProps) => {
               aria-label="Downvote resource"
               aria-pressed={userVote === "down"}
               className={cn(
-                "group/vote flex items-center gap-1 rounded-full px-2.5 py-1 transition-all duration-200",
-                "active:scale-95",
+                "group/vote cursor-pointer inline-flex items-center gap-1.5 rounded-lg border px-1.5 py-1.5 transition-all duration-200",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95",
                 userVote === "down"
-                  ? "bg-rose-500 text-white shadow-sm"
-                  : "bg-muted/50 hover:bg-rose-500/10 text-muted-foreground hover:text-rose-600",
+                  ? "border-[#2f2930] bg-[#10141a] text-[#f87171] shadow-[0_0_0_1px_rgba(248,113,113,0.12)]"
+                  : "border-[#242a33] bg-[#10141a] text-[#f5f7fa] hover:border-[#323a46] hover:bg-[#131821]",
               )}
             >
-              <ArrowBigDown
+              <VoteArrowIcon
+                direction="down"
+                active={userVote === "down"}
                 className={cn(
-                  "w-4 h-4 transition-all duration-200",
-                  userVote === "down"
-                    ? "fill-white"
-                    : "group-hover/vote:fill-rose-500/20",
+                  "h-4 w-4 transition-all duration-200",
+                  userVote !== "down" && "group-hover/vote:scale-110",
                 )}
-                aria-hidden
               />
               <span aria-hidden="true">
-                <AnimatedCounter
-                  value={downvoteCount}
-                  color={userVote === "down" ? "text-white" : "text-inherit"}
-                />
+                <VoteCounter value={downvoteCount} className="text-[#f5f7fa]" />
               </span>
               <span className="sr-only" aria-live="polite">
                 {downvoteCount} downvotes

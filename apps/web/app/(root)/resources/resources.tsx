@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 import { useInView } from "react-intersection-observer";
+import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 
 import ResourceFilter from "@/components/resources/resource-filter";
 import ResourceGrid from "@/components/resources/resource-grid";
@@ -11,10 +12,21 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useResources } from "@/hooks/use-resources";
 import { Loader2 } from "lucide-react";
 import CreateResource from "@/components/resources/create-resource";
+import { useVote } from "@/hooks/use-vote";
+import type { GetResourcesResponse, ResourceListItem } from "@/lib/types";
+import {
+  applyVoteChange,
+  clampVoteCount,
+  mapApiVoteToUiVote,
+} from "@/lib/vote-utils";
+import { useVoteCache } from "@/hooks/use-vote-cache";
 
 const FILTER_DEBOUNCE_MS = 400;
 
 const Resources = () => {
+  const queryClient = useQueryClient();
+  const { patchResourcesCache, patchResourceDetailCache } = useVoteCache();
+  const { submitVote } = useVote();
   const [searchQuery, setSearchQuery] = useQueryState(
     "q",
     parseAsString.withDefault(""),
@@ -77,11 +89,76 @@ const Resources = () => {
   const resources = useMemo(() => {
     if (!data?.pages) return [];
     return data.pages.flatMap((page) => page.data);
-  }, [data?.pages]);
+  }, [data]);
 
-  const handleVote = useCallback((id: string, vote: "up" | "down" | null) => {
-    // TODO: Implement vote mutation
-  }, []);
+  const handleVote = useCallback(
+    (id: string, vote: "up" | "down" | null) => {
+      const resourcesSnapshots = queryClient.getQueriesData<
+        InfiniteData<GetResourcesResponse>
+      >({
+        queryKey: ["resources"],
+      });
+      const liveResource = resourcesSnapshots
+        .flatMap(([, queryData]) => queryData?.pages ?? [])
+        .flatMap((page) => page.data)
+        .find((resource) => resource.id === id);
+      if (!liveResource) return;
+
+      const rollbackSnapshot = {
+        userVote: liveResource.userVote,
+        upvoteCount: clampVoteCount(liveResource.upvoteCount),
+        downvoteCount: clampVoteCount(liveResource.downvoteCount),
+      };
+      const currentVote = mapApiVoteToUiVote(liveResource.userVote);
+      const targetVote = vote ?? currentVote;
+
+      if (!targetVote) return;
+
+      patchResourcesCache(id, (resource) => applyVoteChange(resource, vote));
+      patchResourceDetailCache(id, (resource) =>
+        applyVoteChange(resource, vote),
+      );
+
+      void submitVote({ resourceId: id, targetVote })
+        .then((result) => {
+          const syncVoteState = (
+            resource: ResourceListItem,
+          ): ResourceListItem => ({
+            ...resource,
+            userVote: result.userVote,
+            upvoteCount: clampVoteCount(result.upvotes),
+            downvoteCount: clampVoteCount(result.downvotes),
+          });
+
+          patchResourcesCache(id, syncVoteState);
+          patchResourceDetailCache(id, (resource) => ({
+            ...resource,
+            userVote: result.userVote,
+            upvoteCount: clampVoteCount(result.upvotes),
+            downvoteCount: clampVoteCount(result.downvotes),
+          }));
+        })
+        .catch(() => {
+          const rollbackVoteState = (
+            resource: ResourceListItem,
+          ): ResourceListItem => ({
+            ...resource,
+            userVote: rollbackSnapshot.userVote,
+            upvoteCount: rollbackSnapshot.upvoteCount,
+            downvoteCount: rollbackSnapshot.downvoteCount,
+          });
+
+          patchResourcesCache(id, rollbackVoteState);
+          patchResourceDetailCache(id, (resource) => ({
+            ...resource,
+            userVote: rollbackSnapshot.userVote,
+            upvoteCount: rollbackSnapshot.upvoteCount,
+            downvoteCount: rollbackSnapshot.downvoteCount,
+          }));
+        });
+    },
+    [patchResourceDetailCache, patchResourcesCache, queryClient, submitVote],
+  );
 
   const handleResourceCreate = useCallback(() => {
     // TODO: Implement resource creation modal/redirect
@@ -190,7 +267,7 @@ const Resources = () => {
             {/* End of Results */}
             {!hasNextPage && resources.length > 0 && (
               <p className="text-center text-muted-foreground py-8">
-                You've reached the end
+                You&apos;ve reached the end
               </p>
             )}
           </>

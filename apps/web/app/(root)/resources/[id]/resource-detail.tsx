@@ -14,8 +14,6 @@ import { Card, CardContent } from "@workspace/ui/components/card";
 import { Separator } from "@workspace/ui/components/separator";
 import {
   AlertCircle,
-  ArrowBigDown,
-  ArrowBigUp,
   ArrowLeft,
   BookOpen,
   Calendar,
@@ -32,7 +30,15 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AspectRatio } from "@workspace/ui/components/aspect-ratio";
-import { MarkdownRenderer } from "@/components/editor/markdown-renderer";
+import { ReadMoreDescription } from "@/components/resources/read-more-description";
+import { useVote } from "@/hooks/use-vote";
+import { VoteCounter } from "@/components/resources/vote-counter";
+import { VoteArrowIcon } from "@/components/resources/vote-arrow-icon";
+import {
+  createOptimisticVoteUpdater,
+  useVoteCache,
+} from "@/hooks/use-vote-cache";
+import { clampVoteCount, mapApiVoteToUiVote } from "@/lib/vote-utils";
 function format(date: Date, pattern: string): string {
   if (pattern === "MMM d, yyyy") {
     return new Intl.DateTimeFormat("en-US", {
@@ -67,7 +73,10 @@ const statusColors = {
   approved: "bg-green-500/10 text-green-600 border-green-500/20",
   rejected: "bg-red-500/10 text-red-600 border-red-500/20",
 };
+
 const ResourceDetail = ({ id }: { id: string }) => {
+  const { patchResourcesCache, patchResourceDetailCache } = useVoteCache();
+  const { submitVote } = useVote();
   const {
     data: resource,
     isLoading,
@@ -80,6 +89,9 @@ const ResourceDetail = ({ id }: { id: string }) => {
       getResourceById(id).then((res) => res.data.data as ResourceDetailItem),
   });
   const router = useRouter();
+  const patchResourceCache = (
+    updater: (existing: ResourceDetailItem) => ResourceDetailItem,
+  ) => patchResourceDetailCache(id, updater);
 
   if (isError) {
     return (
@@ -119,7 +131,7 @@ const ResourceDetail = ({ id }: { id: string }) => {
               Resource Not Found
             </h1>
             <p className="text-muted-foreground mb-4">
-              The resource you're looking for doesn't exist.
+              The resource you&apos;re looking for doesn&apos;t exist.
             </p>
             <Button onClick={() => router.push("/resources")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -142,17 +154,54 @@ const ResourceDetail = ({ id }: { id: string }) => {
   }
 
   const res = resource!;
-  const Icon = typeIcons[res.resourceType];
-  const userVote: "up" | "down" | null =
-    res.userVote === "upvote"
-      ? "up"
-      : res.userVote === "downvote"
-        ? "down"
-        : null;
-  const upvoteCount = res.upvoteCount ?? 0;
-  const downvoteCount = res.downvoteCount ?? 0;
+  const Icon = typeIcons[res.resourceType] ?? BookOpen;
+  const userVote = mapApiVoteToUiVote(res.userVote);
+  const upvoteCount = clampVoteCount(res.upvoteCount ?? 0);
+  const downvoteCount = clampVoteCount(res.downvoteCount ?? 0);
   const handleVote = (voteType: "up" | "down") => {
-    // TODO: Implement vote logic
+    const nextVote = userVote === voteType ? null : voteType;
+    const targetVote = nextVote ?? userVote;
+    if (!targetVote) return;
+
+    const previousState = {
+      userVote: res.userVote,
+      upvoteCount,
+      downvoteCount,
+    };
+
+    const optimisticUpdater = createOptimisticVoteUpdater(userVote, nextVote);
+    patchResourceCache(optimisticUpdater);
+    patchResourcesCache(id, optimisticUpdater);
+
+    void submitVote({ resourceId: id, targetVote })
+      .then((result) => {
+        patchResourceCache((existing) => ({
+          ...existing,
+          userVote: result.userVote,
+          upvoteCount: clampVoteCount(result.upvotes),
+          downvoteCount: clampVoteCount(result.downvotes),
+        }));
+        patchResourcesCache(id, (existing) => ({
+          ...existing,
+          userVote: result.userVote,
+          upvoteCount: clampVoteCount(result.upvotes),
+          downvoteCount: clampVoteCount(result.downvotes),
+        }));
+      })
+      .catch(() => {
+        patchResourceCache((existing) => ({
+          ...existing,
+          userVote: previousState.userVote,
+          upvoteCount: clampVoteCount(previousState.upvoteCount),
+          downvoteCount: clampVoteCount(previousState.downvoteCount),
+        }));
+        patchResourcesCache(id, (existing) => ({
+          ...existing,
+          userVote: previousState.userVote,
+          upvoteCount: clampVoteCount(previousState.upvoteCount),
+          downvoteCount: clampVoteCount(previousState.downvoteCount),
+        }));
+      });
   };
   return (
     <main className="flex-1 py-8">
@@ -262,29 +311,30 @@ const ResourceDetail = ({ id }: { id: string }) => {
               </div>
             </div>
 
-            {/* Description */}
-            <div
-              className="max-w-none mb-6 text-[15px] leading-7"
-              // dangerouslySetInnerHTML={{ __html: res.description ?? '' }}
-            >
-              <MarkdownRenderer content={res.description ?? ""} />
-            </div>
-
-            {/* Tech Stack */}
+            {/* Tech Stack - above description, distinct from tags (solid chips + icon) */}
             {res.techStack && res.techStack.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-foreground mb-2">
+                <h3 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                  <Wrench className="w-4 h-4 text-muted-foreground" />
                   Tech Stack
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {res.techStack.map((tech) => (
-                    <Badge key={tech.id} variant="secondary">
+                    <span
+                      key={tech.id}
+                      className="inline-flex items-center rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+                    >
                       {tech.name}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Description */}
+            <div className="mb-6">
+              <ReadMoreDescription content={res.description ?? ""} />
+            </div>
 
             {/* Tags */}
             {res.tags && res.tags.length > 0 && (
@@ -382,39 +432,57 @@ const ResourceDetail = ({ id }: { id: string }) => {
                 {/* Vote Buttons */}
                 <div className="flex items-center gap-2">
                   <button
+                    type="button"
                     onClick={() => handleVote("up")}
+                    aria-label="Upvote resource"
+                    aria-pressed={userVote === "up"}
                     className={cn(
-                      "flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-200 active:scale-95",
+                      "group/vote cursor-pointer inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 transition-all duration-200",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95",
                       userVote === "up"
-                        ? "bg-emerald-500 text-white shadow-sm"
-                        : "bg-muted/50 hover:bg-emerald-500/10 text-muted-foreground hover:text-emerald-600",
+                        ? "border-primary/40 bg-[#10141a] text-primary shadow-sm"
+                        : "border-[#242a33] bg-[#10141a] text-[#f5f7fa] hover:border-[#323a46] hover:bg-[#131821]",
                     )}
                   >
-                    <ArrowBigUp
+                    <VoteArrowIcon
+                      direction="up"
+                      active={userVote === "up"}
                       className={cn(
-                        "w-5 h-5",
-                        userVote === "up" && "fill-white",
+                        "h-4 w-4 transition-all duration-200",
+                        userVote !== "up" && "group-hover/vote:scale-110",
                       )}
                     />
-                    <span className="font-medium text-sm">{upvoteCount}</span>
+                    <VoteCounter
+                      value={upvoteCount}
+                      className="text-[#f5f7fa]"
+                    />
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => handleVote("down")}
+                    aria-label="Downvote resource"
+                    aria-pressed={userVote === "down"}
                     className={cn(
-                      "flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all duration-200 active:scale-95",
+                      "group/vote cursor-pointer inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 transition-all duration-200",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-95",
                       userVote === "down"
-                        ? "bg-rose-500 text-white shadow-sm"
-                        : "bg-muted/50 hover:bg-rose-500/10 text-muted-foreground hover:text-rose-600",
+                        ? "border-[#2f2930] bg-[#10141a] text-[#f87171] shadow-[0_0_0_1px_rgba(248,113,113,0.12)]"
+                        : "border-[#242a33] bg-[#10141a] text-[#f5f7fa] hover:border-[#323a46] hover:bg-[#131821]",
                     )}
                   >
-                    <ArrowBigDown
+                    <VoteArrowIcon
+                      direction="down"
+                      active={userVote === "down"}
                       className={cn(
-                        "w-5 h-5",
-                        userVote === "down" && "fill-white",
+                        "h-4 w-4 transition-all duration-200",
+                        userVote !== "down" && "group-hover/vote:scale-110",
                       )}
                     />
-                    <span className="font-medium text-sm">{downvoteCount}</span>
+                    <VoteCounter
+                      value={downvoteCount}
+                      className="text-[#f5f7fa]"
+                    />
                   </button>
                 </div>
 
