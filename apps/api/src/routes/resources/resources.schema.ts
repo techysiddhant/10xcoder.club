@@ -43,6 +43,8 @@ const SingleResourceSchema = t.Object({
     t.Literal("pending"),
   ]),
   upvoteCount: t.Number(),
+  downvoteCount: t.Number(),
+  userVote: t.Union([t.Literal("upvote"), t.Literal("downvote"), t.Null()]),
   createdAt: t.Date(),
   updatedAt: t.Date(),
   tags: t.Array(TagSchema),

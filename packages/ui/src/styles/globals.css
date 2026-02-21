@@ -273,10 +273,16 @@
     animation: slide-down 0.15s ease-out forwards;
   }
   .animate-slideInUp {
-    animation: slideInUp 0.15s ease-out forwards;
+    animation: slideInUp 0.25s ease-out forwards;
   }
   .animate-slideInDown {
-    animation: slideInDown 0.15s ease-out forwards;
+    animation: slideInDown 0.25s ease-out forwards;
+  }
+  .animate-slideOutUp {
+    animation: slideOutUp 0.25s ease-out forwards;
+  }
+  .animate-slideOutDown {
+    animation: slideOutDown 0.25s ease-out forwards;
   }
 }
 @media (min-width: 1400px) {
@@ -393,5 +399,27 @@
   100% {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+@keyframes slideOutUp {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideOutDown {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
   }
 }

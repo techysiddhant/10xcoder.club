@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 import { useInView } from "react-intersection-observer";
+import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 
 import ResourceFilter from "@/components/resources/resource-filter";
 import ResourceGrid from "@/components/resources/resource-grid";
@@ -11,10 +12,74 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useResources } from "@/hooks/use-resources";
 import { Loader2 } from "lucide-react";
 import CreateResource from "@/components/resources/create-resource";
+import { useVote } from "@/hooks/use-vote";
+import type {
+  GetResourcesResponse,
+  ResourceDetailItem,
+  ResourceListItem,
+} from "@/lib/types";
 
 const FILTER_DEBOUNCE_MS = 400;
 
+const mapApiVoteToUiVote = (
+  userVote: ResourceListItem["userVote"],
+): "up" | "down" | null => {
+  if (userVote === "upvote") return "up";
+  if (userVote === "downvote") return "down";
+  return null;
+};
+
+const mapUiVoteToApiVote = (
+  userVote: "up" | "down" | null,
+): ResourceListItem["userVote"] => {
+  if (userVote === "up") return "upvote";
+  if (userVote === "down") return "downvote";
+  return null;
+};
+
+const clampVoteCount = (count: number) => Math.max(0, count);
+
+const applyVoteChange = (
+  resource: ResourceListItem,
+  nextVote: "up" | "down" | null,
+): ResourceListItem => {
+  const prevVote = mapApiVoteToUiVote(resource.userVote);
+  let upvotes = clampVoteCount(resource.upvoteCount);
+  let downvotes = clampVoteCount(resource.downvoteCount);
+
+  if (prevVote === nextVote) {
+    return resource;
+  }
+
+  if (prevVote === "up") upvotes = Math.max(0, upvotes - 1);
+  if (prevVote === "down") downvotes = Math.max(0, downvotes - 1);
+  if (nextVote === "up") upvotes += 1;
+  if (nextVote === "down") downvotes += 1;
+
+  return {
+    ...resource,
+    userVote: mapUiVoteToApiVote(nextVote),
+    upvoteCount: clampVoteCount(upvotes),
+    downvoteCount: clampVoteCount(downvotes),
+  };
+};
+
+const applyVoteChangeToDetail = (
+  resource: ResourceDetailItem,
+  nextVote: "up" | "down" | null,
+): ResourceDetailItem => {
+  const next = applyVoteChange(resource, nextVote);
+  return {
+    ...resource,
+    userVote: next.userVote,
+    upvoteCount: next.upvoteCount,
+    downvoteCount: next.downvoteCount,
+  };
+};
+
 const Resources = () => {
+  const queryClient = useQueryClient();
+  const { submitVote } = useVote();
   const [searchQuery, setSearchQuery] = useQueryState(
     "q",
     parseAsString.withDefault(""),
@@ -77,11 +142,104 @@ const Resources = () => {
   const resources = useMemo(() => {
     if (!data?.pages) return [];
     return data.pages.flatMap((page) => page.data);
-  }, [data?.pages]);
+  }, [data]);
 
-  const handleVote = useCallback((id: string, vote: "up" | "down" | null) => {
-    // TODO: Implement vote mutation
-  }, []);
+  const patchResourcesCache = useCallback(
+    (
+      resourceId: string,
+      updater: (resource: ResourceListItem) => ResourceListItem,
+    ) => {
+      queryClient.setQueriesData<InfiniteData<GetResourcesResponse>>(
+        { queryKey: ["resources"] },
+        (current) => {
+          if (!current) return current;
+
+          return {
+            ...current,
+            pages: current.pages.map((page) => ({
+              ...page,
+              data: page.data.map((resource) =>
+                resource.id === resourceId ? updater(resource) : resource,
+              ),
+            })),
+          };
+        },
+      );
+    },
+    [queryClient],
+  );
+
+  const patchResourceDetailCache = useCallback(
+    (
+      resourceId: string,
+      updater: (resource: ResourceDetailItem) => ResourceDetailItem,
+    ) => {
+      queryClient.setQueryData<ResourceDetailItem | undefined>(
+        ["resource", resourceId],
+        (current) => {
+          if (!current) return current;
+          return updater(current);
+        },
+      );
+    },
+    [queryClient],
+  );
+
+  const handleVote = useCallback(
+    (id: string, vote: "up" | "down" | null) => {
+      const previousResource = resources.find((resource) => resource.id === id);
+      if (!previousResource) return;
+
+      const currentVote = mapApiVoteToUiVote(previousResource.userVote);
+      const targetVote = vote ?? currentVote;
+
+      if (!targetVote) return;
+
+      patchResourcesCache(id, (resource) => applyVoteChange(resource, vote));
+      patchResourceDetailCache(id, (resource) =>
+        applyVoteChangeToDetail(resource, vote),
+      );
+
+      void submitVote({ resourceId: id, targetVote })
+        .then((result) => {
+          const syncVoteState = (
+            resource: ResourceListItem,
+          ): ResourceListItem => ({
+            ...resource,
+            userVote: result.userVote,
+            upvoteCount: clampVoteCount(result.upvotes),
+            downvoteCount: clampVoteCount(result.downvotes),
+          });
+
+          patchResourcesCache(id, syncVoteState);
+          patchResourceDetailCache(id, (resource) => ({
+            ...resource,
+            userVote: result.userVote,
+            upvoteCount: clampVoteCount(result.upvotes),
+            downvoteCount: clampVoteCount(result.downvotes),
+          }));
+        })
+        .catch(() => {
+          const rollbackVoteState = (
+            resource: ResourceListItem,
+          ): ResourceListItem => ({
+            ...resource,
+            userVote: previousResource.userVote,
+            upvoteCount: clampVoteCount(previousResource.upvoteCount),
+            downvoteCount: clampVoteCount(previousResource.downvoteCount),
+          });
+
+          patchResourcesCache(id, rollbackVoteState);
+          patchResourceDetailCache(id, (resource) => ({
+            ...resource,
+            userVote: previousResource.userVote,
+            upvoteCount: clampVoteCount(previousResource.upvoteCount),
+            downvoteCount: clampVoteCount(previousResource.downvoteCount),
+          }));
+        });
+    },
+    [patchResourceDetailCache, patchResourcesCache, resources, submitVote],
+  );
 
   const handleResourceCreate = useCallback(() => {
     // TODO: Implement resource creation modal/redirect
@@ -190,7 +348,7 @@ const Resources = () => {
             {/* End of Results */}
             {!hasNextPage && resources.length > 0 && (
               <p className="text-center text-muted-foreground py-8">
-                You've reached the end
+                You&apos;ve reached the end
               </p>
             )}
           </>

@@ -11,6 +11,12 @@ const voteLogger = logger.child({ service: "vote" });
 // TTL for vote count cache (1 hour in seconds)
 const VOTE_COUNT_TTL = 3600;
 
+const toNonNegativeInt = (value: string | null | undefined): number => {
+  const parsed = Number.parseInt(value ?? "0", 10);
+  if (Number.isNaN(parsed)) return 0;
+  return Math.max(0, parsed);
+};
+
 export type VoteType = "upvote" | "downvote";
 export type VoteState = VoteType | null;
 
@@ -28,8 +34,8 @@ export async function getVoteCounts(
 
   if (upvotes !== null && downvotes !== null) {
     return {
-      upvotes: parseInt(upvotes),
-      downvotes: parseInt(downvotes),
+      upvotes: toNonNegativeInt(upvotes),
+      downvotes: toNonNegativeInt(downvotes),
     };
   }
 
@@ -132,6 +138,15 @@ local downCountKey = KEYS[4]
 local userId = ARGV[1]
 local voteType = ARGV[2]
 
+local function decrClamp(key)
+    local current = tonumber(redis.call('GET', key) or '0')
+    if current <= 0 then
+        redis.call('SET', key, '0')
+        return 0
+    end
+    return redis.call('DECR', key)
+end
+
 -- Check current vote state
 local hasUpvote = redis.call('SISMEMBER', upvotesKey, userId)
 local hasDownvote = redis.call('SISMEMBER', downvotesKey, userId)
@@ -144,13 +159,13 @@ if voteType == 'upvote' then
     if hasUpvote == 1 then
         -- Already upvoted -> remove upvote
         redis.call('SREM', upvotesKey, userId)
-        redis.call('DECR', upCountKey)
+        decrClamp(upCountKey)
         action = 'remove'
         newVote = 'null'
     elseif hasDownvote == 1 then
         -- Was downvoted -> switch to upvote
         redis.call('SREM', downvotesKey, userId)
-        redis.call('DECR', downCountKey)
+        decrClamp(downCountKey)
         redis.call('SADD', upvotesKey, userId)
         redis.call('INCR', upCountKey)
         action = 'switch'
@@ -168,13 +183,13 @@ else
     if hasDownvote == 1 then
         -- Already downvoted -> remove downvote
         redis.call('SREM', downvotesKey, userId)
-        redis.call('DECR', downCountKey)
+        decrClamp(downCountKey)
         action = 'remove'
         newVote = 'null'
     elseif hasUpvote == 1 then
         -- Was upvoted -> switch to downvote
         redis.call('SREM', upvotesKey, userId)
-        redis.call('DECR', upCountKey)
+        decrClamp(upCountKey)
         redis.call('SADD', downvotesKey, userId)
         redis.call('INCR', downCountKey)
         action = 'switch'
@@ -190,10 +205,20 @@ else
 end
 
 -- Get updated counts
-local upvotes = redis.call('GET', upCountKey) or '0'
-local downvotes = redis.call('GET', downCountKey) or '0'
+local upvotes = tonumber(redis.call('GET', upCountKey) or '0')
+local downvotes = tonumber(redis.call('GET', downCountKey) or '0')
 
-return {action, newVote, fromType, upvotes, downvotes}
+if upvotes < 0 then
+    upvotes = 0
+    redis.call('SET', upCountKey, '0')
+end
+
+if downvotes < 0 then
+    downvotes = 0
+    redis.call('SET', downCountKey, '0')
+end
+
+return {action, newVote, fromType, tostring(upvotes), tostring(downvotes)}
 `;
 
 // ==========================================
@@ -212,15 +237,24 @@ local action = ARGV[2]
 local voteType = ARGV[3]
 local fromType = ARGV[4]
 
+local function decrClamp(key)
+    local current = tonumber(redis.call('GET', key) or '0')
+    if current <= 0 then
+        redis.call('SET', key, '0')
+        return 0
+    end
+    return redis.call('DECR', key)
+end
+
 -- Revert based on action and type
 if action == 'add' then
     -- We added a vote, so remove it
     if voteType == 'upvote' then
         redis.call('SREM', upvotesKey, userId)
-        redis.call('DECR', upCountKey)
+        decrClamp(upCountKey)
     else
         redis.call('SREM', downvotesKey, userId)
-        redis.call('DECR', downCountKey)
+        decrClamp(downCountKey)
     end
 elseif action == 'remove' then
     -- We removed a vote, so add it back
@@ -236,13 +270,13 @@ elseif action == 'switch' then
     if voteType == 'upvote' then
         -- Switched from downvote to upvote, revert to downvote
         redis.call('SREM', upvotesKey, userId)
-        redis.call('DECR', upCountKey)
+        decrClamp(upCountKey)
         redis.call('SADD', downvotesKey, userId)
         redis.call('INCR', downCountKey)
     else
         -- Switched from upvote to downvote, revert to upvote
         redis.call('SREM', downvotesKey, userId)
-        redis.call('DECR', downCountKey)
+        decrClamp(downCountKey)
         redis.call('SADD', upvotesKey, userId)
         redis.call('INCR', upCountKey)
     end
@@ -289,8 +323,8 @@ export async function toggleVote(
     fromTypeStr === "" ? null : (fromTypeStr as VoteType);
 
   const counts = {
-    upvotes: parseInt(upvotesStr || "0"),
-    downvotes: parseInt(downvotesStr || "0"),
+    upvotes: toNonNegativeInt(upvotesStr),
+    downvotes: toNonNegativeInt(downvotesStr),
   };
 
   // Queue DB sync with error handling and compensating transaction
@@ -425,8 +459,8 @@ export async function getVoteCountsBatch(
 
     if (upvotes !== null && downvotes !== null) {
       result.set(resourceIds[i]!, {
-        upvotes: parseInt(upvotes),
-        downvotes: parseInt(downvotes),
+        upvotes: toNonNegativeInt(upvotes),
+        downvotes: toNonNegativeInt(downvotes),
       });
     } else {
       // Cache miss - need to check DB
@@ -449,18 +483,18 @@ export async function getVoteCountsBatch(
     const warmCachePipeline = redis.pipeline();
     for (const row of dbCounts) {
       result.set(row.id, {
-        upvotes: row.upvoteCount,
-        downvotes: row.downvoteCount,
+        upvotes: Math.max(0, row.upvoteCount),
+        downvotes: Math.max(0, row.downvoteCount),
       });
       warmCachePipeline.set(
         REDIS_KEY.UPVOTE_COUNT(row.id),
-        row.upvoteCount.toString(),
+        Math.max(0, row.upvoteCount).toString(),
         "EX",
         VOTE_COUNT_TTL,
       );
       warmCachePipeline.set(
         REDIS_KEY.DOWNVOTE_COUNT(row.id),
-        row.downvoteCount.toString(),
+        Math.max(0, row.downvoteCount).toString(),
         "EX",
         VOTE_COUNT_TTL,
       );

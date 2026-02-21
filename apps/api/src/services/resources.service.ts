@@ -23,6 +23,7 @@ import { redis } from "@/lib/redis";
 import { generateResourcesCacheKey, CACHE_TTL, REDIS_KEY } from "@/constant";
 import { getEmbedding, isGeminiConfigured } from "@/lib/gemini";
 import { env } from "@/config/env";
+import { getUserVote, getVoteCounts } from "@/services/vote.service";
 
 // ==========================================
 // Helper: Transform resource image URL
@@ -363,6 +364,7 @@ export async function getResourceById(id: string) {
     resourceTypeId: rest.resourceTypeId,
     tags: rtt.map((r) => r.tag),
     techStack: rtts.map((r) => r.techStack),
+    userVote: null,
   };
 }
 
@@ -409,6 +411,8 @@ export async function getResourceByIdForView(id: string, userId?: string) {
   });
 
   if (!result) return null;
+  const counts = await getVoteCounts(id);
+  const userVote = userId ? await getUserVote(id, userId) : null;
 
   // Transform to flatten tags, techStack and resourceType
   const {
@@ -424,6 +428,9 @@ export async function getResourceByIdForView(id: string, userId?: string) {
     resourceTypeId: rest.resourceTypeId,
     tags: rtt.map((r) => r.tag),
     techStack: rtts.map((r) => r.techStack),
+    upvoteCount: counts.upvotes,
+    downvoteCount: counts.downvotes,
+    userVote,
   };
 }
 
@@ -477,6 +484,7 @@ export async function getPublicResourceById(id: string) {
     resourceTypeId: rest.resourceTypeId,
     tags: rtt.map((r) => r.tag),
     techStack: rtts.map((r) => r.techStack),
+    userVote: null,
   };
 }
 
