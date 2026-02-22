@@ -35,32 +35,28 @@ COPY apps/api ./apps/api
 COPY packages/schemas ./packages/schemas
 COPY packages/database ./packages/database
 
-# --- Build compiled binary for linux/amd64 (glibc) ---
-RUN cd apps/api && bun build \
-    --compile \
-    --minify-whitespace \
-    --minify-syntax \
-    --target bun-linux-x64 \
-    --outfile server \
-    src/index.ts
+# --- Build transpiled server.js ---
+RUN cd apps/api && bun run build
 
 # -----------------------------------------------------------------------------
-# Runtime stage - Distroless (minimal, secure, ~20MB)
+# Runtime stage - Bun slim image
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 gcr.io/distroless/base-debian12:nonroot AS runtime
+FROM --platform=linux/amd64 oven/bun:1.1.43-slim AS runtime
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Copy compiled binary from build stage
-COPY --from=build /app/apps/api/server ./server
+# Copy bundled JS and any remaining needs
+COPY --from=build /app/apps/api/server.js ./server.js
 
 # Copy drizzle migrations
 COPY --from=build /app/apps/api/drizzle ./drizzle
 
+# Define explicitly the permissions for bun user if required
+USER bun
+
 EXPOSE 3000
 
-# Distroless runs as nonroot user (UID 65532) by default
-CMD ["./server"]
+CMD ["bun", "run", "server.js"]
