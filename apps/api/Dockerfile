@@ -28,7 +28,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Cache bun dependencies between builds
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --ignore-scripts
+    bun install --frozen-lockfile --ignore-scripts
 
 # --- Copy source files ---
 COPY apps/api ./apps/api
