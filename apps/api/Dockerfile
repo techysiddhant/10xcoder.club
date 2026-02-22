@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------
 # Build stage - Debian with Bun
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 oven/bun:1.1.43-debian AS build
+FROM --platform=linux/amd64 oven/bun:1.3.9-slim AS build
 
 WORKDIR /app
 
@@ -28,7 +28,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Cache bun dependencies between builds
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile --ignore-scripts
+    bun install --ignore-scripts
 
 # --- Copy source files ---
 COPY apps/api ./apps/api
@@ -41,7 +41,7 @@ RUN cd apps/api && bun run build
 # -----------------------------------------------------------------------------
 # Runtime stage - Bun slim image
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 oven/bun:1.1.43-slim AS runtime
+FROM --platform=linux/amd64 oven/bun:1.3.9-slim AS runtime
 
 WORKDIR /app
 
