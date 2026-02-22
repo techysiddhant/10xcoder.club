@@ -125,6 +125,7 @@ export const voteRoutes = new Elysia({ prefix: "/api/vote" })
               const id = heartbeatIds.get(clientId);
               if (id) clearInterval(id);
               heartbeatIds.delete(clientId);
+              removeVoteClient(clientId);
             }
           }, HEARTBEAT_INTERVAL_MS);
           heartbeatIds.set(clientId, heartbeatId);
