@@ -7,6 +7,7 @@ import {
   removeVoteClient,
   isVoteSubscriberReady,
 } from "@/lib/vote-subscriber";
+import { env } from "@/config/env";
 
 // Vote response schema
 const VoteResponseSchema = t.Object({
@@ -70,7 +71,7 @@ export const voteRoutes = new Elysia({ prefix: "/api/vote" })
   // ==========================================
   .get(
     "/stream",
-    async ({ set }) => {
+    async ({ set, request }) => {
       // Check if subscriber is ready before accepting clients
       if (!isVoteSubscriberReady()) {
         set.status = 503;
@@ -81,38 +82,66 @@ export const voteRoutes = new Elysia({ prefix: "/api/vote" })
         );
       }
 
+      // Explicit CORS headers for SSE (streaming responses can bypass CORS plugin)
+      const requestOrigin = request.headers.get("Origin");
+      const allowedOrigins = env.CORS_ORIGIN?.split(",").map((s) => s.trim());
+      const allowOrigin: string = allowedOrigins?.includes(requestOrigin ?? "")
+        ? (requestOrigin ?? "*")
+        : allowedOrigins?.length
+          ? (allowedOrigins[0] ?? "*")
+          : (requestOrigin ?? "*");
+
+      const streamHeaders: Record<string, string> = {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no", // Disable nginx response buffering for SSE
+        "Access-Control-Allow-Origin": allowOrigin,
+      };
+
       // Generate unique client ID
       const clientId = crypto.randomUUID();
 
-      // Create readable stream
+      const HEARTBEAT_INTERVAL_MS = 30_000;
+      const heartbeatIds = new Map<string, ReturnType<typeof setInterval>>();
+
       const stream = new ReadableStream<string>({
         start(controller) {
-          // Register this client with the shared subscriber
           const added = addVoteClient(clientId, controller);
 
           if (!added) {
-            // Subscriber became unavailable - close the stream
             controller.close();
             return;
           }
 
-          // Send connection confirmation
           controller.enqueue(
             `data: ${JSON.stringify({ type: "connected", clientId })}\n\n`,
           );
+
+          const heartbeatId = setInterval(() => {
+            try {
+              controller.enqueue(`: heartbeat ${Date.now()}\n\n`);
+            } catch {
+              const id = heartbeatIds.get(clientId);
+              if (id) clearInterval(id);
+              heartbeatIds.delete(clientId);
+              removeVoteClient(clientId);
+            }
+          }, HEARTBEAT_INTERVAL_MS);
+          heartbeatIds.set(clientId, heartbeatId);
         },
         cancel() {
-          // Client disconnected - clean up
+          const heartbeatId = heartbeatIds.get(clientId);
+          if (heartbeatId) {
+            clearInterval(heartbeatId);
+            heartbeatIds.delete(clientId);
+          }
           removeVoteClient(clientId);
         },
       });
 
       return new Response(stream, {
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-        },
+        headers: streamHeaders,
       });
     },
     {
