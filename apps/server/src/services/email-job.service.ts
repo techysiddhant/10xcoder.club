@@ -80,16 +80,26 @@ export async function retryAllFailedEmailJobs(): Promise<number> {
     const batch = await emailQueue.getFailed(0, batchSize - 1);
     if (batch.length === 0) break;
 
+    let succeededInBatch = 0;
     for (let i = batch.length - 1; i >= 0; i--) {
       const job = batch[i];
       if (!job) continue;
       try {
         await job.retry();
         retried++;
+        succeededInBatch++;
       } catch (err) {
         // Log and continue — don't let one failure stop the loop
         logger.warn({ jobId: job.id, error: err }, "Failed to retry email job");
       }
+    }
+
+    if (succeededInBatch === 0) {
+      logger.warn(
+        { batchSize: batch.length },
+        "No retries succeeded in batch, breaking out of loop.",
+      );
+      break;
     }
   }
 

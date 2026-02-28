@@ -45,6 +45,9 @@ const EnvSchema = z.object({
   AWS_S3_BUCKET: z.string().min(1),
   CDN_URL: z.string().url(),
 
+  // YouTube
+  YOUTUBE_API_KEY: z.string().min(1).optional(),
+
   // Sentry (production only)
   SENTRY_DSN: z.string().url().optional(),
 });
