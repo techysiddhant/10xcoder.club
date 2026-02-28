@@ -24,6 +24,9 @@
     "apps/api/**/*.{js,jsx,ts,tsx}": [
       "bun --cwd apps/api run lint -- --fix"
     ],
+    "apps/server/**/*.{js,jsx,ts,tsx}": [
+      "bun --cwd apps/server run lint -- --fix"
+    ],
     "packages/ui/**/*.{js,jsx,ts,tsx}": [
       "bun --cwd packages/ui run lint -- --fix"
     ]
@@ -49,7 +52,15 @@
     "db:generate": "bun --cwd apps/api drizzle-kit generate --config src/drizzle.config.ts",
     "db:migrate": "bun --cwd apps/api drizzle-kit migrate --config src/drizzle.config.ts",
     "api:add": "cd apps/api && bun add",
-    "api:add-dev": "cd apps/api && bun add -d"
+    "api:add-dev": "cd apps/api && bun add -d",
+    "server:add": "cd apps/server && bun add",
+    "server:add-dev": "cd apps/server && bun add -d",
+    "server:dev": "cd apps/server && bun run dev",
+    "server:dev:services": "cd apps/server && bun run dev:services",
+    "server:dev:stop": "cd apps/server && bun run dev:stop",
+    "server:db:studio": "cd apps/server && bun run db:studio",
+    "server:db:generate": "cd apps/server && bun run db:generate",
+    "server:db:migrate": "cd apps/server && bun run db:migrate"
   },
   "workspaces": [
     "apps/*",
