@@ -1,0 +1,50 @@
+{
+  "name": "@workspace/server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "docker compose -f docker-compose.dev.yml up -d && wait-on tcp:localhost:5433 tcp:localhost:6379 --timeout 30000 && tsx watch --env-file=.env src/index.ts",
+    "dev:services": "docker compose -f docker-compose.dev.yml up -d",
+    "dev:stop": "docker compose -f docker-compose.dev.yml down",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "db:studio": "drizzle-kit studio --config src/drizzle.config.ts",
+    "db:generate": "drizzle-kit generate --config src/drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config src/drizzle.config.ts"
+  },
+  "dependencies": {
+    "hono": "^4.7.0",
+    "@hono/node-server": "^1.14.0",
+    "@hono/zod-openapi": "^0.18.0",
+    "@aws-sdk/client-s3": "^3.700.0",
+    "@aws-sdk/s3-request-presigner": "^3.700.0",
+    "@scalar/hono-api-reference": "^0.5.0",
+    "@sentry/node": "^9.5.0",
+    "@workspace/database": "workspace:*",
+    "@workspace/schemas": "workspace:*",
+    "autosendjs": "^1.0.3",
+    "better-auth": "^1.4.10",
+    "bullmq": "^5.40.0",
+    "drizzle-orm": "^0.45.1",
+    "ioredis": "^5.8.2",
+    "pino": "^9.6.0",
+    "pino-logflare": "^0.4.0",
+    "postgres": "^3.4.7",
+    "prom-client": "^15.1.0",
+    "stoker": "^1.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^22.13.0",
+    "drizzle-kit": "^0.31.8",
+    "pino-pretty": "^13.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.39.0",
+    "wait-on": "^8.0.0"
+  }
+}
