@@ -11,6 +11,7 @@ import { metricsHandler, metricsMiddleware } from "./middleware/metrics";
 import indexRouter from "./routes/index/index.index";
 import adminRouter from "./routes/admin/admin.index";
 import uploadRouter from "./routes/upload/upload.index";
+import scrapeRouter from "./routes/scrape/scrape.index";
 import { AuthOpenAPI } from "./lib/auth-open-api";
 
 const app = createRouter();
@@ -108,6 +109,7 @@ app.get("/metrics", metricsHandler);
 app.route("/", indexRouter);
 app.route("/admin", adminRouter);
 app.route("/upload", uploadRouter);
+app.route("/scrape", scrapeRouter);
 
 // ── OpenAPI + Scalar ─────────────────────────────
 

@@ -58,6 +58,14 @@ export async function getPresignedUploadUrl(
 ): Promise<UploadSuccess | UploadFailure> {
   const { fileName, fileType, fileSize, folder } = input;
 
+  if (!ALLOWED_FOLDERS.includes(folder as AllowedFolder)) {
+    return {
+      success: false,
+      error: `Invalid folder. Allowed: ${ALLOWED_FOLDERS.join(", ")}`,
+      errorType: "VALIDATION_ERROR",
+    };
+  }
+
   // Validate file type
   if (!ALLOWED_TYPES.includes(fileType as AllowedType)) {
     return {
@@ -92,7 +100,22 @@ export async function getPresignedUploadUrl(
     sanitizedFileName = crypto.randomUUID().slice(0, 8);
   }
 
-  const key = `${folder}/${userId}/${timestamp}-${sanitizedFileName}`;
+  // Pre-validate CDN URL for profile images before hitting S3
+  if (folder === "profiles" && !env.CDN_URL) {
+    logger.error("CDN_URL is missing but required for profile images");
+    return {
+      success: false,
+      error: "Server configuration error",
+      errorType: "INTERNAL_ERROR",
+    };
+  }
+
+  let sanitizedUserId = userId.replace(/[^a-zA-Z0-9_-]/g, "");
+  if (!sanitizedUserId) {
+    sanitizedUserId = crypto.randomUUID().slice(0, 8);
+  }
+
+  const key = `${folder}/${sanitizedUserId}/${timestamp}-${sanitizedFileName}`;
 
   const command = new PutObjectCommand({
     Bucket: S3_BUCKET,
@@ -114,7 +137,7 @@ export async function getPresignedUploadUrl(
 
     // For profile images, also return the public CDN URL
     if (folder === "profiles") {
-      const cdnBase = env.CDN_URL.replace(/\/$/, "");
+      const cdnBase = env.CDN_URL!.replace(/\/$/, "");
       data.imageUrl = `${cdnBase}/${key}`;
     }
 
