@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { emailQueue } from "../lib/email-queue";
 import type { EmailJobType } from "../lib/email-queue";
 
@@ -85,8 +86,9 @@ export async function retryAllFailedEmailJobs(): Promise<number> {
       try {
         await job.retry();
         retried++;
-      } catch {
+      } catch (err) {
         // Log and continue — don't let one failure stop the loop
+        logger.warn({ jobId: job.id, error: err }, "Failed to retry email job");
       }
     }
   }

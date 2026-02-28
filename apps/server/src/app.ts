@@ -10,6 +10,7 @@ import { Sentry } from "./lib/sentry";
 import { metricsHandler, metricsMiddleware } from "./middleware/metrics";
 import indexRouter from "./routes/index/index.index";
 import adminRouter from "./routes/admin/admin.index";
+import uploadRouter from "./routes/upload/upload.index";
 import { AuthOpenAPI } from "./lib/auth-open-api";
 
 const app = createRouter();
@@ -94,7 +95,7 @@ app.onError((err, c) => {
 
 // ── Better Auth ──────────────────────────────────
 
-app.all("/api/auth/**", (c) => {
+app.all("/api/auth/*", (c) => {
   return auth.handler(c.req.raw);
 });
 
@@ -106,6 +107,7 @@ app.get("/metrics", metricsHandler);
 
 app.route("/", indexRouter);
 app.route("/admin", adminRouter);
+app.route("/upload", uploadRouter);
 
 // ── OpenAPI + Scalar ─────────────────────────────
 

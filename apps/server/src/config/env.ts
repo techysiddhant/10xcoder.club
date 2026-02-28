@@ -38,6 +38,13 @@ const EnvSchema = z.object({
   LOGFLARE_API_KEY: z.string().optional(),
   LOGFLARE_SOURCE_ID: z.string().optional(),
 
+  // AWS S3
+  AWS_REGION: z.string().min(1).default("ap-south-1"),
+  AWS_ACCESS_KEY_ID: z.string().min(1),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1),
+  AWS_S3_BUCKET: z.string().min(1),
+  CDN_URL: z.string().url(),
+
   // Sentry (production only)
   SENTRY_DSN: z.string().url().optional(),
 });
