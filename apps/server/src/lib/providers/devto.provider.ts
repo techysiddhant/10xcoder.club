@@ -87,7 +87,18 @@ export class DevToProvider implements ScrapeProvider {
         throw new PlatformApiError(`Dev.to API error: ${response.status}`);
       }
 
-      const article = await response.json();
+      let article;
+      const cloned = response.clone();
+      try {
+        article = await response.json();
+      } catch (err) {
+        const respText = await cloned
+          .text()
+          .catch(() => "Unable to read response text");
+        throw new PlatformApiError(
+          `Dev.to API returned malformed JSON (status: ${response.status}): ${respText.substring(0, 200)}`,
+        );
+      }
 
       if (
         !article ||

@@ -53,6 +53,10 @@ export class YouTubeProvider implements ScrapeProvider {
   name = "youtube";
 
   canHandle(url: string): boolean {
+    // Fast path: direct 11 character ID
+    if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
+      return true;
+    }
     try {
       const { hostname } = new URL(url);
       return (
@@ -105,21 +109,13 @@ export class YouTubeProvider implements ScrapeProvider {
       part: "snippet,contentDetails,statistics",
     });
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, DEFAULT_TIMEOUT_MS);
-
     try {
-      const response = await fetch(
+      const response = await this.fetchWithTimeout(
         `https://www.googleapis.com/youtube/v3/videos?${params}`,
         {
           headers: { "User-Agent": "Mozilla/5.0 (Bot/Scraper)" },
-          signal: controller.signal,
         },
       );
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new PlatformApiError(`YouTube API error: ${response.status}`);
@@ -167,7 +163,6 @@ export class YouTubeProvider implements ScrapeProvider {
         },
       } satisfies YouTubeVideoResource;
     } catch (error) {
-      clearTimeout(timeoutId);
       if (error instanceof Error && error.name === "AbortError") {
         throw new PlatformApiError("YouTube API request timed out");
       }
@@ -204,24 +199,16 @@ export class YouTubeProvider implements ScrapeProvider {
       part: "snippet,contentDetails",
     });
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, DEFAULT_TIMEOUT_MS);
-
     let playlistData;
     let playlist;
 
     try {
-      const playlistResponse = await fetch(
+      const playlistResponse = await this.fetchWithTimeout(
         `https://www.googleapis.com/youtube/v3/playlists?${playlistParams}`,
         {
           headers: { "User-Agent": "Mozilla/5.0 (Bot/Scraper)" },
-          signal: controller.signal,
         },
       );
-
-      clearTimeout(timeoutId);
 
       if (!playlistResponse.ok) {
         throw new PlatformApiError(
@@ -236,7 +223,6 @@ export class YouTubeProvider implements ScrapeProvider {
         throw new ScrapeNotFoundError("Playlist not found on YouTube");
       }
     } catch (error) {
-      clearTimeout(timeoutId);
       if (error instanceof Error && error.name === "AbortError") {
         throw new PlatformApiError("YouTube API request timed out");
       }

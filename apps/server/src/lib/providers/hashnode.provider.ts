@@ -14,31 +14,42 @@ import {
   ScrapeNotFoundError,
 } from "../errors";
 
-// Matches: *.hashnode.dev/article-slug or hashnode.com/@username/article-slug
 const HASHNODE_PATTERNS = [
-  /([a-zA-Z0-9-]+)\.hashnode\.dev\/([^/?#]+)/,
-  /hashnode\.com\/@([^/]+)\/([^/?#]+)/,
+  /^\/([^/?#]+)/, // path component for hashnode.dev subdomains
+  /^\/@([^/]+)\/([^/?#]+)/, // path component for hashnode.com/@username
 ];
 
 function extractHostAndSlug(
   url: string,
 ): { host: string; slug: string } | null {
-  for (const pattern of HASHNODE_PATTERNS) {
-    const match = url.match(pattern);
-    if (match) {
-      return { host: match[1]!, slug: match[2]! };
-    }
-  }
-
-  // Try to parse any hashnode-related URL
   try {
     const urlObj = new URL(url);
+
+    // If it's the main *.hashnode.dev domain
+    if (urlObj.hostname.endsWith(".hashnode.dev")) {
+      const host = urlObj.hostname.split(".")[0];
+      const match = urlObj.pathname.match(HASHNODE_PATTERNS[0]!);
+      if (host && match && match[1]) {
+        return { host, slug: match[1] };
+      }
+    }
+
+    // If it's the hashnode.com/@username domain
+    if (
+      urlObj.hostname === "hashnode.com" ||
+      urlObj.hostname === "www.hashnode.com"
+    ) {
+      const match = urlObj.pathname.match(HASHNODE_PATTERNS[1]!);
+      if (match && match[1] && match[2]) {
+        return { host: `${match[1]}.hashnode.dev`, slug: match[2] };
+      }
+    }
+
+    // Try to parse custom hashnode-related URL based on the old logic
     const pathParts = urlObj.pathname.split("/").filter(Boolean);
     if (pathParts.length > 0) {
-      // Normalize host: extract subdomain for hashnode.dev, keep full hostname for custom domains
       let host = urlObj.hostname;
       if (urlObj.hostname.endsWith(".hashnode.dev")) {
-        // Extract subdomain (e.g., "myhost" from "myhost.hashnode.dev")
         host = urlObj.hostname.split(".")[0]!;
       }
       return {
@@ -57,7 +68,16 @@ export class HashnodeProvider implements ScrapeProvider {
   name = "hashnode";
 
   canHandle(url: string): boolean {
-    return url.includes("hashnode.dev") || url.includes("hashnode.com");
+    try {
+      const parsed = new URL(url);
+      return (
+        parsed.hostname === "hashnode.com" ||
+        parsed.hostname === "www.hashnode.com" ||
+        parsed.hostname.endsWith(".hashnode.dev")
+      );
+    } catch {
+      return false;
+    }
   }
 
   async scrape(

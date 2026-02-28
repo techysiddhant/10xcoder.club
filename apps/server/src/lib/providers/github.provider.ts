@@ -18,7 +18,7 @@ import {
 
 // Strict pattern requiring github.com as the domain (with optional protocol and www)
 const GITHUB_REPO_PATTERN =
-  /(?:https?:\/\/)?(?:www\.)?github\.com\/([^/]+)\/([^/?#]+)/;
+  /^(?:https?:\/\/)?(?:www\.)?github\.com\/([^/]+)\/([^/?#]+)(?:\/.*)?$/;
 
 function extractRepoInfo(url: string): { owner: string; repo: string } | null {
   const match = url.match(GITHUB_REPO_PATTERN);

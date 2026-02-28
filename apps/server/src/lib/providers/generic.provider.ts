@@ -450,39 +450,45 @@ export class GenericProvider implements ScrapeProvider {
         let sizeLimitExceeded = false;
 
         res.on("data", (chunk: Buffer) => {
-          // Track cumulative byte length
+          // Track cumulative byte length of incoming (compressed) data
           totalBytes += chunk.length;
 
-          // Enforce size cap
+          // Enforce size cap on the network/compressed level
           if (totalBytes > this.MAX_RESPONSE_SIZE) {
             sizeLimitExceeded = true;
-            // Abort the upstream request immediately
             req.destroy();
             res.destroy();
-            // Reject with clear error message (will result in 413-style handling upstream)
             reject(
               new PlatformApiError(
-                `Response body exceeds maximum size of ${this.MAX_RESPONSE_SIZE} bytes (received ${totalBytes} bytes)`,
+                `Response body exceeds maximum size of ${this.MAX_RESPONSE_SIZE} bytes (received ${totalBytes} bytes compressed)`,
               ),
             );
             return;
           }
 
-          // Only push chunk if under limit
           chunks.push(chunk);
         });
 
         res.on("end", () => {
-          // Only concatenate if we didn't exceed the limit
-          if (sizeLimitExceeded) {
-            return; // Error already handled in data handler
-          }
+          if (sizeLimitExceeded) return;
 
           let body: Buffer = Buffer.concat(chunks);
           const encoding = res.headers["content-encoding"];
+
           if (encoding) {
             const decompressed = this.decompressBody(body, encoding);
-            if (decompressed) body = decompressed;
+            if (decompressed) {
+              body = decompressed;
+              // Check if decompressed size exceeds max
+              if (body.length > this.MAX_RESPONSE_SIZE) {
+                reject(
+                  new PlatformApiError(
+                    `Decompressed response body exceeds maximum size of ${this.MAX_RESPONSE_SIZE} bytes (received ${body.length} bytes)`,
+                  ),
+                );
+                return;
+              }
+            }
           }
           // Convert Node.js response to Fetch Response
           const response = new Response(body as unknown as BodyInit, {

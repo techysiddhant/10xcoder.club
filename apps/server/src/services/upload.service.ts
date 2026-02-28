@@ -127,7 +127,7 @@ export async function getPresignedUploadUrl(
 
     // For profile images, also return the public CDN URL
     if (folder === "profiles") {
-      if (!env.CDN_URL || typeof env.CDN_URL !== "string") {
+      if (!env.CDN_URL) {
         logger.error("CDN_URL is missing but required for profile images");
         return {
           success: false,

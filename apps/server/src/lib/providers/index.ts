@@ -41,5 +41,5 @@ export function getProviderForUrl(url: string): ScrapeProvider {
  * Get all registered providers
  */
 export function getAllProviders(): ScrapeProvider[] {
-  return providers;
+  return [...providers];
 }
