@@ -23,7 +23,7 @@ import { logger } from "../logger";
 
 // Patterns for video ID extraction
 const VIDEO_PATTERNS = [
-  /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/,
+  /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/live\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})(?=$|[^A-Za-z0-9_-])/,
   /^([a-zA-Z0-9_-]{11})$/, // Direct video ID
 ];
 

@@ -678,7 +678,7 @@ export class GenericProvider implements ScrapeProvider {
     if (!pattern) return false;
     const hasEndAnchor = pattern.endsWith("$");
     const normalizedPattern = hasEndAnchor ? pattern.slice(0, -1) : pattern;
-    const escaped = normalizedPattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+    const escaped = normalizedPattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regexPattern =
       "^" + escaped.replace(/\\\*/g, ".*") + (hasEndAnchor ? "$" : ".*");
     try {
@@ -699,7 +699,11 @@ export class GenericProvider implements ScrapeProvider {
       if (!rule.path) continue;
       if (!this.matchesRobotsPath(path, rule.path)) continue;
       const matchLength = rule.path.replace(/\*/g, "").length;
-      if (!bestMatch || matchLength > bestMatch.length) {
+      if (
+        !bestMatch ||
+        matchLength > bestMatch.length ||
+        (matchLength === bestMatch.length && rule.type === "allow")
+      ) {
         bestMatch = { type: rule.type, length: matchLength };
       }
     }
