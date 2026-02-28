@@ -1,6 +1,8 @@
 import { emailQueue } from "../lib/email-queue";
 import type { EmailJobType } from "../lib/email-queue";
 
+const MAX_LIMIT = 1000;
+
 // ── Types ────────────────────────────────────────
 
 export interface EmailJobStats {
@@ -43,7 +45,7 @@ export async function getFailedEmailJobs(
   limit: number,
 ): Promise<{ total: number; jobs: FailedEmailJob[] }> {
   const safeStart = Math.max(0, Math.floor(start));
-  const safeLimit = Math.max(1, Math.floor(limit));
+  const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(limit)));
 
   const total = await emailQueue.getFailedCount();
   const jobs = await emailQueue.getFailed(safeStart, safeStart + safeLimit - 1);
@@ -68,14 +70,18 @@ export async function getFailedEmailJobs(
 export async function retryAllFailedEmailJobs(): Promise<number> {
   const batchSize = 50;
   let retried = 0;
-  let start = 0;
 
+  // Always fetch from index 0: job.retry() removes items and shifts indices,
+  // so advancing start would skip jobs. Iterate in reverse to avoid
+  // index-shifting issues within each batch.
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const batch = await emailQueue.getFailed(start, start + batchSize - 1);
+    const batch = await emailQueue.getFailed(0, batchSize - 1);
     if (batch.length === 0) break;
 
-    for (const job of batch) {
+    for (let i = batch.length - 1; i >= 0; i--) {
+      const job = batch[i];
+      if (!job) continue;
       try {
         await job.retry();
         retried++;
@@ -83,8 +89,6 @@ export async function retryAllFailedEmailJobs(): Promise<number> {
         // Log and continue — don't let one failure stop the loop
       }
     }
-
-    start += batchSize;
   }
 
   return retried;

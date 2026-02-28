@@ -45,18 +45,20 @@ app.use(async (c, next) => {
   const start = Date.now();
   logger.info({ method: c.req.method, path: c.req.path }, "← request");
 
-  await next();
-
-  const duration = Date.now() - start;
-  logger.info(
-    {
-      method: c.req.method,
-      path: c.req.path,
-      status: c.res.status,
-      duration: `${duration}ms`,
-    },
-    "→ response",
-  );
+  try {
+    await next();
+  } finally {
+    const duration = Date.now() - start;
+    logger.info(
+      {
+        method: c.req.method,
+        path: c.req.path,
+        status: c.res.status,
+        duration: `${duration}ms`,
+      },
+      "→ response",
+    );
+  }
 });
 
 // ── Error handler ────────────────────────────────
