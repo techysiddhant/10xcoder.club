@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "docker compose -f docker-compose.dev.yml up -d && tsx watch --env-file=.env src/index.ts",
+    "dev": "docker compose -f docker-compose.dev.yml up -d && wait-on tcp:localhost:5433 tcp:localhost:6379 --timeout 30000 && tsx watch --env-file=.env src/index.ts",
     "dev:services": "docker compose -f docker-compose.dev.yml up -d",
     "dev:stop": "docker compose -f docker-compose.dev.yml down",
     "build": "tsc",
@@ -24,7 +24,7 @@
     "@sentry/node": "^9.5.0",
     "@workspace/database": "workspace:*",
     "@workspace/schemas": "workspace:*",
-    "autosendjs": "latest",
+    "autosendjs": "^1.0.3",
     "better-auth": "^1.4.10",
     "bullmq": "^5.40.0",
     "drizzle-orm": "^0.45.1",
@@ -42,6 +42,7 @@
     "pino-pretty": "^13.1.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.39.0"
+    "typescript-eslint": "^8.39.0",
+    "wait-on": "^8.0.0"
   }
 }

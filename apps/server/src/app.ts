@@ -21,8 +21,8 @@ const corsOrigins = env.CORS_ORIGIN?.split(",")
   .filter(Boolean);
 
 if (corsOrigins?.length && corsOrigins.includes("*")) {
-  logger.warn(
-    "CORS_ORIGIN contains '*' with credentials:true — this is unsafe in production",
+  throw new Error(
+    "CORS_ORIGIN='*' cannot be used with credentials:true. Set specific origins.",
   );
 }
 
@@ -73,11 +73,21 @@ app.onError((err, c) => {
     });
   }
 
+  // Derive status from error, default to 500
+  const rawStatus =
+    (err as { status?: number }).status ??
+    (err as { statusCode?: number }).statusCode ??
+    500;
+  const status = rawStatus >= 400 && rawStatus < 600 ? rawStatus : 500;
+
   const message = isProduction
     ? "Something went wrong. Please try again later."
     : err.message;
 
-  return c.json({ status: "error", message }, 500);
+  return c.json(
+    { status: "error", message },
+    status as Parameters<typeof c.json>[1],
+  );
 });
 
 // ── Better Auth ──────────────────────────────────

@@ -8,10 +8,11 @@ import {
   username,
 } from "better-auth/plugins";
 
-import { env } from "../config/env";
+import { env, isProduction } from "../config/env";
 import { db } from "../db/index";
 import { DEFAULT_USER_NAMES, RoleSchema } from "@workspace/schemas";
 import { redis } from "./redis";
+import { logger } from "./logger";
 import {
   sendMagicLinkEmail,
   sendResetPasswordEmail,
@@ -84,7 +85,15 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: false,
     sendResetPassword: async ({ user, url }) => {
-      void sendResetPasswordEmail(user.email, user.name, url);
+      try {
+        await sendResetPasswordEmail(user.email, user.name, url);
+      } catch (err) {
+        logger.error(
+          { err, email: user.email },
+          "Failed to enqueue reset password email",
+        );
+        throw err;
+      }
     },
   },
   socialProviders: {
@@ -96,8 +105,8 @@ export const auth = betterAuth({
   advanced: {
     cookiePrefix: "10xcoder",
     defaultCookieAttributes: {
-      sameSite: "none",
-      secure: true,
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
     },
   },
   account: {
@@ -109,7 +118,15 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     sendVerificationEmail: async ({ user, url }) => {
-      void sendVerificationEmail(user.email, user.name, url);
+      try {
+        await sendVerificationEmail(user.email, user.name, url);
+      } catch (err) {
+        logger.error(
+          { err, email: user.email },
+          "Failed to enqueue verification email",
+        );
+        throw err;
+      }
     },
   },
   plugins: [
@@ -138,7 +155,12 @@ export const auth = betterAuth({
     openAPI(),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        void sendMagicLinkEmail(email, url);
+        try {
+          await sendMagicLinkEmail(email, url);
+        } catch (err) {
+          logger.error({ err, email }, "Failed to enqueue magic link email");
+          throw err;
+        }
       },
     }),
   ],
@@ -161,8 +183,12 @@ export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.API_URL,
   basePath: "/api/auth",
-  trustedOrigins: env.CORS_ORIGIN?.split(",")
-    .map((s) => s.trim())
-    .filter(Boolean) ?? [env.API_URL],
+  trustedOrigins: (() => {
+    const parsed =
+      env.CORS_ORIGIN?.split(",")
+        .map((s) => s.trim())
+        .filter(Boolean) ?? [];
+    return parsed.length ? parsed : [env.API_URL];
+  })(),
   appName: "10xCoder.club",
 });

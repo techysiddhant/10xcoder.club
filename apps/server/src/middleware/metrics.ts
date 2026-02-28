@@ -20,15 +20,17 @@ export const metricsMiddleware: MiddlewareHandler = async (c, next) => {
 
   const start = performance.now();
 
-  await next();
+  try {
+    await next();
+  } finally {
+    const duration = (performance.now() - start) / 1000; // convert ms → seconds
+    const route = c.req.routePath || "unknown";
+    const method = c.req.method;
+    const status = String(c.res.status);
 
-  const duration = (performance.now() - start) / 1000; // convert ms → seconds
-  const route = c.req.routePath || "unknown";
-  const method = c.req.method;
-  const status = String(c.res.status);
-
-  httpRequestsTotal.inc({ method, route, status });
-  httpRequestDuration.observe({ method, route, status }, duration);
+    httpRequestsTotal.inc({ method, route, status });
+    httpRequestDuration.observe({ method, route, status }, duration);
+  }
 };
 
 /**

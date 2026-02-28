@@ -18,7 +18,7 @@ interface SendEmailParams {
 
 export async function sendEmail(params: SendEmailParams): Promise<void> {
   await autosend.emails.send({
-    from: { email: `no-reply@${env.EMAIL_FROM}`, name: "10xCoder.club" },
+    from: { email: `no-reply@${env.DOMAIN}`, name: "10xCoder.club" },
     to: { email: params.to },
     subject: params.subject,
     templateId: params.templateId,

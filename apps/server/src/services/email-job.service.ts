@@ -66,12 +66,25 @@ export async function getFailedEmailJobs(
 // ── Retry all failed jobs ────────────────────────
 
 export async function retryAllFailedEmailJobs(): Promise<number> {
-  const failed = await emailQueue.getFailed();
+  const batchSize = 50;
   let retried = 0;
+  let start = 0;
 
-  for (const job of failed) {
-    await job.retry();
-    retried++;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const batch = await emailQueue.getFailed(start, start + batchSize - 1);
+    if (batch.length === 0) break;
+
+    for (const job of batch) {
+      try {
+        await job.retry();
+        retried++;
+      } catch {
+        // Log and continue — don't let one failure stop the loop
+      }
+    }
+
+    start += batchSize;
   }
 
   return retried;

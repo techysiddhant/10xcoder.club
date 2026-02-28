@@ -32,7 +32,7 @@ const EnvSchema = z.object({
 
   // Autosend
   AUTOSEND_API_KEY: z.string().min(1),
-  EMAIL_FROM: z.string().min(1),
+  DOMAIN: z.string().min(1),
 
   // Logflare (production only)
   LOGFLARE_API_KEY: z.string().optional(),
@@ -52,7 +52,7 @@ if (!result.success) {
   console.error(
     "\n📝 Please check apps/server/.env.example for required variables.",
   );
-  process.exit(1);
+  throw new Error("Invalid environment variables");
 }
 
 export const env = result.data;

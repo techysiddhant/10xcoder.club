@@ -13,7 +13,7 @@ try {
   await connectRedis();
 } catch (err) {
   logger.error({ err }, "Failed to connect to Redis");
-  process.exit(1);
+  throw err;
 }
 
 // Start email worker after Redis is connected
