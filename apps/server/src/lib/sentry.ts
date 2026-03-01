@@ -8,7 +8,7 @@
  */
 import * as Sentry from "@sentry/node";
 
-import { env, isProduction } from "../config/env";
+import { env, isProduction } from "@/config/env";
 
 if (isProduction && env.SENTRY_DSN) {
   Sentry.init({

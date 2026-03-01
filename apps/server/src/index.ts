@@ -3,10 +3,10 @@ import "./lib/sentry";
 
 import { serve } from "@hono/node-server";
 
-import app from "./app";
-import { env } from "./config/env";
-import { logger } from "./lib/logger";
-import { connectRedis } from "./lib/redis";
+import app from "@/app";
+import { env } from "@/config/env";
+import { logger } from "@/lib/logger";
+import { connectRedis } from "@/lib/redis";
 
 // Connect Redis before starting server
 try {
@@ -17,7 +17,12 @@ try {
 }
 
 // Start email worker after Redis is connected
-await import("./lib/email-queue");
+try {
+  await import("@/lib/email-queue");
+} catch (err) {
+  logger.error({ err }, "Failed to initialize email queue worker");
+  throw err;
+}
 
 serve({
   fetch: app.fetch,

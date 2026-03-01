@@ -14,8 +14,8 @@ import type {
   ScrapeProvider,
   ScrapeOptions,
   RobotsDiagnostics,
-} from "../../types/scrape";
-import { InvalidUrlError, PlatformApiError, ScrapeError } from "../errors";
+} from "@/types/scrape";
+import { InvalidUrlError, PlatformApiError, ScrapeError } from "@/lib/errors";
 
 export class GenericProvider implements ScrapeProvider {
   name = "generic";

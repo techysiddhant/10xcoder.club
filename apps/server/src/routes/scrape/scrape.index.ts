@@ -1,9 +1,9 @@
-import { createRouter } from "../../lib/create-app";
-import { authMiddleware } from "../../middleware/auth.middleware";
-import { scrapeRateLimitMiddleware } from "../../middleware/rate-limit.middleware";
+import { createRouter } from "@/lib/create-app";
+import { authMiddleware } from "@/middleware/auth.middleware";
+import { scrapeRateLimitMiddleware } from "@/middleware/rate-limit.middleware";
 
-import * as controllers from "../../controllers/scrape.controller";
-import * as routes from "./scrape.routes";
+import * as controllers from "@/controllers/scrape.controller";
+import * as routes from "@/routes/scrape/scrape.routes";
 
 const router = createRouter();
 

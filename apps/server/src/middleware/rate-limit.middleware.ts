@@ -7,8 +7,8 @@
 
 import type { Context, Next } from "hono";
 
-import { redis } from "../lib/redis";
-import { logger } from "../lib/logger";
+import { redis } from "@/lib/redis";
+import { logger } from "@/lib/logger";
 
 // ── Configuration ────────────────────────────────
 

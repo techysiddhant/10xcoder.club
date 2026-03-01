@@ -1,7 +1,7 @@
 import type { Context, Next } from "hono";
 
-import { auth } from "../lib/auth";
-import { logger } from "../lib/logger";
+import { auth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 /**
  * Hono middleware that validates Better Auth session.

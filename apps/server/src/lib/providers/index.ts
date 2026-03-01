@@ -3,12 +3,12 @@
  * Manages all scrape providers and selects the appropriate one for a URL
  */
 
-import type { ScrapeProvider } from "../../types/scrape";
-import { YouTubeProvider } from "./youtube.provider";
-import { GitHubProvider } from "./github.provider";
-import { DevToProvider } from "./devto.provider";
-import { HashnodeProvider } from "./hashnode.provider";
-import { GenericProvider } from "./generic.provider";
+import type { ScrapeProvider } from "@/types/scrape";
+import { YouTubeProvider } from "@/lib/providers/youtube.provider";
+import { GitHubProvider } from "@/lib/providers/github.provider";
+import { DevToProvider } from "@/lib/providers/devto.provider";
+import { HashnodeProvider } from "@/lib/providers/hashnode.provider";
+import { GenericProvider } from "@/lib/providers/generic.provider";
 
 // Create a single module-level GenericProvider instance for reuse
 const genericProvider = new GenericProvider();

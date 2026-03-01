@@ -1,10 +1,10 @@
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
-import type { AppRouteHandler } from "../lib/types";
+import type { AppRouteHandler } from "@/lib/types";
 import type {
   GetInfoRoute,
   HealthCheckRoute,
-} from "../routes/index/index.routes";
+} from "@/routes/index/index.routes";
 
 export const getInfo: AppRouteHandler<GetInfoRoute> = (c) => {
   return c.json(

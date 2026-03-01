@@ -1,8 +1,8 @@
-import { createRouter } from "../../lib/create-app";
-import { adminAuthMiddleware } from "../../middleware/auth.middleware";
+import { createRouter } from "@/lib/create-app";
+import { adminAuthMiddleware } from "@/middleware/auth.middleware";
 
-import * as handlers from "../../controllers/admin.controller";
-import * as routes from "./admin.routes";
+import * as handlers from "@/controllers/admin.controller";
+import * as routes from "@/routes/admin/admin.routes";
 
 const router = createRouter();
 
