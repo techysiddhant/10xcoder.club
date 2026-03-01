@@ -12,6 +12,13 @@ router.use(adminAuthMiddleware);
 const adminRouter = router
   .openapi(routes.getStats, handlers.getStats)
   .openapi(routes.getFailed, handlers.getFailed)
-  .openapi(routes.retryAll, handlers.retryAll);
+  .openapi(routes.retryAll, handlers.retryAll)
+  .openapi(routes.listResources, handlers.listResources)
+  .openapi(routes.updateResourceStatus, handlers.updateStatus)
+  .openapi(routes.removeResource, handlers.removeResource)
+  .openapi(routes.listResourceTypes, handlers.listResourceTypes)
+  .openapi(routes.createResourceType, handlers.createResourceType)
+  .openapi(routes.updateResourceType, handlers.updateResourceType)
+  .openapi(routes.deleteResourceType, handlers.deleteResourceType);
 
 export default adminRouter;
