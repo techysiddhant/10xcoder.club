@@ -147,7 +147,7 @@ export const listResourceTypes: AppRouteHandler<
   } catch (error) {
     logger.error({ err: error }, "Admin: Failed to list resource types");
     return c.json(
-      { error: "Failed to list resource types" },
+      { status: "error", message: "Failed to list resource types" },
       HttpStatusCodes.INTERNAL_SERVER_ERROR,
     ) as any;
   }
@@ -165,13 +165,22 @@ export const createResourceType: AppRouteHandler<
     ) as any;
   } catch (error) {
     logger.error({ err: error }, "Admin: Failed to create resource type");
+    const isValidationError =
+      error instanceof Error &&
+      (error.message.toLowerCase().includes("duplicate") ||
+        error.message.toLowerCase().includes("already exists") ||
+        error.message.toLowerCase().includes("validation"));
+    const status = isValidationError
+      ? HttpStatusCodes.BAD_REQUEST
+      : HttpStatusCodes.INTERNAL_SERVER_ERROR;
+    const message = isValidationError ? error.message : "Internal server error";
+
     return c.json(
       {
         status: "error",
-        message:
-          error instanceof Error ? error.message : "Internal server error",
+        message,
       },
-      HttpStatusCodes.BAD_REQUEST,
+      status,
     ) as any;
   }
 };
@@ -193,13 +202,21 @@ export const updateResourceType: AppRouteHandler<
     return c.json({ data: result }, HttpStatusCodes.OK) as any;
   } catch (error) {
     logger.error({ err: error }, "Admin: Failed to update resource type");
+    const isValidationError =
+      error instanceof Error &&
+      (error.message.toLowerCase().includes("already exists") ||
+        error.message.toLowerCase().includes("no fields provided"));
+    const status = isValidationError
+      ? HttpStatusCodes.BAD_REQUEST
+      : HttpStatusCodes.INTERNAL_SERVER_ERROR;
+    const message = isValidationError ? error.message : "Internal server error";
+
     return c.json(
       {
         status: "error",
-        message:
-          error instanceof Error ? error.message : "Internal server error",
+        message,
       },
-      HttpStatusCodes.BAD_REQUEST,
+      status,
     ) as any;
   }
 };
