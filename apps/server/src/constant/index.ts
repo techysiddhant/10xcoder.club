@@ -94,7 +94,7 @@ export function generateResourcesCacheKey(query: ResourceListQuery): string {
   const parts = ["resources"];
   // Encode values to prevent ambiguous keys when values contain colons or special chars
   if (query.cursor) parts.push(`cursor:${encodeURIComponent(query.cursor)}`);
-  if (query.limit) parts.push(`limit:${query.limit}`);
+  if (query.limit !== undefined) parts.push(`limit:${query.limit}`);
   if (query.resourceType)
     parts.push(`type:${encodeURIComponent(query.resourceType)}`);
   if (query.language) parts.push(`lang:${encodeURIComponent(query.language)}`);

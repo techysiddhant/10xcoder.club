@@ -23,7 +23,13 @@ import { redis } from "@/lib/redis";
 import { generateResourcesCacheKey, CACHE_TTL, REDIS_KEY } from "@/constant";
 import { getEmbedding, isGeminiConfigured } from "@/lib/gemini";
 import { env } from "@/config/env";
-import { getUserVote, getVoteCounts } from "@/services/vote.service";
+import {
+  getUserVote,
+  getVoteCounts,
+  getVoteCountsBatch,
+  getUserVotesBatch,
+  type VoteState,
+} from "@/services/vote.service";
 
 // ==========================================
 // Helper: Transform resource image URL
@@ -117,69 +123,6 @@ interface UserResourcesInput {
   status?: "approved" | "rejected" | "pending";
   resourceType?: string;
   search?: string;
-}
-
-// ==========================================
-// Helper: Get vote counts from Redis in batch
-// ==========================================
-async function getVoteCountsBatch(
-  resourceIds: string[],
-): Promise<Map<string, { upvotes: number; downvotes: number }>> {
-  const result = new Map<string, { upvotes: number; downvotes: number }>();
-  if (resourceIds.length === 0) return result;
-
-  const pipeline = redis.pipeline();
-  for (const id of resourceIds) {
-    pipeline.get(REDIS_KEY.UPVOTE_COUNT(id));
-    pipeline.get(REDIS_KEY.DOWNVOTE_COUNT(id));
-  }
-
-  const results = await pipeline.exec();
-  for (let i = 0; i < resourceIds.length; i++) {
-    const upvotes = results?.[i * 2]?.[1] as string | null;
-    const downvotes = results?.[i * 2 + 1]?.[1] as string | null;
-    result.set(resourceIds[i]!, {
-      upvotes: upvotes ? parseInt(upvotes) : 0,
-      downvotes: downvotes ? parseInt(downvotes) : 0,
-    });
-  }
-
-  return result;
-}
-
-// ==========================================
-// Helper: Get user votes from Redis in batch
-// ==========================================
-type VoteState = "upvote" | "downvote" | null;
-
-async function getUserVotesBatch(
-  resourceIds: string[],
-  userId: string,
-): Promise<Map<string, VoteState>> {
-  const result = new Map<string, VoteState>();
-  if (resourceIds.length === 0 || !userId) return result;
-
-  const pipeline = redis.pipeline();
-  for (const id of resourceIds) {
-    pipeline.sismember(REDIS_KEY.VOTE_UPVOTES(id), userId);
-    pipeline.sismember(REDIS_KEY.VOTE_DOWNVOTES(id), userId);
-  }
-
-  const results = await pipeline.exec();
-  for (let i = 0; i < resourceIds.length; i++) {
-    const hasUpvote = results?.[i * 2]?.[1] === 1;
-    const hasDownvote = results?.[i * 2 + 1]?.[1] === 1;
-
-    if (hasUpvote) {
-      result.set(resourceIds[i]!, "upvote");
-    } else if (hasDownvote) {
-      result.set(resourceIds[i]!, "downvote");
-    } else {
-      result.set(resourceIds[i]!, null);
-    }
-  }
-
-  return result;
 }
 
 // ==========================================
