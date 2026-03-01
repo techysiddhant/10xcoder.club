@@ -24,9 +24,12 @@ try {
   throw err;
 }
 
-serve({
-  fetch: app.fetch,
-  port: env.PORT,
-});
-
-logger.info(`🚀 Server is running on http://localhost:${env.PORT}`);
+serve(
+  {
+    fetch: app.fetch,
+    port: env.PORT,
+  },
+  (info) => {
+    logger.info(`🚀 Server is running on http://localhost:${info.port}`);
+  },
+);

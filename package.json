@@ -56,6 +56,7 @@
     "server:add": "cd apps/server && bun add",
     "server:add-dev": "cd apps/server && bun add -d",
     "server:dev": "cd apps/server && bun run dev",
+    "server:kill-port": "lsof -ti :8000 | xargs kill 2>/dev/null || true",
     "server:dev:services": "cd apps/server && bun run dev:services",
     "server:dev:stop": "cd apps/server && bun run dev:stop",
     "server:db:studio": "cd apps/server && bun run db:studio",
