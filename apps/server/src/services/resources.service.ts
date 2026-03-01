@@ -666,6 +666,10 @@ export async function getAllResources(query: ListResourcesInput) {
     let vectorQuery;
     if (resourceIds !== undefined && resourceIds.length > 0) {
       // Apply tag/techStack filter in the vector search query.
+      const idList = sql.join(
+        resourceIds.map((id) => sql`${id}`),
+        sql`, `,
+      );
       vectorQuery = sql`
                 SELECT id, 1 - (embedding <=> ${JSON.stringify(searchEmbedding)}::vector) as similarity
                 FROM resource
@@ -673,7 +677,7 @@ export async function getAllResources(query: ListResourcesInput) {
                   AND status = 'approved'
                   AND is_published = true
                   AND embedding IS NOT NULL
-                  AND id = ANY(${resourceIds}::text[])
+                  AND id = ANY(ARRAY[${idList}]::text[])
                 ORDER BY embedding <=> ${JSON.stringify(searchEmbedding)}::vector
                 LIMIT ${limit + 1}
             `;
