@@ -485,10 +485,12 @@ function normalizeToStringArray(
   return parts.length ? parts : undefined;
 }
 
+const MAX_LIMIT = 100;
+
 export async function getAllResources(query: ListResourcesInput) {
   const {
     cursor,
-    limit = 20,
+    limit: rawLimit = 20,
     resourceType,
     language,
     tag: tagParam,
@@ -496,6 +498,9 @@ export async function getAllResources(query: ListResourcesInput) {
     search,
     userId,
   } = query;
+
+  // Clamp limit to a safe range
+  const limit = Math.max(1, Math.min(rawLimit, MAX_LIMIT));
 
   const tagNames = normalizeToStringArray(tagParam);
   const techStackNames = normalizeToStringArray(techStackParam);
@@ -528,6 +533,7 @@ export async function getAllResources(query: ListResourcesInput) {
   const conditions = [
     isNull(resource.deletedAt),
     eq(resource.status, "approved"),
+    eq(resource.isPublished, true),
   ];
 
   if (resourceType) {
@@ -760,9 +766,15 @@ export async function getAllResources(query: ListResourcesInput) {
   const items = hasMore ? resources.slice(0, limit) : resources;
 
   // Generate next cursor from last item
-  const lastItem = items[items.length - 1];
-  const nextCursor =
-    hasMore && lastItem ? encodeCursor(lastItem.createdAt, lastItem.id) : null;
+  // For vector search, cursor-based pagination is not supported — return null
+  let nextCursor: string | null = null;
+  if (!useVectorSearch) {
+    const lastItem = items[items.length - 1];
+    nextCursor =
+      hasMore && lastItem
+        ? encodeCursor(lastItem.createdAt, lastItem.id)
+        : null;
+  }
 
   // Get upvote counts from Redis for all resources
   const itemIds = items.map((r) => r.id);
@@ -981,7 +993,16 @@ export async function getUserResources(
   userId: string,
   query: UserResourcesInput,
 ) {
-  const { page = 1, limit = 20, status, resourceType, search } = query;
+  const {
+    page: rawPage = 1,
+    limit: rawLimit = 20,
+    status,
+    resourceType,
+    search,
+  } = query;
+  // Clamp pagination inputs to safe ranges
+  const page = Math.max(1, rawPage);
+  const limit = Math.max(1, Math.min(rawLimit, MAX_LIMIT));
   const offset = (page - 1) * limit;
 
   // Build conditions
