@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
-import { emailQueue } from "../lib/email-queue";
-import type { EmailJobType } from "../lib/email-queue";
+import { emailQueue } from "@/lib/email-queue";
+import type { EmailJobType } from "@/lib/email-queue";
 
 const MAX_LIMIT = 1000;
 

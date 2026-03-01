@@ -2,17 +2,18 @@ import { apiReference } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import { prettyJSON } from "hono/pretty-json";
 
-import { createRouter } from "./lib/create-app";
-import { env, isProduction } from "./config/env";
-import { auth } from "./lib/auth";
-import { logger } from "./lib/logger";
-import { Sentry } from "./lib/sentry";
-import { metricsHandler, metricsMiddleware } from "./middleware/metrics";
-import indexRouter from "./routes/index/index.index";
-import adminRouter from "./routes/admin/admin.index";
-import uploadRouter from "./routes/upload/upload.index";
-import scrapeRouter from "./routes/scrape/scrape.index";
-import { AuthOpenAPI } from "./lib/auth-open-api";
+import { createRouter } from "@/lib/create-app";
+import { env, isProduction } from "@/config/env";
+import { auth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+import { Sentry } from "@/lib/sentry";
+import { metricsHandler, metricsMiddleware } from "@/middleware/metrics";
+import indexRouter from "@/routes/index/index.index";
+import adminRouter from "@/routes/admin/admin.index";
+import uploadRouter from "@/routes/upload/upload.index";
+import scrapeRouter from "@/routes/scrape/scrape.index";
+import resourcesRouter from "@/routes/resources/resources.index";
+import { AuthOpenAPI } from "@/lib/auth-open-api";
 
 const app = createRouter();
 
@@ -110,6 +111,7 @@ app.route("/", indexRouter);
 app.route("/admin", adminRouter);
 app.route("/upload", uploadRouter);
 app.route("/scrape", scrapeRouter);
+app.route("/resources", resourcesRouter);
 
 // ── OpenAPI + Scalar ─────────────────────────────
 

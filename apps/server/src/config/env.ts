@@ -48,6 +48,9 @@ const EnvSchema = z.object({
   // YouTube
   YOUTUBE_API_KEY: z.string().min(1).optional(),
 
+  // Gemini
+  GEMINI_API_KEY: z.string().optional(),
+
   // Sentry (production only)
   SENTRY_DSN: z.string().url().optional(),
 });

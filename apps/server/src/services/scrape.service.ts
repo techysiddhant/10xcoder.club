@@ -6,11 +6,11 @@
 import { eq, and } from "drizzle-orm";
 import { account } from "@workspace/database";
 
-import { db } from "../db/index";
-import { redis } from "../lib/redis";
-import { logger } from "../lib/logger";
-import { getProviderForUrl } from "../lib/providers";
-import type { ScrapedResource } from "../types/scrape";
+import { db } from "@/db/index";
+import { redis } from "@/lib/redis";
+import { logger } from "@/lib/logger";
+import { getProviderForUrl } from "@/lib/providers";
+import type { ScrapedResource } from "@/types/scrape";
 
 // ── Constants ────────────────────────────────────
 

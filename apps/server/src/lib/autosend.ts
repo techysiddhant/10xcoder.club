@@ -1,9 +1,9 @@
 import { Autosend } from "autosendjs";
 
-import { env } from "../config/env";
-import { logger } from "./logger";
-import { addEmailJob } from "./email-queue";
-import type { EmailJobData } from "./email-queue";
+import { env } from "@/config/env";
+import { logger } from "@/lib/logger";
+import { addEmailJob } from "@/lib/email-queue";
+import type { EmailJobData } from "@/lib/email-queue";
 
 const autosend = new Autosend(env.AUTOSEND_API_KEY);
 

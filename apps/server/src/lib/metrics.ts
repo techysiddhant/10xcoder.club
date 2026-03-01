@@ -6,7 +6,7 @@
  */
 import client from "prom-client";
 
-import { isProduction } from "../config/env";
+import { isProduction } from "@/config/env";
 
 // Collect default Node.js metrics (CPU, memory, event loop) only in production
 if (isProduction) {

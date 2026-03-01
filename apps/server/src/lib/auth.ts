@@ -8,16 +8,16 @@ import {
   username,
 } from "better-auth/plugins";
 
-import { env, isProduction } from "../config/env";
-import { db } from "../db/index";
+import { env, isProduction } from "@/config/env";
+import { db } from "@/db/index";
 import { DEFAULT_USER_NAMES, RoleSchema } from "@workspace/schemas";
-import { redis } from "./redis";
-import { logger } from "./logger";
+import { redis } from "@/lib/redis";
+import { logger } from "@/lib/logger";
 import {
   sendMagicLinkEmail,
   sendResetPasswordEmail,
   sendVerificationEmail,
-} from "./autosend";
+} from "@/lib/autosend";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {

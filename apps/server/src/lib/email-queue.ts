@@ -1,9 +1,9 @@
 import { Queue, Worker } from "bullmq";
 import type { Job } from "bullmq";
 
-import { env } from "../config/env";
-import { logger } from "./logger";
-import { sendEmail } from "./autosend";
+import { env } from "@/config/env";
+import { logger } from "@/lib/logger";
+import { sendEmail } from "@/lib/autosend";
 
 // ── Types ────────────────────────────────────────
 

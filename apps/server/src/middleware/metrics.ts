@@ -1,12 +1,12 @@
 import type { MiddlewareHandler } from "hono";
 
-import { isProduction } from "../config/env";
+import { isProduction } from "@/config/env";
 import {
   getMetrics,
   getMetricsContentType,
   httpRequestDuration,
   httpRequestsTotal,
-} from "../lib/metrics";
+} from "@/lib/metrics";
 
 /**
  * Hono middleware to instrument HTTP requests for Prometheus.

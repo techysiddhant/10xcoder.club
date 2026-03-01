@@ -1,17 +1,17 @@
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
-import type { AppRouteHandler } from "../lib/types";
+import type { AppRouteHandler } from "@/lib/types";
 import type {
   GetFailedRoute,
   GetStatsRoute,
   RetryAllRoute,
-} from "../routes/admin/admin.routes";
+} from "@/routes/admin/admin.routes";
 
 import {
   getEmailJobStats,
   getFailedEmailJobs,
   retryAllFailedEmailJobs,
-} from "../services/email-job.service";
+} from "@/services/email-job.service";
 
 export const getStats: AppRouteHandler<GetStatsRoute> = async (c) => {
   const stats = await getEmailJobStats();

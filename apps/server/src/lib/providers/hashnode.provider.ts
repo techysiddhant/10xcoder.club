@@ -7,12 +7,12 @@ import type {
   ScrapedResource,
   ScrapeProvider,
   ScrapeOptions,
-} from "../../types/scrape";
+} from "@/types/scrape";
 import {
   InvalidUrlError,
   PlatformApiError,
   ScrapeNotFoundError,
-} from "../errors";
+} from "@/lib/errors";
 
 const HASHNODE_PATTERNS = [
   /^\/([^/?#]+)/, // path component for hashnode.dev subdomains

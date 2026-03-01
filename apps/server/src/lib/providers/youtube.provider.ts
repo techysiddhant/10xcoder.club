@@ -3,7 +3,7 @@
  * Scrapes YouTube video and playlist metadata using YouTube Data API v3
  */
 
-import { env } from "../../config/env";
+import { env } from "@/config/env";
 import type {
   ScrapedResource,
   ScrapeProvider,
@@ -13,13 +13,13 @@ import type {
   YouTubePlaylistMetadata,
   YouTubeVideoResource,
   YouTubePlaylistResource,
-} from "../../types/scrape";
+} from "@/types/scrape";
 import {
   InvalidUrlError,
   PlatformApiError,
   ScrapeNotFoundError,
-} from "../errors";
-import { logger } from "../logger";
+} from "@/lib/errors";
+import { logger } from "@/lib/logger";
 
 // Patterns for video ID extraction
 const VIDEO_PATTERNS = [

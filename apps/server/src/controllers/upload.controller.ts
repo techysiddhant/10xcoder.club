@@ -1,9 +1,9 @@
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
-import type { AppRouteHandler } from "../lib/types";
-import type { CreatePresignedRoute } from "../routes/upload/upload.routes";
+import type { AppRouteHandler } from "@/lib/types";
+import type { CreatePresignedRoute } from "@/routes/upload/upload.routes";
 
-import { getPresignedUploadUrl } from "../services/upload.service";
+import { getPresignedUploadUrl } from "@/services/upload.service";
 
 export const createPresigned: AppRouteHandler<CreatePresignedRoute> = async (
   c,

@@ -5,18 +5,18 @@
 
 import * as HttpStatusCodes from "stoker/http-status-codes";
 
-import type { AppRouteHandler } from "../lib/types";
-import type { ScrapeUrlRoute } from "../routes/scrape/scrape.routes";
+import type { AppRouteHandler } from "@/lib/types";
+import type { ScrapeUrlRoute } from "@/routes/scrape/scrape.routes";
 
-import { scrapeUrl } from "../services/scrape.service";
-import { logger } from "../lib/logger";
+import { scrapeUrl } from "@/services/scrape.service";
+import { logger } from "@/lib/logger";
 import {
   ScrapeError,
   getUserMessageForErrorCode,
   getStatusForErrorCode,
   type ScrapeErrorCode,
-} from "../lib/errors";
-import type { ScrapedResource } from "../types/scrape";
+} from "@/lib/errors";
+import type { ScrapedResource } from "@/types/scrape";
 
 // ── Helpers ──────────────────────────────────────
 

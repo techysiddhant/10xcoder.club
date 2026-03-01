@@ -8,13 +8,13 @@ import type {
   ScrapedResource,
   ScrapeProvider,
   ScrapeOptions,
-} from "../../types/scrape";
+} from "@/types/scrape";
 import {
   InvalidUrlError,
   PlatformApiError,
   ScrapeNotFoundError,
   RateLimitError,
-} from "../errors";
+} from "@/lib/errors";
 
 // Strict pattern requiring github.com as the domain (with optional protocol and www)
 const GITHUB_REPO_PATTERN =

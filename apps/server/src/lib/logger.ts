@@ -1,7 +1,7 @@
 import pino from "pino";
 import type { Logger } from "pino";
 
-import { env, isProduction } from "../config/env";
+import { env, isProduction } from "@/config/env";
 
 /**
  * Application logger using Pino.
