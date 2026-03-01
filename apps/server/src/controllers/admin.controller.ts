@@ -81,9 +81,11 @@ export const updateStatus: AppRouteHandler<UpdateResourceStatusRoute> = async (
 
     if (!result.success) {
       const status =
-        result.code === 404
-          ? HttpStatusCodes.NOT_FOUND
-          : HttpStatusCodes.BAD_REQUEST;
+        result.code === 500
+          ? HttpStatusCodes.INTERNAL_SERVER_ERROR
+          : result.code === 404
+            ? HttpStatusCodes.NOT_FOUND
+            : HttpStatusCodes.BAD_REQUEST;
       return c.json({ status: "error", message: result.error }, status) as any;
     }
 
@@ -112,9 +114,11 @@ export const removeResource: AppRouteHandler<RemoveResourceRoute> = async (
 
     if (!result.success) {
       const status =
-        result.code === 404
-          ? HttpStatusCodes.NOT_FOUND
-          : HttpStatusCodes.BAD_REQUEST;
+        result.code === 500
+          ? HttpStatusCodes.INTERNAL_SERVER_ERROR
+          : result.code === 404
+            ? HttpStatusCodes.NOT_FOUND
+            : HttpStatusCodes.BAD_REQUEST;
       return c.json({ status: "error", message: result.error }, status) as any;
     }
 

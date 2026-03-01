@@ -47,13 +47,27 @@ async function generateResourceEmbedding(
   // Fetch resource with tags and techStack
   const resourceData = await db.query.resource.findFirst({
     where: eq(resource.id, resourceId),
+    columns: {
+      id: true,
+      title: true,
+    },
     with: {
-      resourceType: true,
+      resourceType: {
+        columns: { id: true, name: true },
+      },
       resourceToTags: {
-        with: { tag: true },
+        with: {
+          tag: {
+            columns: { id: true, name: true },
+          },
+        },
       },
       resourceToTechStack: {
-        with: { techStack: true },
+        with: {
+          techStack: {
+            columns: { id: true, name: true },
+          },
+        },
       },
     },
   });
@@ -152,14 +166,50 @@ export async function adminGetAllResources(query: AdminListResourcesInput) {
     // Get resources with creator info and relations
     const resources = await db.query.resource.findMany({
       where: and(...conditions),
+      columns: {
+        id: true,
+        title: true,
+        description: true,
+        url: true,
+        image: true,
+        status: true,
+        isPublished: true,
+        language: true,
+        credits: true,
+        resourceTypeId: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        reason: true,
+      },
       with: {
         resourceToTags: {
-          with: { tag: true },
+          with: {
+            tag: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
+          },
         },
         resourceToTechStack: {
-          with: { techStack: true },
+          with: {
+            techStack: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
+          },
         },
-        resourceType: true,
+        resourceType: {
+          columns: {
+            id: true,
+            name: true,
+            label: true,
+          },
+        },
         creator: {
           columns: {
             id: true,
@@ -217,6 +267,7 @@ export async function adminUpdateResourceStatus(
 
   const existing = await db.query.resource.findFirst({
     where: and(eq(resource.id, resourceId), isNull(resource.deletedAt)),
+    columns: { id: true },
   });
 
   if (!existing) {
@@ -243,8 +294,20 @@ export async function adminUpdateResourceStatus(
     const [updated] = await db
       .update(resource)
       .set(updateData)
-      .where(eq(resource.id, resourceId))
+      .where(and(eq(resource.id, resourceId), isNull(resource.deletedAt)))
       .returning();
+
+    if (!updated) {
+      logger.warn(
+        { resourceId },
+        "Admin: Update status failed - resource not found or concurrently deleted",
+      );
+      return {
+        success: false,
+        error: "Resource not found or already deleted",
+        code: 404,
+      };
+    }
 
     logger.info({ resourceId, status }, "Resource status updated by admin");
     return { success: true, data: updated };
@@ -278,10 +341,23 @@ export async function adminDeleteResource(resourceId: string) {
   }
 
   try {
-    await db
+    const [deleted] = await db
       .update(resource)
       .set({ deletedAt: new Date() })
-      .where(eq(resource.id, resourceId));
+      .where(and(eq(resource.id, resourceId), isNull(resource.deletedAt)))
+      .returning({ id: resource.id });
+
+    if (!deleted) {
+      logger.warn(
+        { resourceId },
+        "Admin: Soft-delete failed - resource not found or already deleted",
+      );
+      return {
+        success: false,
+        code: 404,
+        error: "Resource not found or already deleted",
+      };
+    }
 
     logger.info({ resourceId }, "Resource soft-deleted by admin");
     return { success: true };

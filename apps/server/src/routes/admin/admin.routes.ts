@@ -164,7 +164,7 @@ export const updateResourceStatus = createRoute({
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
       z.object({
-        status: z.number(),
+        status: z.literal("success"),
         data: z.any(),
       }),
       "Resource status updated",
