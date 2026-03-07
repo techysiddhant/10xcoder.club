@@ -107,6 +107,12 @@ export const streamVotes: AppRouteHandler<StreamVotesRoute> = async (c) => {
   const clientId = crypto.randomUUID();
 
   return streamSSE(c, async (stream) => {
+    let resolveAbort: () => void;
+    const abortPromise = new Promise<void>((resolve) => {
+      resolveAbort = resolve;
+      stream.onAbort(() => resolve());
+    });
+
     // Register client with a callback to enqueue data
     const added = addVoteClient(clientId, (msg) => {
       // msg is the JSON string from Redis. Format it as SSE event data.
@@ -115,6 +121,8 @@ export const streamVotes: AppRouteHandler<StreamVotesRoute> = async (c) => {
           { err, clientId },
           "Failed to write SSE event to client",
         );
+        removeVoteClient(clientId);
+        resolveAbort();
       });
     });
 
@@ -137,15 +145,6 @@ export const streamVotes: AppRouteHandler<StreamVotesRoute> = async (c) => {
       removeVoteClient(clientId);
       throw err;
     }
-
-    let resolveAbort: () => void;
-    // Create a Promise that resolves when the stream aborts
-    const abortPromise = new Promise<void>((resolve) => {
-      resolveAbort = resolve;
-      stream.onAbort(() => {
-        resolve();
-      });
-    });
 
     // Keep connection alive
     const heartbeats = setInterval(async () => {
