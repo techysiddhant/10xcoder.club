@@ -5,10 +5,15 @@ import type { AppRouteHandler } from "@/lib/types";
 import type {
   UpvoteRoute,
   DownvoteRoute,
+  GetCountsRoute,
   StreamVotesRoute,
 } from "@/routes/vote/vote.routes";
 
-import { toggleVote, checkResourceExists } from "@/services/vote.service";
+import {
+  toggleVote,
+  checkResourceExists,
+  getVoteCounts,
+} from "@/services/vote.service";
 import { logger } from "@/lib/logger";
 import {
   addVoteClient,
@@ -91,6 +96,36 @@ export const downvote: AppRouteHandler<DownvoteRoute> = async (c) => {
     controllerLogger.error({ error, resourceId }, "Downvote failed");
     return c.json(
       { status: "error", message: "Failed to toggle downvote" },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR,
+    ) as any;
+  }
+};
+
+export const getCounts: AppRouteHandler<GetCountsRoute> = async (c) => {
+  const { resourceId } = c.req.valid("param");
+
+  try {
+    const exists = await checkResourceExists(resourceId);
+    if (!exists) {
+      return c.json(
+        { status: "error", message: "Resource not found" },
+        HttpStatusCodes.NOT_FOUND,
+      ) as any;
+    }
+
+    const counts = await getVoteCounts(resourceId);
+    return c.json(
+      {
+        status: "success",
+        upvotes: counts.upvotes,
+        downvotes: counts.downvotes,
+      },
+      HttpStatusCodes.OK,
+    ) as any;
+  } catch (error) {
+    controllerLogger.error({ error, resourceId }, "Get counts failed");
+    return c.json(
+      { status: "error", message: "Failed to get vote counts" },
       HttpStatusCodes.INTERNAL_SERVER_ERROR,
     ) as any;
   }
