@@ -138,6 +138,15 @@ export const streamVotes: AppRouteHandler<StreamVotesRoute> = async (c) => {
       throw err;
     }
 
+    let resolveAbort: () => void;
+    // Create a Promise that resolves when the stream aborts
+    const abortPromise = new Promise<void>((resolve) => {
+      resolveAbort = resolve;
+      stream.onAbort(() => {
+        resolve();
+      });
+    });
+
     // Keep connection alive
     const heartbeats = setInterval(async () => {
       try {
@@ -146,17 +155,9 @@ export const streamVotes: AppRouteHandler<StreamVotesRoute> = async (c) => {
           data: Date.now().toString(),
         });
       } catch (err) {
-        clearInterval(heartbeats);
-        removeVoteClient(clientId);
+        if (resolveAbort) resolveAbort();
       }
     }, 30000);
-
-    // Create a Promise that resolves when the stream aborts
-    const abortPromise = new Promise<void>((resolve) => {
-      stream.onAbort(() => {
-        resolve();
-      });
-    });
 
     try {
       // Wait indefinitely until the stream is aborted
