@@ -110,7 +110,12 @@ export const streamVotes: AppRouteHandler<StreamVotesRoute> = async (c) => {
     // Register client with a callback to enqueue data
     const added = addVoteClient(clientId, (msg) => {
       // msg is the JSON string from Redis. Format it as SSE event data.
-      stream.writeSSE({ data: msg }).catch(() => {});
+      stream.writeSSE({ data: msg }).catch((err) => {
+        controllerLogger.debug(
+          { err, clientId },
+          "Failed to write SSE event to client",
+        );
+      });
     });
 
     if (!added) {
