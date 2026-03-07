@@ -11,6 +11,12 @@ const VoteResponseSchema = z.object({
   downvotes: z.number(),
 });
 
+const CountsResponseSchema = z.object({
+  status: z.string().default("success"),
+  upvotes: z.number(),
+  downvotes: z.number(),
+});
+
 const ErrorSchema = z.object({
   status: z.string().default("error"),
   message: z.string(),
@@ -70,6 +76,29 @@ export const downvote = createRoute({
   },
 });
 
+export const getCounts = createRoute({
+  path: "/{resourceId}/counts",
+  method: "get",
+  tags,
+  request: {
+    params: z.object({
+      resourceId: z.string().uuid(),
+    }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      CountsResponseSchema,
+      "Vote counts for resource",
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(ErrorSchema, "Bad request"),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(ErrorSchema, "Resource not found"),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      ErrorSchema,
+      "Internal error",
+    ),
+  },
+});
+
 export const streamVotes = createRoute({
   path: "/stream",
   method: "get",
@@ -87,4 +116,5 @@ export const streamVotes = createRoute({
 
 export type UpvoteRoute = typeof upvote;
 export type DownvoteRoute = typeof downvote;
+export type GetCountsRoute = typeof getCounts;
 export type StreamVotesRoute = typeof streamVotes;

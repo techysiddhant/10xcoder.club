@@ -7,6 +7,7 @@ import * as routes from "@/routes/vote/vote.routes";
 const router = createRouter();
 
 // Public routes
+router.openapi(routes.getCounts, controllers.getCounts);
 router.openapi(routes.streamVotes, controllers.streamVotes);
 
 // Protected routes
