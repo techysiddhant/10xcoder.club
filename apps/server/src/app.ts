@@ -13,6 +13,7 @@ import adminRouter from "@/routes/admin/admin.index";
 import uploadRouter from "@/routes/upload/upload.index";
 import scrapeRouter from "@/routes/scrape/scrape.index";
 import resourcesRouter from "@/routes/resources/resources.index";
+import voteRouter from "@/routes/vote/vote.index";
 import { AuthOpenAPI } from "@/lib/auth-open-api";
 
 const app = createRouter();
@@ -112,6 +113,7 @@ app.route("/admin", adminRouter);
 app.route("/upload", uploadRouter);
 app.route("/scrape", scrapeRouter);
 app.route("/resources", resourcesRouter);
+app.route("/vote", voteRouter);
 
 // ── OpenAPI + Scalar ─────────────────────────────
 

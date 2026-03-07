@@ -7,6 +7,7 @@ import app from "@/app";
 import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
 import { connectRedis } from "@/lib/redis";
+import { initVoteSubscriber } from "@/lib/vote-subscriber";
 
 // Connect Redis before starting server
 try {
@@ -21,6 +22,22 @@ try {
   await import("@/lib/email-queue");
 } catch (err) {
   logger.error({ err }, "Failed to initialize email queue worker");
+  throw err;
+}
+
+// Start vote worker after Redis is connected
+try {
+  await import("@/lib/vote-worker");
+} catch (err) {
+  logger.error({ err }, "Failed to initialize vote sync worker");
+  throw err;
+}
+
+// Initialize vote subscriber for SSE
+try {
+  await initVoteSubscriber();
+} catch (err) {
+  logger.error({ err }, "Failed to initialize vote subscriber");
   throw err;
 }
 
