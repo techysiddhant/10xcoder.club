@@ -129,9 +129,14 @@ export const streamVotes: AppRouteHandler<StreamVotesRoute> = async (c) => {
       return;
     }
 
-    await stream.writeSSE({
-      data: JSON.stringify({ type: "connected", clientId }),
-    });
+    try {
+      await stream.writeSSE({
+        data: JSON.stringify({ type: "connected", clientId }),
+      });
+    } catch (err) {
+      removeVoteClient(clientId);
+      throw err;
+    }
 
     // Keep connection alive
     const heartbeats = setInterval(async () => {
