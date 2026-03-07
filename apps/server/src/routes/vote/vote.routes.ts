@@ -22,13 +22,19 @@ export const upvote = createRoute({
   tags,
   request: {
     params: z.object({
-      resourceId: z.string().min(1),
+      resourceId: z.string().uuid(),
     }),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(VoteResponseSchema, "Upvote toggled"),
     [HttpStatusCodes.BAD_REQUEST]: jsonContent(ErrorSchema, "Bad request"),
-    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(ErrorSchema, "Unauthorized"),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({
+        success: z.boolean(),
+        message: z.string(),
+      }),
+      "Unauthorized",
+    ),
     [HttpStatusCodes.NOT_FOUND]: jsonContent(ErrorSchema, "Resource not found"),
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
       ErrorSchema,
@@ -43,13 +49,19 @@ export const downvote = createRoute({
   tags,
   request: {
     params: z.object({
-      resourceId: z.string().min(1),
+      resourceId: z.string().uuid(),
     }),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(VoteResponseSchema, "Downvote toggled"),
     [HttpStatusCodes.BAD_REQUEST]: jsonContent(ErrorSchema, "Bad request"),
-    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(ErrorSchema, "Unauthorized"),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      z.object({
+        success: z.boolean(),
+        message: z.string(),
+      }),
+      "Unauthorized",
+    ),
     [HttpStatusCodes.NOT_FOUND]: jsonContent(ErrorSchema, "Resource not found"),
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
       ErrorSchema,

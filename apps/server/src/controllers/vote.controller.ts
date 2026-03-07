@@ -141,16 +141,16 @@ export const streamVotes: AppRouteHandler<StreamVotesRoute> = async (c) => {
       }
     }, 30000);
 
-    stream.onAbort(() => {
-      clearInterval(heartbeats);
-      removeVoteClient(clientId);
+    // Create a Promise that resolves when the stream aborts
+    const abortPromise = new Promise<void>((resolve) => {
+      stream.onAbort(() => {
+        resolve();
+      });
     });
 
-    // To keep it pending forever, we loop indefinitely waiting
     try {
-      while (true) {
-        await stream.sleep(1000);
-      }
+      // Wait indefinitely until the stream is aborted
+      await abortPromise;
     } catch (err) {
       controllerLogger.error({ err, clientId }, "Error in vote stream loop");
     } finally {

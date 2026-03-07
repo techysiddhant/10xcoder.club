@@ -43,12 +43,23 @@ const worker = new Worker<VoteJobData>(
       if (action === "add") {
         // Use transaction to ensure insert and increment are atomic
         await db.transaction(async (tx) => {
-          // Insert vote record and check if it was inserted
-          const insertResult = await tx
-            .insert(userVote)
-            .values({ resourceId, userId, type })
-            .onConflictDoNothing()
-            .returning({ id: userVote.id });
+          let insertResult;
+          try {
+            insertResult = await tx
+              .insert(userVote)
+              .values({ resourceId, userId, type })
+              .onConflictDoNothing()
+              .returning({ id: userVote.id });
+          } catch (err: any) {
+            // 23503 is the Postgres SQLSTATE for foreign key violation
+            if (err.code === "23503") {
+              jobLogger.warn(
+                "Foreign key violation on insert - resource or user may have been deleted. Marking job complete.",
+              );
+              return; // Terminate transaction successfully
+            }
+            throw err;
+          }
 
           // Only increment counter if a vote was actually inserted
           if (insertResult.length > 0) {
@@ -116,17 +127,28 @@ const worker = new Worker<VoteJobData>(
 
         await db.transaction(async (tx) => {
           // Update vote type, ensuring it currently matches fromType
-          const updateResult = await tx
-            .update(userVote)
-            .set({ type })
-            .where(
-              and(
-                eq(userVote.resourceId, resourceId),
-                eq(userVote.userId, userId),
-                eq(userVote.type, fromType),
-              ),
-            )
-            .returning({ id: userVote.id });
+          let updateResult;
+          try {
+            updateResult = await tx
+              .update(userVote)
+              .set({ type })
+              .where(
+                and(
+                  eq(userVote.resourceId, resourceId),
+                  eq(userVote.userId, userId),
+                  eq(userVote.type, fromType),
+                ),
+              )
+              .returning({ id: userVote.id });
+          } catch (err: any) {
+            if (err.code === "23503") {
+              jobLogger.warn(
+                "Foreign key violation on update - resource or user may have been deleted. Marking job complete.",
+              );
+              return;
+            }
+            throw err;
+          }
 
           // Only update counters if a vote was actually updated
           if (updateResult.length > 0) {
@@ -169,7 +191,7 @@ const worker = new Worker<VoteJobData>(
   },
   {
     connection,
-    concurrency: 10,
+    concurrency: 1, // Process serially to prevent race conditions on vote counts for the same object
   },
 );
 
