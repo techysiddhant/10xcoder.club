@@ -7,6 +7,7 @@ on:
       - "apps/server/**"
       - "packages/schemas/**"
       - "packages/database/**"
+      - "tsconfig.base.json"
       - "package.json"
       - "bun.lock"
   workflow_dispatch:

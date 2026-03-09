@@ -68,8 +68,8 @@ COPY --from=build /app/apps/server/drizzle ./drizzle
 
 # Copy production node_modules (includes workspace deps)
 COPY --from=deps /app/node_modules ./node_modules
-# node_modules are hoisted to root by bun workspaces
-COPY --from=deps /app/packages ./packages
+# Copy workspace packages with compiled source from build stage
+COPY --from=build /app/packages ./packages
 
 # Copy package.json for Node.js module resolution
 COPY --from=build /app/apps/server/package.json ./package.json

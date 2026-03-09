@@ -136,19 +136,19 @@ jobs:
             fi
 
             echo "⏳ Waiting for new server ($NEW_ID) health check"
-            for i in {1..20}; do
+            for i in {1..24}; do
               STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$NEW_ID" 2>/dev/null || echo "starting")
               if [ "$STATUS" = "healthy" ]; then
                 echo "✅ New server is healthy"
                 break
               fi
-              if [ "$i" -eq 20 ]; then
+              if [ "$i" -eq 24 ]; then
                 echo "❌ Health check failed — rolling back"
                 docker stop "$NEW_ID" && docker rm "$NEW_ID" 2>/dev/null || true
                 docker compose up -d --scale server=1 server
                 exit 1
               fi
-              sleep 3
+              sleep 5
             done
 
             echo "🔄 Removing old server containers"
@@ -161,7 +161,7 @@ jobs:
             done
 
             echo "🔄 Scaling to single server (new container preserved)"
-            docker compose up -d --no-deps --scale server=1 server
+            docker compose up -d --no-deps --no-recreate --scale server=1 server
 
             echo "🗑️ Cleaning old images"
             docker image prune -f || true

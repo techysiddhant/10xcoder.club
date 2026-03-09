@@ -60,9 +60,9 @@ cmd_restart() {
 }
 
 cmd_prune() {
-  echo -e "${YELLOW}🗑️  Removing orphan containers...${NC}"
-  docker compose down --remove-orphans 2>/dev/null || true
-  docker compose -f docker-compose.infra.yml down --remove-orphans 2>/dev/null || true
+  echo -e "${YELLOW}🗑️  Removing orphan containers (keeping stack running)...${NC}"
+  docker compose up -d --remove-orphans 2>/dev/null || true
+  docker compose -f docker-compose.infra.yml up -d --remove-orphans 2>/dev/null || true
 
   echo -e "${YELLOW}🗑️  Removing dangling images...${NC}"
   docker image prune -f
@@ -111,11 +111,12 @@ cmd_reset_redis() {
   confirm "This will FLUSH ALL Redis data (queues, sessions, caches)."
 
   echo -e "${YELLOW}🗑️  Flushing Redis...${NC}"
-  # Load .env for REDIS_PASSWORD
+  # Safely parse REDIS_PASSWORD from .env without sourcing/evaluating
   if [[ -f .env ]]; then
-    set -a
-    source .env
-    set +a
+    parsed_password=$(grep -E '^(export[[:space:]]+)?REDIS_PASSWORD=' .env | tail -n 1 | sed -E 's/^(export[[:space:]]+)?REDIS_PASSWORD=//' | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
+    if [[ -n "$parsed_password" ]]; then
+      export REDIS_PASSWORD="$parsed_password"
+    fi
   fi
   if [[ -z "${REDIS_PASSWORD:-}" ]]; then
     echo -e "${RED}❌ REDIS_PASSWORD is not set. Cannot flush Redis.${NC}"

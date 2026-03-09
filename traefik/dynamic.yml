@@ -3,10 +3,10 @@
 
 tls:
   certificates:
-    - certFile: /etc/ssl/cloudflare/cert.pem
-      keyFile: /etc/ssl/cloudflare/key.pem
+    - certFile: /etc/ssl/cloudflare/origin.pem
+      keyFile: /etc/ssl/cloudflare/origin-key.pem
   stores:
     default:
       defaultCertificate:
-        certFile: /etc/ssl/cloudflare/cert.pem
-        keyFile: /etc/ssl/cloudflare/key.pem
+        certFile: /etc/ssl/cloudflare/origin.pem
+        keyFile: /etc/ssl/cloudflare/origin-key.pem
