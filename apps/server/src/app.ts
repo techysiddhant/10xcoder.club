@@ -106,6 +106,12 @@ app.all("/api/auth/*", (c) => {
 
 app.get("/metrics", metricsHandler);
 
+// ── Health Check ─────────────────────────────────
+
+app.get("/health", (c) => {
+  return c.json({ status: "ok" });
+});
+
 // ── Routes ───────────────────────────────────────
 
 app.route("/", indexRouter);

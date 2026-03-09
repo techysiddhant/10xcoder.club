@@ -1,14 +1,14 @@
-FROM oven/bun:1.1.43-alpine
+FROM oven/bun:1-alpine
 
 WORKDIR /app
 
 # Required tools
 RUN apk add --no-cache postgresql-client
 
-# Copy only what migrations need
-COPY apps/api/drizzle ./drizzle
+# Copy server drizzle migrations
+COPY apps/server/drizzle ./drizzle
 
-# Create minimal package.json safely
+# Create minimal package.json
 RUN cat <<'EOF' > package.json
 {
   "name": "migration",

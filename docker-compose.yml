@@ -1,39 +1,25 @@
+# =============================================================================
+# Application Stack — Server, Database, Redis, Migrations, Backups
+# =============================================================================
+# Usage: docker compose up -d
+# Prereq: docker compose -f docker-compose.infra.yml up -d (creates app_net)
+# =============================================================================
+
 services:
-  db:
-    image: pgvector/pgvector:pg18
-    container_name: ${DB_CONTAINER_NAME:-10xcoder_db}
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - postgres_data:/var/lib/postgresql
-    networks: [app_net]
-    ports:
-      - "127.0.0.1:5432:5432"
-
-  redis:
-    image: redis:7-alpine
-    container_name: ${REDIS_CONTAINER_NAME:-10xcoder_redis}
-    restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD}
-    networks: [app_net]
-
-  app:
-    image: ghcr.io/techysiddhant/10xcoder-api:latest
-    container_name: ${APP_CONTAINER_NAME:-10xcoder_app}
+  # ── Server — Hono API ─────────────────────────────────────
+  server:
+    image: ghcr.io/techysiddhant/10xcoder-server:${IMAGE_TAG:-latest}
+    container_name: ${APP_CONTAINER_NAME:-10xcoder_server}
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 3000
+      PORT: 8000
       # Database
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      DATABASE_URL: ${DATABASE_URL}
       # Redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -46,61 +32,179 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
       # Email
-      RESEND_API_KEY: ${RESEND_API_KEY}
-      EMAIL_FROM: ${EMAIL_FROM}
+      AUTOSEND_API_KEY: ${AUTOSEND_API_KEY}
+      DOMAIN: ${DOMAIN}
       # AI
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       # AWS S3
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}
-      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
       CDN_URL: ${CDN_URL}
-      # Sentry (error tracking)
+      # Sentry
       SENTRY_DSN: ${SENTRY_DSN:-}
+      # Logflare
+      LOGFLARE_API_KEY: ${LOGFLARE_API_KEY:-}
+      LOGFLARE_SOURCE_ID: ${LOGFLARE_SOURCE_ID:-}
+      # YouTube
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      # HTTP router
+      - "traefik.http.routers.server.rule=Host(`api.10xcoder.club`)"
+      - "traefik.http.routers.server.entrypoints=websecure"
+      - "traefik.http.routers.server.tls=true"
+      - "traefik.http.services.server.loadbalancer.server.port=8000"
+      # SSE: long timeouts for vote stream
+      - "traefik.http.services.server.loadbalancer.responseforwarding.flushinterval=1ms"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
     networks: [app_net]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+  # ── PostgreSQL ────────────────────────────────────────────
+  db:
+    image: pgvector/pgvector:pg18
+    container_name: ${DB_CONTAINER_NAME:-10xcoder_db}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    networks: [app_net]
+    ports:
+      - "127.0.0.1:5432:5432"
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Redis ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ${REDIS_CONTAINER_NAME:-10xcoder_redis}
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    volumes:
+      - redis_data:/data
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+    networks: [app_net]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Database Migrations ───────────────────────────────────
   migrate:
     build:
       context: .
-      dockerfile: apps/api/migration.Dockerfile
+      dockerfile: apps/server/migration.Dockerfile
     container_name: 10xcoder_migrate
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks: [app_net]
     restart: "no"
     profiles: ["migrate"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  nginx:
-    image: nginx:alpine
-    container_name: ${NGINX_CONTAINER_NAME:-10xcoder_nginx}
+  # ── Database Backup ───────────────────────────────────────
+  db-backup:
+    image: prodrigestivill/postgres-backup-local
+    container_name: 10xcoder_backup
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SCHEDULE: "@daily"
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+      HEALTHCHECK_PORT: 8081
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - /etc/ssl/cloudflare:/etc/ssl/cloudflare:ro
+      - db_backups:/backups
     depends_on:
-      - app
+      db:
+        condition: service_healthy
     networks: [app_net]
-
-  uptime-kuma:
-    image: louislam/uptime-kuma:1
-    container_name: 10xcoder_uptime
-    restart: unless-stopped
-    volumes:
-      - uptime_kuma_data:/app/data
-    networks: [app_net]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   app_net:
+    external: true
 
 volumes:
   postgres_data:
-  uptime_kuma_data:
+  redis_data:
+  db_backups:
