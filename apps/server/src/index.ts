@@ -33,12 +33,14 @@ try {
   throw err;
 }
 
-// Initialize vote subscriber for SSE
+// Initialize vote subscriber for SSE (non-fatal on failure)
 try {
   await initVoteSubscriber();
 } catch (err) {
-  logger.error({ err }, "Failed to initialize vote subscriber");
-  throw err;
+  logger.error(
+    { err },
+    "Failed to initialize vote subscriber. SSE vote stream will be disabled.",
+  );
 }
 
 serve(
