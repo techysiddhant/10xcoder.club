@@ -30,7 +30,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Cache bun dependencies between builds (NODE_ENV unset to include devDeps for build)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile --ignore-scripts
+    bun install --ignore-scripts
 
 # -----------------------------------------------------------------------------
 # Stage 2: Build TypeScript project
