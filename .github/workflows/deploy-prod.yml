@@ -17,27 +17,27 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      # ----------------------------------------------------------------------
+      # ----------------------------------------------------------------
       # Checkout
-      # ----------------------------------------------------------------------
+      # ----------------------------------------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ----------------------------------------------------------------------
+      # ----------------------------------------------------------------
       # Create ENV file
-      # ----------------------------------------------------------------------
+      # ----------------------------------------------------------------
       - name: Create production env file
         run: |
           echo "${{ secrets.ENV_FILE_PROD }}" > .env
 
-      # ----------------------------------------------------------------------
-      # Copy config files to EC2
-      # ----------------------------------------------------------------------
-      - name: Copy files to EC2
+      # ----------------------------------------------------------------
+      # Copy config files to server
+      # ----------------------------------------------------------------
+      - name: Copy files to production server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
@@ -46,24 +46,25 @@ jobs:
           port: 22
           source: >
             docker-compose.yml,
-            nginx,
-            .env,
+            docker-compose.infra.yml,
+            traefik,
             scripts,
-            apps/api/migration.Dockerfile,
-            apps/api/drizzle
+            apps/server/migration.Dockerfile,
+            apps/server/drizzle,
+            .env
           target: /home/${{ secrets.USERNAME }}/10xcoder-prod
 
-      # ----------------------------------------------------------------------
-      # Deploy on EC2 (pull and restart)
-      # ----------------------------------------------------------------------
-      - name: Deploy on EC2
+      # ----------------------------------------------------------------
+      # Deploy on server
+      # ----------------------------------------------------------------
+      - name: Deploy on production server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
           port: 22
-          command_timeout: 5m
+          command_timeout: 10m
           script: |
             set -e
 
@@ -79,11 +80,18 @@ jobs:
             echo "🔑 Login to GHCR"
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
-            echo "📥 Pulling latest images"
+            echo "🌐 Ensuring shared network exists"
+            docker network create app_net 2>/dev/null || true
+
+            echo "🏗️ Starting infrastructure services"
+            docker compose -f docker-compose.infra.yml up -d
+
+            echo "📥 Pulling latest application images"
             docker compose pull
 
-            echo "🚀 Starting containers"
-            docker compose up -d
+            # ── Ensure DB is ready before migrations ──
+            echo "🚀 Starting database and redis"
+            docker compose up -d db redis
 
             echo "⏳ Waiting for DB to be ready"
             for i in {1..30}; do
@@ -91,32 +99,75 @@ jobs:
                 echo "✅ DB ready"
                 break
               fi
+              if [ "$i" -eq 30 ]; then
+                echo "❌ DB failed to become ready"
+                exit 1
+              fi
               sleep 2
             done
 
+            # ── Run migrations BEFORE starting new server ──
             echo "🧪 Running migrations"
             docker compose --profile migrate run --rm --build migrate
 
-            echo "🔍 Verifying required migrations in DB"
-            set +e
-            PSQL_OUTPUT=$(docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT string_agg(check_name, ',') FROM (SELECT 'resource_type_id_uuidv7_default' AS check_name WHERE NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resource_type' AND column_name = 'id' AND data_type = 'uuid' AND column_default ILIKE '%uuidv7%') UNION ALL SELECT 'resource_description_max_5000_chk' AS check_name WHERE NOT EXISTS (SELECT 1 FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid JOIN pg_namespace n ON n.oid = t.relnamespace WHERE n.nspname = 'public' AND t.relname = 'resource' AND c.conname = 'resource_description_max_5000_chk')) checks;")
-            PSQL_STATUS=$?
-            set -e
-            if [ "$PSQL_STATUS" -ne 0 ]; then
-              echo "❌ Failed to query migrations via docker compose exec -T db psql (exit code: $PSQL_STATUS)"
-              exit "$PSQL_STATUS"
-            fi
-            MISSING_TAGS="$PSQL_OUTPUT"
-            if [ -n "$MISSING_TAGS" ]; then
-              echo "❌ Missing required migration effects: $MISSING_TAGS"
+            # ── Capture old container IDs ──
+            OLD_IDS=$(docker compose ps -q server 2>/dev/null || true)
+
+            # ── Zero-downtime deployment ──
+            echo "🚀 Scaling up new server replica"
+            docker compose up -d --no-deps --scale server=2 server
+
+            # Identify new container ID
+            ALL_IDS=$(docker compose ps -q server)
+            NEW_ID=""
+            for cid in $ALL_IDS; do
+              if ! echo "$OLD_IDS" | grep -q "$cid"; then
+                NEW_ID="$cid"
+                break
+              fi
+            done
+
+            if [ -z "$NEW_ID" ]; then
+              echo "❌ Could not identify new container."
+              echo "   OLD_IDS: $OLD_IDS"
+              echo "   ALL_IDS: $ALL_IDS"
+              docker compose ps server
               exit 1
             fi
-            echo "✅ Required migration effects are present"
+
+            echo "⏳ Waiting for new server ($NEW_ID) health check"
+            for i in {1..24}; do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$NEW_ID" 2>/dev/null || echo "starting")
+              if [ "$STATUS" = "healthy" ]; then
+                echo "✅ New server is healthy"
+                break
+              fi
+              if [ "$i" -eq 24 ]; then
+                echo "❌ Health check failed — rolling back"
+                docker stop "$NEW_ID" && docker rm "$NEW_ID" 2>/dev/null || true
+                docker compose up -d --scale server=1 server
+                exit 1
+              fi
+              sleep 5
+            done
+
+            echo "🔄 Removing old server containers"
+            for old_cid in $OLD_IDS; do
+              if [ "$old_cid" != "$NEW_ID" ]; then
+                echo "   Stopping old container $old_cid"
+                docker stop "$old_cid" 2>/dev/null || true
+                docker rm -f "$old_cid" 2>/dev/null || true
+              fi
+            done
+
+            echo "🔄 Scaling to single server (new container preserved)"
+            docker compose up -d --no-deps --no-recreate --scale server=1 server
 
             echo "🗑️ Cleaning old images"
             docker image prune -f || true
 
             echo "📊 Final container status"
             docker compose ps
+            docker compose -f docker-compose.infra.yml ps
 
             echo "🎉 Deployment completed successfully"

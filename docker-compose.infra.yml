@@ -1,0 +1,149 @@
+# =============================================================================
+# Infrastructure Stack — Traefik, Docker Socket Proxy, Dozzle, Uptime Kuma
+# =============================================================================
+# Usage: docker compose -f docker-compose.infra.yml up -d
+# =============================================================================
+
+services:
+  # ── Docker Socket Proxy — Secure Docker API access ────────
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.2
+    container_name: 10xcoder_socket_proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      SERVICES: 1
+      TASKS: 1
+      NETWORKS: 1
+      NODES: 0
+      SWARM: 0
+      BUILD: 0
+      COMMIT: 0
+      CONFIGS: 0
+      DISTRIBUTION: 0
+      EXEC: 0
+      IMAGES: 0
+      INFO: 1
+      PLUGINS: 0
+      SECRETS: 0
+      VOLUMES: 0
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [socket_net]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Traefik — API Gateway & Reverse Proxy ──────────────────
+  traefik:
+    image: traefik:v3.3
+    container_name: 10xcoder_traefik
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - /etc/ssl/cloudflare:/etc/ssl/cloudflare:ro
+      - traefik_logs:/var/log/traefik
+    labels:
+      - "traefik.enable=true"
+      # Dashboard secured behind basicAuth on websecure entrypoint
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.10xcoder.club`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH:?TRAEFIK_DASHBOARD_AUTH is required}"
+    networks: [app_net, socket_net]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Dozzle — Real-Time Log Viewer ─────────────────────────
+  dozzle:
+    image: amir20/dozzle:v8.12.13
+    container_name: 10xcoder_dozzle
+    restart: unless-stopped
+    environment:
+      DOZZLE_REMOTE_HOST: tcp://socket-proxy:2375
+      DOZZLE_USERNAME: ${DOZZLE_USERNAME:-admin}
+      DOZZLE_PASSWORD: ${DOZZLE_PASSWORD:?DOZZLE_PASSWORD is required}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`logs.10xcoder.club`)"
+      - "traefik.http.routers.dozzle.entrypoints=websecure"
+      - "traefik.http.routers.dozzle.tls=true"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+    networks: [app_net, socket_net]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Uptime Kuma — Service Monitoring ──────────────────────
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: 10xcoder_uptime
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma_data:/app/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime.rule=Host(`status.10xcoder.club`)"
+      - "traefik.http.routers.uptime.entrypoints=websecure"
+      - "traefik.http.routers.uptime.tls=true"
+      - "traefik.http.services.uptime.loadbalancer.server.port=3001"
+    networks: [app_net]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  app_net:
+    name: app_net
+  socket_net:
+    internal: true
+
+volumes:
+  uptime_kuma_data:
+  traefik_logs:

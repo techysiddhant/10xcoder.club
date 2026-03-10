@@ -4,8 +4,10 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "apps/api/**"
+      - "apps/server/**"
       - "packages/schemas/**"
+      - "packages/database/**"
+      - "tsconfig.base.json"
       - "package.json"
       - "bun.lock"
   workflow_dispatch:
@@ -16,7 +18,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/10xcoder-api
+  IMAGE_NAME: ${{ github.repository_owner }}/10xcoder-server
 
 jobs:
   build-push:
@@ -55,7 +57,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: apps/api/Dockerfile
+          file: apps/server/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

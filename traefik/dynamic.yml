@@ -1,0 +1,12 @@
+# Traefik Dynamic Configuration — TLS Certificates
+# Cloudflare origin certificates
+
+tls:
+  certificates:
+    - certFile: /etc/ssl/cloudflare/origin.pem
+      keyFile: /etc/ssl/cloudflare/origin-key.pem
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/ssl/cloudflare/origin.pem
+        keyFile: /etc/ssl/cloudflare/origin-key.pem
