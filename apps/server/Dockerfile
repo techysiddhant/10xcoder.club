@@ -1,92 +1,88 @@
 # syntax=docker/dockerfile:1
 
 # =============================================================================
-# 10xcoder.club Server — Production Dockerfile
+# 10xcoder.club Server — Optimized Production Dockerfile
 # =============================================================================
-# Build from monorepo root: docker build -f apps/server/Dockerfile .
+# Build from monorepo root:
+# docker build -f apps/server/Dockerfile .
 # =============================================================================
 
+
 # -----------------------------------------------------------------------------
-# Stage 1: Install dependencies with Bun
+# Stage 1 — Install dependencies (cached)
 # -----------------------------------------------------------------------------
 FROM --platform=linux/amd64 oven/bun:1-slim AS deps
 
 WORKDIR /app
 
-# NODE_ENV is NOT set to production here so devDependencies (typescript, etc.) are installed
-
-# Copy workspace root files
+# Copy root files
 COPY package.json bun.lock tsconfig.base.json ./
 
-# Copy all workspace package.json files for dependency resolution
+# Copy workspace package.json files only (for caching)
 COPY apps/server/package.json ./apps/server/
-COPY apps/web/package.json ./apps/web/
-COPY packages/api-types/package.json ./packages/api-types/
 COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/database/package.json ./packages/database/
-COPY packages/ui/package.json ./packages/ui/
-COPY packages/eslint-config/package.json ./packages/eslint-config/
-COPY packages/typescript-config/package.json ./packages/typescript-config/
 
-# Cache bun dependencies between builds (NODE_ENV unset to include devDeps for build)
+# Install dependencies with cache
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --ignore-scripts
+    bun install --frozen-lockfile
+
 
 # -----------------------------------------------------------------------------
-# Stage 2: Build TypeScript project
+# Stage 2 — Build server
 # -----------------------------------------------------------------------------
 FROM deps AS build
 
 WORKDIR /app
 
-# Copy source files
-COPY apps/server ./apps/server
-COPY packages/schemas ./packages/schemas
-COPY packages/database ./packages/database
+# Copy full source now (after deps installed)
+COPY apps ./apps
+COPY packages ./packages
 
-# Build with tsc
+# Build server
 RUN cd apps/server && bun run build
 
+# Debug check (safe to keep)
+RUN ls -R apps/server/dist
+
+
 # -----------------------------------------------------------------------------
-# Stage 3: Production runtime with Node.js
+# Stage 3 — Production runtime
 # -----------------------------------------------------------------------------
 FROM --platform=linux/amd64 node:20-slim AS runtime
-
-RUN apt-get update && apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=8000
 
-# Copy compiled output
+# Install curl for healthcheck
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy production node_modules
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy built server
 COPY --from=build /app/apps/server/dist ./dist
 
-# Ensure a stable entrypoint path for Node.
-# Some TypeScript configurations may emit to dist/src/index.js;
-# if so, create dist/index.js as a thin shim.
-RUN if [ -f dist/src/index.js ] && [ ! -f dist/index.js ]; then \
-      mkdir -p dist && cp dist/src/index.js dist/index.js; \
-    fi
-
-# Copy drizzle migrations (needed at runtime for db:push / reference)
-COPY --from=build /app/apps/server/drizzle ./drizzle
-
-# Copy production node_modules (includes workspace deps)
-COPY --from=deps /app/node_modules ./node_modules
-# Copy workspace packages with compiled source from build stage
+# Copy runtime dependencies from workspace packages
 COPY --from=build /app/packages ./packages
 
-# Copy package.json for Node.js module resolution
+# Copy server package.json
 COPY --from=build /app/apps/server/package.json ./package.json
 
-# Run as non-root user
+# Copy drizzle migrations
+COPY --from=build /app/apps/server/drizzle ./drizzle
+
+# Run as non-root
 USER node
 
 EXPOSE 8000
 
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/apps/server/src/index.js"]
