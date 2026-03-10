@@ -9,7 +9,6 @@ services:
   # ── Server — Hono API ─────────────────────────────────────
   server:
     image: ghcr.io/techysiddhant/10xcoder-server:${IMAGE_TAG:-latest}
-    container_name: ${APP_CONTAINER_NAME:-10xcoder_server}
     restart: unless-stopped
     environment:
       NODE_ENV: production
