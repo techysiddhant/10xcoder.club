@@ -63,6 +63,13 @@ ENV PORT=8000
 # Copy compiled output
 COPY --from=build /app/apps/server/dist ./dist
 
+# Ensure a stable entrypoint path for Node.
+# Some TypeScript configurations may emit to dist/src/index.js;
+# if so, create dist/index.js as a thin shim.
+RUN if [ -f dist/src/index.js ] && [ ! -f dist/index.js ]; then \
+      mkdir -p dist && cp dist/src/index.js dist/index.js; \
+    fi
+
 # Copy drizzle migrations (needed at runtime for db:push / reference)
 COPY --from=build /app/apps/server/drizzle ./drizzle
 
