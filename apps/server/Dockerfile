@@ -1,94 +1,103 @@
 # syntax=docker/dockerfile:1
 
-# =============================================================================
-# 10xcoder.club Server — Optimized Production Dockerfile
-# =============================================================================
-# Build from monorepo root:
-# docker build -f apps/server/Dockerfile .
-# =============================================================================
-
-
 # -----------------------------------------------------------------------------
-# Stage 1 — Install dependencies (cached)
+# Stage 1 — Install dependencies
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 oven/bun:1-slim AS deps
+FROM oven/bun:1-slim AS deps
 
 WORKDIR /app
 
-# Copy root files
+# Copy root manifests
 COPY package.json bun.lock tsconfig.base.json ./
 
-# Copy workspace package.json files only (for caching)
+# Copy workspace manifests (bun lockfile expects all workspaces present)
 COPY apps/server/package.json ./apps/server/
 COPY apps/web/package.json ./apps/web/
 COPY apps/api/package.json ./apps/api/
-COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/database/package.json ./packages/database/
+COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/api-types/package.json ./packages/api-types/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 
-# Install dependencies with cache
+# Install build deps for server workspace only
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile
+    bun install --frozen-lockfile --filter @workspace/server
 
 
 # -----------------------------------------------------------------------------
-# Stage 2 — Build server
+# Stage 2 — Install production dependencies (runtime only)
+# -----------------------------------------------------------------------------
+FROM oven/bun:1-slim AS prod-deps
+
+WORKDIR /app
+
+COPY package.json bun.lock ./
+COPY apps/server/package.json ./apps/server/
+COPY apps/web/package.json ./apps/web/
+COPY apps/api/package.json ./apps/api/
+COPY packages/database/package.json ./packages/database/
+COPY packages/schemas/package.json ./packages/schemas/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/api-types/package.json ./packages/api-types/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --no-frozen-lockfile --no-save --production --filter @workspace/server
+
+
+# -----------------------------------------------------------------------------
+# Stage 3 — Build
 # -----------------------------------------------------------------------------
 FROM deps AS build
 
 WORKDIR /app
 
-# Copy full source now (after deps installed)
-COPY apps ./apps
-COPY packages ./packages
+# Copy source code
+COPY apps/server ./apps/server
+COPY packages/database ./packages/database
+COPY packages/schemas ./packages/schemas
 
 # Build server
 RUN cd apps/server && bun run build
 
-# Debug check (safe to keep)
-RUN ls -R apps/server/dist
-
 
 # -----------------------------------------------------------------------------
-# Stage 3 — Production runtime
+# Stage 4 — Production runtime (small)
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 node:20-slim AS runtime
+FROM node:20-alpine AS runtime
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=8000
 
-# Install curl for healthcheck
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+# install curl for healthcheck
+RUN apk add --no-cache curl
 
-# Copy production node_modules
-COPY --from=deps /app/node_modules ./node_modules
+# copy runtime deps only
+COPY --from=prod-deps /app/node_modules ./node_modules
 
-# Copy built server
+# copy built server
 COPY --from=build /app/apps/server/dist ./dist
 
-# Copy runtime dependencies from workspace packages
-COPY --from=build /app/packages ./packages
+# copy only required workspace packages
+COPY --from=build /app/packages/database ./packages/database
+COPY --from=build /app/packages/schemas ./packages/schemas
 
-# Copy server package.json
+# copy package.json
 COPY --from=build /app/apps/server/package.json ./package.json
 
-# Copy drizzle migrations
+# copy migrations
 COPY --from=build /app/apps/server/drizzle ./drizzle
 
-# Run as non-root
 USER node
 
 EXPOSE 8000
 
-# Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
+ CMD curl -f http://localhost:8000/health || exit 1
 
 CMD ["node", "dist/apps/server/src/index.js"]
