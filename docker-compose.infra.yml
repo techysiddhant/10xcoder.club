@@ -7,7 +7,7 @@
 services:
   # ── Docker Socket Proxy — Secure Docker API access ────────
   socket-proxy:
-    image: tecnativa/docker-socket-proxy:0.4.1
+    image: tecnativa/docker-socket-proxy:0.2
     container_name: 10xcoder_socket_proxy
     restart: unless-stopped
     environment:
