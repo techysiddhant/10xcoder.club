@@ -40,16 +40,24 @@ function createLogger(): Logger {
 
   // Production with Logflare
   if (env.LOGFLARE_API_KEY && env.LOGFLARE_SOURCE_ID) {
-    return pino({
-      ...baseConfig,
-      transport: {
-        target: "pino-logflare",
-        options: {
-          apiKey: env.LOGFLARE_API_KEY,
-          sourceToken: env.LOGFLARE_SOURCE_ID,
+    try {
+      return pino({
+        ...baseConfig,
+        transport: {
+          target: "pino-logflare",
+          options: {
+            apiKey: env.LOGFLARE_API_KEY,
+            sourceToken: env.LOGFLARE_SOURCE_ID,
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      // Keep the app booting if transport resolution fails in bundled/runtime environments.
+      console.warn(
+        "⚠️ Logflare transport unavailable, falling back to stdout JSON logs.",
+        error,
+      );
+    }
   }
 
   // Production without Logflare: plain JSON to stdout
