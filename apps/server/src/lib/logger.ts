@@ -38,8 +38,12 @@ function createLogger(): Logger {
     });
   }
 
+  const hasLogflareApiKey = Boolean(env.LOGFLARE_API_KEY);
+  const hasLogflareSourceId = Boolean(env.LOGFLARE_SOURCE_ID);
+  const hasCompleteLogflareConfig = hasLogflareApiKey && hasLogflareSourceId;
+
   // Production with Logflare
-  if (env.LOGFLARE_API_KEY && env.LOGFLARE_SOURCE_ID) {
+  if (hasCompleteLogflareConfig) {
     try {
       return pino({
         ...baseConfig,
@@ -58,6 +62,12 @@ function createLogger(): Logger {
         error,
       );
     }
+  }
+
+  if (hasLogflareApiKey !== hasLogflareSourceId) {
+    console.warn(
+      "⚠️ Incomplete Logflare config: both LOGFLARE_API_KEY and LOGFLARE_SOURCE_ID are required. Falling back to stdout JSON logs.",
+    );
   }
 
   // Production without Logflare: plain JSON to stdout
