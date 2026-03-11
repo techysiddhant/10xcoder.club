@@ -60,8 +60,10 @@ COPY apps/server ./apps/server
 COPY packages/database ./packages/database
 COPY packages/schemas ./packages/schemas
 
-# Build server
-RUN cd apps/server && bun run build
+# Build server and emit a Node-runnable bundle entrypoint.
+RUN cd apps/server && \
+    bun run build && \
+    bun build src/index.ts --target=node --format=esm --outfile bundle/index.js
 
 
 # -----------------------------------------------------------------------------
@@ -83,6 +85,9 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 # copy built server
 COPY --from=build /app/apps/server/dist ./dist
 
+# copy bundled runtime entrypoint (resolves TS path aliases and ESM specifiers)
+COPY --from=build /app/apps/server/bundle ./bundle
+
 # copy only required workspace packages
 COPY --from=build /app/packages/database ./packages/database
 COPY --from=build /app/packages/schemas ./packages/schemas
@@ -100,4 +105,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
  CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["node", "dist/apps/server/src/index.js"]
+CMD ["node", "bundle/index.js"]
