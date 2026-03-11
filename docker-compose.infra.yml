@@ -21,6 +21,7 @@ services:
       COMMIT: 0
       CONFIGS: 0
       DISTRIBUTION: 0
+      EVENTS: 1
       EXEC: 0
       IMAGES: 0
       INFO: 1
@@ -51,6 +52,8 @@ services:
     image: traefik:v3.3
     container_name: 10xcoder_traefik
     restart: unless-stopped
+    environment:
+      DOCKER_API_VERSION: "1.44"
     depends_on:
       - socket-proxy
     ports:
@@ -91,6 +94,7 @@ services:
     restart: unless-stopped
     environment:
       DOZZLE_REMOTE_HOST: tcp://socket-proxy:2375
+      DOCKER_API_VERSION: "1.44"
       DOZZLE_USERNAME: ${DOZZLE_USERNAME:-admin}
       DOZZLE_PASSWORD: ${DOZZLE_PASSWORD:?DOZZLE_PASSWORD is required}
     labels:
