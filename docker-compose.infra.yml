@@ -102,6 +102,7 @@ services:
       - "traefik.http.routers.dozzle.rule=Host(`logs.10xcoder.club`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls=true"
+      - "traefik.http.routers.dozzle.middlewares=dashboard-auth"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
     networks: [app_net, socket_net]
     security_opt:
