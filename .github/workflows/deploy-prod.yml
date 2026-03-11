@@ -94,8 +94,11 @@ jobs:
             echo "🌐 Ensuring shared network exists"
             docker network create app_net 2>/dev/null || true
 
-            echo "🏗️ Starting infrastructure services"
-            docker compose -f docker-compose.infra.yml up -d
+            echo "🏗️ Recreating infrastructure services (apply Traefik/socket-proxy config changes)"
+            docker compose -f docker-compose.infra.yml pull
+            docker compose -f docker-compose.infra.yml up -d --force-recreate socket-proxy traefik dozzle
+            echo "🔎 Traefik env check"
+            docker inspect --format='{{range .Config.Env}}{{println .}}{{end}}' 10xcoder_traefik | grep -E 'DOCKER_API_VERSION|DOCKER_HOST' || true
 
             echo "📥 Pulling latest application images"
             docker compose pull
