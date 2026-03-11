@@ -53,8 +53,6 @@ services:
     image: traefik:v3.4
     container_name: 10xcoder_traefik
     restart: unless-stopped
-    environment:
-      DOCKER_API_VERSION: "1.44"
     depends_on:
       - socket-proxy
     ports:
@@ -64,6 +62,7 @@ services:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
       - /etc/ssl/cloudflare:/etc/ssl/cloudflare:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_logs:/var/log/traefik
     labels:
       - "traefik.enable=true"

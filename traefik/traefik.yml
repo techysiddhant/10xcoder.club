@@ -19,7 +19,7 @@ entryPoints:
 
 providers:
   docker:
-    endpoint: "tcp://socket-proxy:2375"
+    endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
     network: app_net
   file:
