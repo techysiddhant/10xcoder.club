@@ -76,11 +76,6 @@ jobs:
 
             cd /home/${{ secrets.USERNAME }}/10xcoder-prod
 
-            echo "🔐 Loading environment"
-            set -a
-            source .env
-            set +a
-
             export COMPOSE_PROJECT_NAME=10xcoder-prod
             export IMAGE_TAG=${{ env.DEPLOY_IMAGE_TAG }}
             echo "🏷️ Deploying server image tag: ${IMAGE_TAG}"
@@ -95,21 +90,21 @@ jobs:
             docker network create app_net 2>/dev/null || true
 
             echo "🏗️ Recreating infrastructure services (apply Traefik/socket-proxy config changes)"
-            docker compose -f docker-compose.infra.yml pull
-            docker compose -f docker-compose.infra.yml up -d --force-recreate socket-proxy traefik dozzle
+            docker compose --env-file .env -f docker-compose.infra.yml pull
+            docker compose --env-file .env -f docker-compose.infra.yml up -d --force-recreate socket-proxy traefik dozzle
             echo "🔎 Traefik env check"
             docker inspect --format='{{range .Config.Env}}{{println .}}{{end}}' 10xcoder_traefik | grep -E 'DOCKER_API_VERSION|DOCKER_HOST' || true
 
             echo "📥 Pulling latest application images"
-            docker compose pull
+            docker compose --env-file .env pull
 
             # ── Ensure DB is ready before migrations ──
             echo "🚀 Starting database and redis"
-            docker compose up -d db redis
+            docker compose --env-file .env up -d db redis
 
             echo "⏳ Waiting for DB to be ready"
             for i in {1..30}; do
-              if docker compose exec -T db pg_isready -U "$POSTGRES_USER" >/dev/null 2>&1; then
+              if docker compose --env-file .env exec -T db sh -lc 'pg_isready -U "$POSTGRES_USER"' >/dev/null 2>&1; then
                 echo "✅ DB ready"
                 break
               fi
@@ -122,17 +117,17 @@ jobs:
 
             # ── Run migrations BEFORE starting new server ──
             echo "🧪 Running migrations"
-            docker compose --profile migrate run --rm --build migrate
+            docker compose --env-file .env --profile migrate run --rm --build migrate
 
             # ── Capture old container IDs ──
-            OLD_IDS=$(docker compose ps -q server 2>/dev/null || true)
+            OLD_IDS=$(docker compose --env-file .env ps -q server 2>/dev/null || true)
 
             # ── Zero-downtime deployment ──
             echo "🚀 Scaling up new server replica"
-            docker compose up -d --no-deps --scale server=2 server
+            docker compose --env-file .env up -d --no-deps --scale server=2 server
 
             # Identify new container ID
-            ALL_IDS=$(docker compose ps -q server)
+            ALL_IDS=$(docker compose --env-file .env ps -q server)
             NEW_ID=""
             for cid in $ALL_IDS; do
               if ! echo "$OLD_IDS" | grep -q "$cid"; then
@@ -145,7 +140,7 @@ jobs:
               echo "❌ Could not identify new container."
               echo "   OLD_IDS: $OLD_IDS"
               echo "   ALL_IDS: $ALL_IDS"
-              docker compose ps server
+              docker compose --env-file .env ps server
               exit 1
             fi
 
@@ -163,7 +158,7 @@ jobs:
                 echo "🔎 Container health state"
                 docker inspect --format='{{json .State.Health}}' "$NEW_ID" || true
                 docker stop "$NEW_ID" && docker rm "$NEW_ID" 2>/dev/null || true
-                docker compose up -d --scale server=1 server
+                docker compose --env-file .env up -d --scale server=1 server
                 exit 1
               fi
               sleep 5
@@ -179,13 +174,13 @@ jobs:
             done
 
             echo "🔄 Scaling to single server (new container preserved)"
-            docker compose up -d --no-deps --no-recreate --scale server=1 server
+            docker compose --env-file .env up -d --no-deps --no-recreate --scale server=1 server
 
             echo "🗑️ Cleaning old images"
             docker image prune -f || true
 
             echo "📊 Final container status"
-            docker compose ps
-            docker compose -f docker-compose.infra.yml ps
+            docker compose --env-file .env ps
+            docker compose --env-file .env -f docker-compose.infra.yml ps
 
             echo "🎉 Deployment completed successfully"
