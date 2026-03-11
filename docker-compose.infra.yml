@@ -24,6 +24,8 @@ services:
       EXEC: 0
       IMAGES: 0
       INFO: 1
+      VERSION: 1
+      PING: 1
       PLUGINS: 0
       SECRETS: 0
       VOLUMES: 0
