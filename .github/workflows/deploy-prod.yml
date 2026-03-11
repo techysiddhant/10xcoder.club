@@ -13,6 +13,7 @@ concurrency:
 
 env:
   COMPOSE_PROJECT_NAME: 10xcoder-prod
+  DEPLOY_IMAGE_TAG: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
   deploy:
@@ -76,9 +77,14 @@ jobs:
             set +a
 
             export COMPOSE_PROJECT_NAME=10xcoder-prod
+            export IMAGE_TAG=${{ env.DEPLOY_IMAGE_TAG }}
+            echo "🏷️ Deploying server image tag: ${IMAGE_TAG}"
 
             echo "🔑 Login to GHCR"
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+
+            echo "📦 Pulling server image ghcr.io/techysiddhant/10xcoder-server:${IMAGE_TAG}"
+            docker pull "ghcr.io/techysiddhant/10xcoder-server:${IMAGE_TAG}"
 
             echo "🌐 Ensuring shared network exists"
             docker network create app_net 2>/dev/null || true
@@ -144,6 +150,10 @@ jobs:
               fi
               if [ "$i" -eq 24 ]; then
                 echo "❌ Health check failed — rolling back"
+                echo "📋 Failing container logs (last 200 lines)"
+                docker logs --tail 200 "$NEW_ID" || true
+                echo "🔎 Container health state"
+                docker inspect --format='{{json .State.Health}}' "$NEW_ID" || true
                 docker stop "$NEW_ID" && docker rm "$NEW_ID" 2>/dev/null || true
                 docker compose up -d --scale server=1 server
                 exit 1
