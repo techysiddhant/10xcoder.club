@@ -20,8 +20,14 @@ COPY package.json bun.lock tsconfig.base.json ./
 
 # Copy workspace package.json files only (for caching)
 COPY apps/server/package.json ./apps/server/
+COPY apps/web/package.json ./apps/web/
+COPY apps/api/package.json ./apps/api/
 COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/database/package.json ./packages/database/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/api-types/package.json ./packages/api-types/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Install dependencies with cache
 RUN --mount=type=cache,target=/root/.bun/install/cache \
