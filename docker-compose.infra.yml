@@ -53,6 +53,7 @@ services:
     container_name: 10xcoder_traefik
     restart: unless-stopped
     environment:
+      DOCKER_HOST: tcp://socket-proxy:2375
       DOCKER_API_VERSION: "1.44"
     depends_on:
       - socket-proxy
