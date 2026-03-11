@@ -6,6 +6,11 @@ on:
     types: [completed]
     branches: ["main"]
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Server image tag to deploy (defaults to latest)"
+        required: false
+        default: "latest"
 
 concurrency:
   group: deploy-production
@@ -13,7 +18,7 @@ concurrency:
 
 env:
   COMPOSE_PROJECT_NAME: 10xcoder-prod
-  DEPLOY_IMAGE_TAG: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+  DEPLOY_IMAGE_TAG: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.inputs.image_tag || 'latest' }}
 
 jobs:
   deploy:
