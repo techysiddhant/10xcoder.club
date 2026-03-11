@@ -11,6 +11,7 @@ services:
     container_name: 10xcoder_socket_proxy
     restart: unless-stopped
     environment:
+      LABELS: 1
       CONTAINERS: 1
       SERVICES: 1
       TASKS: 1
