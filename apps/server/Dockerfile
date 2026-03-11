@@ -45,7 +45,7 @@ COPY packages/api-types/package.json ./packages/api-types/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --no-frozen-lockfile --no-save --production --filter @workspace/server
+    bun install --frozen-lockfile --no-save --production --filter @workspace/server
 
 
 # -----------------------------------------------------------------------------
