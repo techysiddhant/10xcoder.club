@@ -38,18 +38,36 @@ function createLogger(): Logger {
     });
   }
 
+  const hasLogflareApiKey = Boolean(env.LOGFLARE_API_KEY);
+  const hasLogflareSourceId = Boolean(env.LOGFLARE_SOURCE_ID);
+  const hasCompleteLogflareConfig = hasLogflareApiKey && hasLogflareSourceId;
+
   // Production with Logflare
-  if (env.LOGFLARE_API_KEY && env.LOGFLARE_SOURCE_ID) {
-    return pino({
-      ...baseConfig,
-      transport: {
-        target: "pino-logflare",
-        options: {
-          apiKey: env.LOGFLARE_API_KEY,
-          sourceToken: env.LOGFLARE_SOURCE_ID,
+  if (hasCompleteLogflareConfig) {
+    try {
+      return pino({
+        ...baseConfig,
+        transport: {
+          target: "pino-logflare",
+          options: {
+            apiKey: env.LOGFLARE_API_KEY,
+            sourceToken: env.LOGFLARE_SOURCE_ID,
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      // Keep the app booting if transport resolution fails in bundled/runtime environments.
+      console.warn(
+        "⚠️ Logflare transport unavailable, falling back to stdout JSON logs.",
+        error,
+      );
+    }
+  }
+
+  if (hasLogflareApiKey !== hasLogflareSourceId) {
+    console.warn(
+      "⚠️ Incomplete Logflare config: both LOGFLARE_API_KEY and LOGFLARE_SOURCE_ID are required. Falling back to stdout JSON logs.",
+    );
   }
 
   // Production without Logflare: plain JSON to stdout
