@@ -43,6 +43,7 @@ jobs:
       - name: Create Traefik auth file
         run: |
           printf '%s\n' '${{ secrets.TRAEFIK_USERS_HTPASSWD }}' > traefik/users.htpasswd
+          test -s traefik/users.htpasswd
 
       # ----------------------------------------------------------------
       # Copy config files to server
@@ -96,6 +97,8 @@ jobs:
             echo "🏗️ Recreating infrastructure services (apply Traefik/socket-proxy config changes)"
             docker compose --env-file .env -f docker-compose.infra.yml pull
             docker compose --env-file .env -f docker-compose.infra.yml up -d --force-recreate socket-proxy traefik dozzle
+            test -s traefik/users.htpasswd
+            docker exec 10xcoder_traefik sh -lc 'test -s /etc/traefik/users.htpasswd'
             echo "🔎 Traefik env check"
             docker inspect --format='{{range .Config.Env}}{{println .}}{{end}}' 10xcoder_traefik | grep -E 'DOCKER_API_VERSION|DOCKER_HOST' || true
 
