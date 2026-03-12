@@ -40,6 +40,10 @@ jobs:
         run: |
           echo "${{ secrets.ENV_FILE_PROD }}" > .env
 
+      - name: Create Traefik auth file
+        run: |
+          printf '%s\n' '${{ secrets.TRAEFIK_USERS_HTPASSWD }}' > traefik/users.htpasswd
+
       # ----------------------------------------------------------------
       # Copy config files to server
       # ----------------------------------------------------------------

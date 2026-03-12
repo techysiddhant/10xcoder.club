@@ -1,6 +1,12 @@
 # Traefik Dynamic Configuration — TLS Certificates
 # Cloudflare origin certificates
 
+http:
+  middlewares:
+    dashboard-auth:
+      basicAuth:
+        usersFile: /etc/traefik/users.htpasswd
+
 tls:
   certificates:
     - certFile: /etc/ssl/cloudflare/origin.pem

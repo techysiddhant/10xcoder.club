@@ -61,6 +61,7 @@ services:
     volumes:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik/users.htpasswd:/etc/traefik/users.htpasswd:ro
       - /etc/ssl/cloudflare:/etc/ssl/cloudflare:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_logs:/var/log/traefik
@@ -71,8 +72,7 @@ services:
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.tls=true"
       - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
-      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH:?TRAEFIK_DASHBOARD_AUTH is required}"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth@file"
     networks: [app_net, socket_net]
     security_opt:
       - no-new-privileges:true
@@ -102,7 +102,7 @@ services:
       - "traefik.http.routers.dozzle.rule=Host(`logs.10xcoder.club`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls=true"
-      - "traefik.http.routers.dozzle.middlewares=dashboard-auth"
+      - "traefik.http.routers.dozzle.middlewares=dashboard-auth@file"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
     networks: [app_net, socket_net]
     security_opt:
