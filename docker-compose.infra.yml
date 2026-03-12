@@ -95,8 +95,6 @@ services:
     environment:
       DOZZLE_REMOTE_HOST: tcp://socket-proxy:2375
       DOCKER_API_VERSION: "1.44"
-      DOZZLE_USERNAME: ${DOZZLE_USERNAME:-admin}
-      DOZZLE_PASSWORD: ${DOZZLE_PASSWORD:?DOZZLE_PASSWORD is required}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dozzle.rule=Host(`logs.10xcoder.club`)"
