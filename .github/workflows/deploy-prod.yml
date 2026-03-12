@@ -38,12 +38,33 @@ jobs:
       # ----------------------------------------------------------------
       - name: Create production env file
         run: |
-          echo "${{ secrets.ENV_FILE_PROD }}" > .env
+          cat > .env <<'EOF'
+          ${{ secrets.ENV_FILE_PROD }}
+          EOF
+
+          if [ ! -s .env ]; then
+            echo "ENV_FILE_PROD rendered an empty .env file"
+            exit 1
+          fi
 
       - name: Create Traefik auth file
         run: |
-          auth_line="$(grep -E '^TRAEFIK_DASHBOARD_AUTH=' .env | tail -n 1 || true)"
+          auth_line="$(grep -E '^TRAEFIK_DASHBOARD_AUTH=' .env | tail -n 1 | tr -d '\r' || true)"
           auth_value="${auth_line#TRAEFIK_DASHBOARD_AUTH=}"
+
+          case "$auth_value" in
+            \"*\")
+              auth_value="${auth_value#\"}"
+              auth_value="${auth_value%\"}"
+              ;;
+            \'*\')
+              auth_value="${auth_value#\'}"
+              auth_value="${auth_value%\'}"
+              ;;
+          esac
+
+          # Older env blobs may still contain compose-escaped dollars.
+          auth_value="${auth_value//\$\$/\$}"
 
           if [ -z "$auth_value" ]; then
             echo "TRAEFIK_DASHBOARD_AUTH is missing from ENV_FILE_PROD"
@@ -52,7 +73,7 @@ jobs:
 
           printf '%s\n' "$auth_value" > traefik/users.htpasswd
 
-          if ! grep -Eq '^[^:]+:\$.+' traefik/users.htpasswd; then
+          if ! grep -Eq '^[^:[:space:]]+:\$[^[:space:]]+$' traefik/users.htpasswd; then
             echo "Invalid htpasswd content generated for traefik/users.htpasswd"
             exit 1
           fi
@@ -109,8 +130,8 @@ jobs:
             echo "🏗️ Recreating infrastructure services (apply Traefik/socket-proxy config changes)"
             docker compose --env-file .env -f docker-compose.infra.yml pull
             docker compose --env-file .env -f docker-compose.infra.yml up -d --force-recreate socket-proxy traefik dozzle
-            grep -Eq '^[^:]+:\$.+' traefik/users.htpasswd
-            docker exec 10xcoder_traefik sh -lc 'grep -Eq "^[^:]+:\\$.+" /etc/traefik/users.htpasswd'
+            grep -Eq '^[^:[:space:]]+:\$[^[:space:]]+$' traefik/users.htpasswd
+            docker exec 10xcoder_traefik sh -lc 'grep -Eq "^[^:[:space:]]+:\\$[^[:space:]]+$" /etc/traefik/users.htpasswd'
             echo "🔎 Traefik env check"
             docker inspect --format='{{range .Config.Env}}{{println .}}{{end}}' 10xcoder_traefik | grep -E 'DOCKER_API_VERSION|DOCKER_HOST' || true
 
