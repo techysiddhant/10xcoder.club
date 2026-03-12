@@ -115,11 +115,11 @@ app.get("/health", (c) => {
 // ── Routes ───────────────────────────────────────
 
 app.route("/", indexRouter);
-app.route("/admin", adminRouter);
-app.route("/upload", uploadRouter);
-app.route("/scrape", scrapeRouter);
-app.route("/resources", resourcesRouter);
-app.route("/vote", voteRouter);
+app.route("/api/admin", adminRouter);
+app.route("/api/upload", uploadRouter);
+app.route("/api/scrape", scrapeRouter);
+app.route("/api/resources", resourcesRouter);
+app.route("/api/vote", voteRouter);
 
 // ── OpenAPI + Scalar ─────────────────────────────
 
@@ -130,7 +130,7 @@ app.get("/doc", async (c) => {
   const spec = app.getOpenAPIDocument({
     openapi: "3.1.0",
     info: {
-      title: "10xCoder.club Server API",
+      title: "10xCoder.club Server",
       version: "1.0.0",
     },
   });
