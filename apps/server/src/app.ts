@@ -14,7 +14,6 @@ import uploadRouter from "@/routes/upload/upload.index";
 import scrapeRouter from "@/routes/scrape/scrape.index";
 import resourcesRouter from "@/routes/resources/resources.index";
 import voteRouter from "@/routes/vote/vote.index";
-import { AuthOpenAPI } from "@/lib/auth-open-api";
 
 const app = createRouter();
 
@@ -124,8 +123,9 @@ app.route("/api/vote", voteRouter);
 // ── OpenAPI + Scalar (non-production only) ──────
 
 if (!isProduction) {
+  const { AuthOpenAPI } = await import("@/lib/auth-open-api");
   const authPaths = await AuthOpenAPI.getPaths();
-  const authComponents = await AuthOpenAPI.components;
+  const authComponents = await AuthOpenAPI.getComponents();
 
   app.get("/doc", async (c) => {
     const spec = app.getOpenAPIDocument({

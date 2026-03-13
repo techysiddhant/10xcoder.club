@@ -31,7 +31,6 @@ export const AuthOpenAPI = {
 
       return reference;
     }) as Promise<Paths>,
-  components: getSchema().then(
-    ({ components }) => components,
-  ) as Promise<Components>,
+  getComponents: () =>
+    getSchema().then(({ components }) => components) as Promise<Components>,
 } as const;
