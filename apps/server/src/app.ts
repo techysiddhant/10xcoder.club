@@ -14,7 +14,6 @@ import uploadRouter from "@/routes/upload/upload.index";
 import scrapeRouter from "@/routes/scrape/scrape.index";
 import resourcesRouter from "@/routes/resources/resources.index";
 import voteRouter from "@/routes/vote/vote.index";
-import { AuthOpenAPI } from "@/lib/auth-open-api";
 
 const app = createRouter();
 
@@ -121,37 +120,40 @@ app.route("/api/scrape", scrapeRouter);
 app.route("/api/resources", resourcesRouter);
 app.route("/api/vote", voteRouter);
 
-// ── OpenAPI + Scalar ─────────────────────────────
+// ── OpenAPI + Scalar (non-production only) ──────
 
-const authPaths = await AuthOpenAPI.getPaths();
-const authComponents = await AuthOpenAPI.components;
+if (!isProduction) {
+  const { AuthOpenAPI } = await import("@/lib/auth-open-api");
+  const authPaths = await AuthOpenAPI.getPaths();
+  const authComponents = await AuthOpenAPI.getComponents();
 
-app.get("/doc", async (c) => {
-  const spec = app.getOpenAPIDocument({
-    openapi: "3.1.0",
-    info: {
-      title: "10xCoder.club Server",
-      version: "1.0.0",
-    },
+  app.get("/doc", async (c) => {
+    const spec = app.getOpenAPIDocument({
+      openapi: "3.1.0",
+      info: {
+        title: "10xCoder.club Server",
+        version: "1.0.0",
+      },
+    });
+
+    return c.json({
+      ...spec,
+      paths: { ...spec.paths, ...authPaths },
+      components: { ...spec.components, ...authComponents },
+    });
   });
-
-  return c.json({
-    ...spec,
-    paths: { ...spec.paths, ...authPaths },
-    components: { ...spec.components, ...authComponents },
-  });
-});
-app.get(
-  "/docs",
-  apiReference({
-    spec: { url: "/doc" },
-    theme: "bluePlanet",
-    layout: "classic",
-    defaultHttpClient: {
-      targetKey: "js",
-      clientKey: "fetch",
-    },
-  }),
-);
+  app.get(
+    "/docs",
+    apiReference({
+      spec: { url: "/doc" },
+      theme: "bluePlanet",
+      layout: "classic",
+      defaultHttpClient: {
+        targetKey: "js",
+        clientKey: "fetch",
+      },
+    }),
+  );
+}
 
 export default app;
