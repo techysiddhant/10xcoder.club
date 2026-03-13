@@ -22,10 +22,10 @@ const ResourcePreviewCard = () => {
               </div>
               <ExternalLink className="w-4 h-4 text-muted-foreground" />
             </div>
-            <h3 className="font-semibold mb-2 text-foreground">
+            <p className="font-semibold mb-2 text-foreground">
               React Server Components Deep Dive
-            </h3>
-            <p className="text-sm text-muted-foreground mb-3">
+            </p>
+            <p className="text-sm text-foreground/75 mb-3">
               Complete guide to RSC architecture, streaming, and data fetching
               patterns.
             </p>
@@ -57,10 +57,10 @@ const ResourcePreviewCard = () => {
                 <span>2.4k</span>
               </div>
             </div>
-            <h3 className="font-semibold mb-2 text-foreground">
+            <p className="font-semibold mb-2 text-foreground">
               SaaS Starter Kit
-            </h3>
-            <p className="text-sm text-muted-foreground mb-3">
+            </p>
+            <p className="text-sm text-foreground/75 mb-3">
               Next.js 14, Auth, Stripe, Prisma — ready to fork and ship.
             </p>
             <div className="flex items-center gap-2">
@@ -85,10 +85,10 @@ const ResourcePreviewCard = () => {
                 <BookOpen className="w-4 h-4 text-green-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-sm truncate text-foreground">
+                <p className="font-medium text-sm truncate text-foreground">
                   System Design: Rate Limiting
-                </h3>
-                <p className="text-xs text-muted-foreground">
+                </p>
+                <p className="text-xs text-foreground/70">
                   Article · Intermediate
                 </p>
               </div>

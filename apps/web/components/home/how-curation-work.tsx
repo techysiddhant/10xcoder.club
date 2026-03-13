@@ -34,7 +34,7 @@ const HowCurationWorks = () => {
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 text-foreground">
             How curation works
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-foreground/75 text-lg max-w-2xl mx-auto">
             Every resource is reviewed and selected to ensure you only get the
             best.
           </p>
@@ -56,7 +56,7 @@ const HowCurationWorks = () => {
                   <h3 className="font-semibold mb-2 text-foreground">
                     {step.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm leading-relaxed text-foreground/75">
                     {step.description}
                   </p>
                 </div>

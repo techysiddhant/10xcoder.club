@@ -25,7 +25,7 @@ const Hero = () => {
             Learn. Build. <span className="text-gradient">Ship Faster.</span>
           </h1>
 
-          <p className="opacity-0 animate-fade-up delay-2 text-lg text-muted-foreground mb-8 leading-relaxed max-w-2xl">
+          <p className="opacity-0 animate-fade-up delay-2 mb-8 max-w-2xl text-lg leading-relaxed text-foreground/75">
             A free, community-curated hub of high-quality learning resources and
             production-ready GitHub templates — reviewed, selected, and trusted
             by developers.
@@ -58,7 +58,7 @@ const Hero = () => {
             </Button>
           </div>
 
-          <div className="opacity-0 animate-fade-up delay-4 mt-8 flex items-center gap-6 text-sm text-muted-foreground">
+          <div className="opacity-0 animate-fade-up delay-4 mt-8 flex items-center gap-6 text-sm text-foreground/70">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
               100% Free
