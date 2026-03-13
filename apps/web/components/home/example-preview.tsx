@@ -63,7 +63,7 @@ const ExamplePreview = () => {
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 text-foreground">
             See what's inside
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-foreground/75 text-lg max-w-2xl mx-auto">
             Real examples from our curated collection.
           </p>
         </div>
@@ -97,7 +97,7 @@ const ExamplePreview = () => {
                           </h4>
                           <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
-                        <p className="text-sm text-muted-foreground mb-3">
+                        <p className="mb-3 text-sm text-foreground/75">
                           {resource.description}
                         </p>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -139,12 +139,12 @@ const ExamplePreview = () => {
                       <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
                         {template.title}
                       </h4>
-                      <div className="flex items-center gap-1 text-muted-foreground text-xs shrink-0">
+                      <div className="flex items-center gap-1 text-xs text-foreground/70 shrink-0">
                         <Star className="w-3.5 h-3.5 fill-primary text-primary" />
                         <span>{template.stars}</span>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">
+                    <p className="mb-3 text-sm text-foreground/75">
                       {template.description}
                     </p>
                     <div className="flex items-center justify-between gap-2">
@@ -159,7 +159,7 @@ const ExamplePreview = () => {
                           </Badge>
                         ))}
                       </div>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
+                      <span className="flex items-center gap-1 text-xs text-foreground/70 shrink-0">
                         <Clock className="w-3 h-3" />
                         {template.updated}
                       </span>

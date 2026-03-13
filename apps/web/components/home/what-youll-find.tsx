@@ -37,7 +37,7 @@ const WhatYoullFind = () => {
             What you'll find on{" "}
             <span className="text-gradient">10xcoder.club</span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-foreground/75 text-lg max-w-2xl mx-auto">
             Everything you need to learn faster and build better — curated,
             organized, and free.
           </p>
@@ -62,7 +62,7 @@ const WhatYoullFind = () => {
                   {section.items.map((item, i) => (
                     <li
                       key={i}
-                      className="flex items-start gap-3 text-muted-foreground"
+                      className="flex items-start gap-3 text-foreground/75"
                     >
                       <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                       <span className="text-sm">{item}</span>

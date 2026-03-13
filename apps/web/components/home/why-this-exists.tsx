@@ -22,7 +22,7 @@ const WhyThisExists = () => {
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 text-foreground">
             Why this platform exists
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-foreground/75 text-lg max-w-2xl mx-auto">
             We built what we wished existed when we started.
           </p>
         </div>
@@ -30,17 +30,17 @@ const WhyThisExists = () => {
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Problems */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-muted-foreground mb-6 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-foreground/85 mb-6 flex items-center gap-2">
               <XCircle className="w-5 h-5 text-red-500" />
               The Problem
             </h3>
             {problems.map((problem, i) => (
               <div
                 key={i}
-                className="flex items-start gap-3 p-4 rounded-lg bg-red-500/5 border border-red-500/10"
+                className="flex items-start gap-3 rounded-lg border border-red-500/15 bg-red-500/7 p-4"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-2 shrink-0" />
-                <span className="text-muted-foreground text-sm">{problem}</span>
+                <span className="text-foreground/75 text-sm">{problem}</span>
               </div>
             ))}
           </div>

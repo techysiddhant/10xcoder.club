@@ -20,7 +20,7 @@ const CTA = () => {
             <span className="text-gradient">Start building.</span>
           </h2>
 
-          <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto">
+          <p className="mb-8 max-w-lg mx-auto text-lg text-foreground/75">
             Access curated resources and production-ready templates — all in one
             place, completely free.
           </p>
@@ -55,7 +55,7 @@ const CTA = () => {
             </Button>
           </div>
 
-          <p className="text-sm text-muted-foreground mt-6">
+          <p className="mt-6 text-sm text-foreground/70">
             Free forever · Community-driven · No sign-up required to browse
           </p>
         </div>
