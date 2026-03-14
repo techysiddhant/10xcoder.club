@@ -20,7 +20,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(publicEnv.NEXT_PUBLIC_APP_URL),
   title: {
-    default: "10xCoder.club",
+    // default: "10xCoder.club",
+    default: "10xCoder.club | Free Developer Resources & Tools",
     template: "%s | 10xCoder.club",
   },
   description:
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "Learn. Build. Ship Faster.",
+    title: "10xCoder.club | Free Developer Resources & Tools",
     description:
       "Discover and share the best free developer resources on 10xcoder.club — curated tools, articles, and videos to boost your coding journey.",
     url: publicEnv.NEXT_PUBLIC_APP_URL,
@@ -54,7 +55,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Learn. Build. Ship Faster.",
+    title: "10xCoder.club | Free Developer Resources & Tools",
     description:
       "Discover and share the best free developer resources on 10xcoder.club — curated tools, articles, and videos to boost your coding journey.",
     images: [
