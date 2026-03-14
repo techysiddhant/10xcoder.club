@@ -122,3 +122,9 @@ export function generateResourcesCacheKey(query: ResourceListQuery): string {
 export const QUEUE_NAMES = {
   VOTE_SYNC: "vote-sync",
 } as const;
+
+export const EMAIL_TEMPLATE_IDS = {
+  VERIFICATION: "A-2c74f165fa273add3abf",
+  RESET_PASSWORD: "A-f8710f29b19b5f71976c",
+  MAGIC_LINK: "A-4198bab25ff66ca88da1",
+} as const;

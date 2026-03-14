@@ -4,6 +4,7 @@ import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
 import { addEmailJob } from "@/lib/email-queue";
 import type { EmailJobData } from "@/lib/email-queue";
+import { EMAIL_TEMPLATE_IDS } from "@/constant";
 
 const autosend = new Autosend(env.AUTOSEND_API_KEY);
 
@@ -17,13 +18,14 @@ interface SendEmailParams {
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<void> {
-  await autosend.emails.send({
-    from: { email: `no-reply@${env.DOMAIN}`, name: "10xCoder.club" },
+  const response = await autosend.emails.send({
+    from: { email: `no-reply@${env.DOMAIN}`, name: "10xCoder-club" },
     to: { email: params.to },
     subject: params.subject,
     templateId: params.templateId,
     dynamicData: params.dynamicData,
   });
+  logger.info({ response }, "Email sent successfully");
 }
 
 // ── Queue-based senders (used by auth callbacks) ─
@@ -36,10 +38,13 @@ export const sendVerificationEmail = async (
   const data: EmailJobData = {
     type: "verification",
     to: email,
-    subject: "Verify your email",
-    // TODO: Add Autosend template ID for verification email
-    templateId: "VERIFICATION_TEMPLATE_ID",
-    dynamicData: { name, url },
+    subject: "Verify Your Email Address",
+    templateId: EMAIL_TEMPLATE_IDS.VERIFICATION,
+    dynamicData: {
+      name,
+      verificationLink: url,
+      year: new Date().getFullYear().toString(),
+    },
   };
 
   await addEmailJob(data);
@@ -54,10 +59,13 @@ export const sendResetPasswordEmail = async (
   const data: EmailJobData = {
     type: "reset-password",
     to: email,
-    subject: "Reset your password",
-    // TODO: Add Autosend template ID for reset password email
-    templateId: "RESET_PASSWORD_TEMPLATE_ID",
-    dynamicData: { name, url },
+    subject: "Reset Your Password",
+    templateId: EMAIL_TEMPLATE_IDS.RESET_PASSWORD,
+    dynamicData: {
+      name,
+      resetPasswordLink: url,
+      year: new Date().getFullYear().toString(),
+    },
   };
 
   await addEmailJob(data);
@@ -72,9 +80,12 @@ export const sendMagicLinkEmail = async (
     type: "magic-link",
     to: email,
     subject: "Sign in to 10xCoder.club",
-    // TODO: Add Autosend template ID for magic link email
-    templateId: "MAGIC_LINK_TEMPLATE_ID",
-    dynamicData: { email, url },
+    templateId: EMAIL_TEMPLATE_IDS.MAGIC_LINK,
+    dynamicData: {
+      email,
+      magicLink: url,
+      year: new Date().getFullYear().toString(),
+    },
   };
 
   await addEmailJob(data);
