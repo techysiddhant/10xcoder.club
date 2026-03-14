@@ -57,7 +57,7 @@ export const emailWorker = new Worker<EmailJobData>(
       "📧 Processing email job",
     );
 
-    await sendEmail({ to, subject, templateId, dynamicData });
+    await sendEmail({ ...job.data });
 
     logger.info({ jobId: job.id, type, to }, "✅ Email sent successfully");
   },

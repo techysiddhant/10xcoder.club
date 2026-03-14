@@ -4,6 +4,7 @@ import { Badge } from "@workspace/ui/components/badge";
 const ResourcePreviewCard = () => {
   return (
     <div className="relative">
+      <h2 className="sr-only">Featured resource examples</h2>
       {/* Glow effect */}
       <div className="absolute -inset-4 bg-primary/10 rounded-2xl blur-2xl opacity-50" />
 
@@ -22,9 +23,9 @@ const ResourcePreviewCard = () => {
               </div>
               <ExternalLink className="w-4 h-4 text-muted-foreground" />
             </div>
-            <p className="font-semibold mb-2 text-foreground">
+            <h3 className="font-semibold mb-2 text-foreground">
               React Server Components Deep Dive
-            </p>
+            </h3>
             <p className="text-sm text-foreground/75 mb-3">
               Complete guide to RSC architecture, streaming, and data fetching
               patterns.
@@ -57,9 +58,9 @@ const ResourcePreviewCard = () => {
                 <span>2.4k</span>
               </div>
             </div>
-            <p className="font-semibold mb-2 text-foreground">
+            <h3 className="font-semibold mb-2 text-foreground">
               SaaS Starter Kit
-            </p>
+            </h3>
             <p className="text-sm text-foreground/75 mb-3">
               Next.js 14, Auth, Stripe, Prisma — ready to fork and ship.
             </p>
@@ -85,9 +86,9 @@ const ResourcePreviewCard = () => {
                 <BookOpen className="w-4 h-4 text-green-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate text-foreground">
+                <h3 className="font-medium text-sm truncate text-foreground">
                   System Design: Rate Limiting
-                </p>
+                </h3>
                 <p className="text-xs text-foreground/70">
                   Article · Intermediate
                 </p>
