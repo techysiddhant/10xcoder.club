@@ -75,7 +75,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "/",
+    canonical: publicEnv.NEXT_PUBLIC_APP_URL,
   },
 };
 
