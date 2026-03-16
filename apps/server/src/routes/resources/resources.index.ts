@@ -6,11 +6,6 @@ import * as routes from "@/routes/resources/resources.routes";
 
 const router = createRouter();
 
-// Public routes with optional auth checking inside the handler
-router.openapi(routes.getResources, controllers.getResources);
-router.openapi(routes.getResourceOptions, controllers.getResourceOptions);
-router.openapi(routes.getResource, controllers.getResource);
-
 // Protected routes inside a grouped instance
 const protectedRouter = createRouter();
 protectedRouter.use(authMiddleware);
@@ -24,6 +19,13 @@ protectedRouter
   .openapi(routes.restoreResource, controllers.restoreResource);
 
 // Mount the protected routes into the main router
+// Register protected routes before the dynamic `/{id}` route so `/my`
+// endpoints are not captured as a resource id.
 router.route("/", protectedRouter);
+
+// Public routes with optional auth checking inside the handler
+router.openapi(routes.getResources, controllers.getResources);
+router.openapi(routes.getResourceOptions, controllers.getResourceOptions);
+router.openapi(routes.getResource, controllers.getResource);
 
 export default router;

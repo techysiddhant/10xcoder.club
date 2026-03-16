@@ -83,5 +83,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Build without API: still expose key pages
     resourceUrls = [];
   }
-  return [...staticPages, ...resourceUrls];
+  return [...staticPages, ...(resourceUrls || [])];
 }
