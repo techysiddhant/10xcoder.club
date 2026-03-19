@@ -42,7 +42,7 @@ const Header = () => {
         </div>
       </div> */}
       {/* Navbar: fixed below the notice; on mobile notice stacks so use larger top to avoid overlap */}
-      <nav className="fixed top-20 sm:top-12 left-0 right-0 z-50 bg-background/95 dark:bg-background/98 backdrop-blur-md border-b border-border/50">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 dark:bg-background/98 backdrop-blur-md border-b border-border/50">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}

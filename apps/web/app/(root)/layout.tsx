@@ -7,8 +7,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
     <VoteStreamProvider>
       <div className="bg-background min-h-dvh">
         <Header />
-        {/* Spacer: on mobile notice ~5rem + navbar 4rem; on sm+ notice 3rem + navbar 4rem */}
-        <div className="pt-36 sm:pt-28">{children}</div>
+        <div className="pt-10 sm:pt-16">{children}</div>
         <Footer />
       </div>
     </VoteStreamProvider>
