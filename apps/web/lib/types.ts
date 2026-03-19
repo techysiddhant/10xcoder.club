@@ -46,6 +46,7 @@ export interface ResourceListItem {
   /** When true, backend blocks deletion; UI should disable delete for published items */
   isPublished: boolean;
   reason?: string | null;
+  metadata?: ResourceMetadata;
 }
 
 /** Response shape of GET /api/resources */
@@ -59,8 +60,16 @@ export interface GetResourcesResponse {
 /** Playlist item for video resources */
 export interface ResourcePlaylistItem {
   title: string;
-  url: string;
-  duration?: string;
+  videoId: string;
+  duration?: string; // YouTube duration (e.g. PT1H2M3S)
+  thumbnail?: string;
+  position?: number;
+}
+
+export interface ResourceMetadata {
+  // YouTube playlist
+  playlistId?: string;
+  playlistVideos?: ResourcePlaylistItem[];
 }
 
 /** Single resource from GET /api/resources/:id (detail view) */

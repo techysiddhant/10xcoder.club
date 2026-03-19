@@ -59,7 +59,8 @@ export interface YouTubePlaylistMetadata {
 export interface GitHubMetadata {
   repoName: string;
   stars: number;
-  language?: string;
+  // Preferred key (new schema)
+  repoLanguage?: string;
   topics?: string[];
 }
 

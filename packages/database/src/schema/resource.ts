@@ -27,8 +27,28 @@ export const resourceStatusEnum = pgEnum(
   ResourceStatusSchema.options,
 );
 
-// Metadata type for JSONB column
+// Metadata type for JSONB column.
+//
+// `resource.metadata` is populated from the scraper response `_meta`
+// (see `apps/server/src/controllers/scrape.controller.ts`), so it includes
+// scraper-level details like `platform`, `method`, and `cached` plus
+// platform-specific fields (videoId, playlistId, stars, etc.).
 export type ResourceMetadata = {
+  // Scraper-level metadata
+  platform?: "youtube" | "github" | "devto" | "hashnode" | "generic";
+  method?: "api" | "graphql" | "og_meta";
+  cached?: boolean;
+
+  // YouTube video
+  videoId?: string;
+  channelUrl?: string;
+  duration?: string;
+  stats?: {
+    views?: number;
+    likes?: number;
+    comments?: number;
+  };
+
   // YouTube playlist
   playlistId?: string;
   playlistTitle?: string;
@@ -38,14 +58,15 @@ export type ResourceMetadata = {
     videoId: string;
     title: string;
     thumbnail: string;
+    duration?: string;
   }>;
-  // YouTube video
-  videoId?: string;
-  duration?: string;
+
   // GitHub
+  repoName?: string;
   stars?: number;
-  language?: string;
+  repoLanguage?: string;
   topics?: string[];
+
   // Blog
   readingTime?: number;
   publishedAt?: string;

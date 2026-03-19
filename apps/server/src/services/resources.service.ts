@@ -7,6 +7,7 @@ import {
   techStack,
   resourceToTags,
   resourceToTechStack,
+  type ResourceMetadata,
 } from "@workspace/database";
 import {
   eq,
@@ -81,6 +82,9 @@ function escapeILikePattern(pattern: string): string {
     .replace(/_/g, "\\_"); // Escape underscores
 }
 
+// Note: no metadata backward-compat normalization needed because we don't
+// have production legacy rows (new rows always write `metadata.repoLanguage`).
+
 // Input types for service functions
 interface CreateResourceInput {
   title: string;
@@ -92,6 +96,7 @@ interface CreateResourceInput {
   language?: "english" | "hindi";
   tags?: string[];
   techStack?: string[];
+  metadata?: ResourceMetadata | Record<string, unknown>;
 }
 
 interface UpdateResourceInput {
@@ -104,6 +109,7 @@ interface UpdateResourceInput {
   language?: "english" | "hindi";
   tags?: string[];
   techStack?: string[];
+  metadata?: ResourceMetadata | Record<string, unknown>;
 }
 
 interface ListResourcesInput {
@@ -231,7 +237,16 @@ export async function createResource(
     const result = await tx
       .insert(resource)
       .values({
-        ...resourceData,
+        title: resourceData.title,
+        url: resourceData.url,
+        description: resourceData.description ?? undefined,
+        image: resourceData.image ?? undefined,
+        credits: resourceData.credits ?? undefined,
+        language: resourceData.language ?? "english",
+        metadata:
+          resourceData.metadata === undefined
+            ? undefined
+            : (resourceData.metadata as unknown as ResourceMetadata),
         resourceTypeId,
         createdBy: userId,
       })
@@ -306,6 +321,7 @@ export async function getResourceById(id: string) {
   return {
     ...rest,
     image: transformImageUrl(rest.image),
+    metadata: rest.metadata,
     resourceType: rt.name,
     resourceTypeId: rest.resourceTypeId,
     tags: rtt.map((r) => r.tag),
@@ -370,6 +386,7 @@ export async function getResourceByIdForView(id: string, userId?: string) {
   return {
     ...rest,
     image: transformImageUrl(rest.image),
+    metadata: rest.metadata,
     resourceType: rt.name,
     resourceTypeId: rest.resourceTypeId,
     tags: rtt.map((r) => r.tag),
@@ -426,6 +443,7 @@ export async function getPublicResourceById(id: string) {
   return {
     ...rest,
     image: transformImageUrl(rest.image),
+    metadata: rest.metadata,
     resourceType: rt.name,
     resourceTypeId: rest.resourceTypeId,
     tags: rtt.map((r) => r.tag),
@@ -800,6 +818,7 @@ export async function getAllResources(query: ListResourcesInput) {
     return {
       ...rest,
       image: transformImageUrl(rest.image),
+      metadata: rest.metadata,
       resourceType: rt.name,
       resourceTypeId: rest.resourceTypeId,
       tags: rtt.map((item) => item.tag),
@@ -1091,6 +1110,7 @@ export async function getUserResources(
     return {
       ...rest,
       image: transformImageUrl(rest.image),
+      metadata: rest.metadata,
       resourceType: rt.name,
       resourceTypeId: rest.resourceTypeId,
       tags: rtt.map((item) => item.tag),
@@ -1145,6 +1165,7 @@ export async function getUserResourceById(resourceId: string, userId: string) {
   return {
     ...rest,
     image: transformImageUrl(rest.image),
+    metadata: rest.metadata,
     resourceType: rt.name,
     resourceTypeId: rest.resourceTypeId,
     tags: rtt.map((item) => item.tag),

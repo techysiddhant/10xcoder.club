@@ -35,6 +35,9 @@ export const resourceCreateSchema = z.object({
     .max(4, "Maximum 4 tech stack items.")
     .optional()
     .default([]),
+  // Scraper metadata saved into DB `resource.metadata` JSONB column.
+  // Stored as-is from `/api/scrape` response `_meta`.
+  metadata: z.unknown().optional(),
 });
 
 export type ResourceCreateInput = z.infer<typeof resourceCreateSchema>;

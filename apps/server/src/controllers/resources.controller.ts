@@ -276,6 +276,7 @@ export const createResource: AppRouteHandler<CreateResourceRoute> = async (
         tags: body.tags ?? [],
         techStack: body.techStack ?? [],
         credits: body.credits ?? undefined,
+        metadata: body.metadata ?? undefined,
       },
       user.id,
     );

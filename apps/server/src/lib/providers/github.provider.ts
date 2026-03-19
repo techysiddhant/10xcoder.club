@@ -191,7 +191,7 @@ export class GitHubProvider implements ScrapeProvider {
       metadata: {
         repoName: data.name,
         stars: data.stargazers_count || 0,
-        language: data.language || undefined,
+        repoLanguage: data.language || undefined,
         topics,
       },
     };
