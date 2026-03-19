@@ -1,7 +1,7 @@
 "use client";
 import { getResourceById } from "@/lib/http";
 import type { ResourceDetailItem, ResourcePlaylistItem } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatYouTubeDuration } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import {
   Avatar,
@@ -358,22 +358,23 @@ const ResourceDetail = ({ id }: { id: string }) => {
 
             {/* Playlist Section - Only for video resources */}
             {res.resourceType === "video" &&
-              res.playlist &&
-              res.playlist.length > 0 && (
+              res.metadata?.playlistId &&
+              (res.metadata?.playlistVideos?.length ?? 0) > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <ListVideo className="w-5 h-5 text-blue-500" />
                     <h3 className="text-sm font-medium text-foreground">
-                      Playlist ({res.playlist.length} videos)
+                      Playlist ({res.metadata?.playlistVideos?.length ?? 0}{" "}
+                      videos)
                     </h3>
                   </div>
                   <Card className="border-border/50 overflow-hidden">
                     <div className="divide-y divide-border">
-                      {res.playlist.map(
+                      {res.metadata?.playlistVideos?.map(
                         (item: ResourcePlaylistItem, index: number) => (
                           <a
                             key={index}
-                            href={item.url}
+                            href={`https://www.youtube.com/watch?v=${item.videoId}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors group"
@@ -383,13 +384,15 @@ const ResourceDetail = ({ id }: { id: string }) => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-foreground truncate group-hover:text-blue-500 transition-colors">
-                                {index + 1}. {item.title}
+                                {index + 1}. {item?.title}
                               </p>
                             </div>
-                            {item.duration && (
+                            {item?.duration && (
                               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Clock className="w-3 h-3" />
-                                <span>{item.duration}</span>
+                                <span>
+                                  {formatYouTubeDuration(item?.duration)}
+                                </span>
                               </div>
                             )}
                             <ExternalLink className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />

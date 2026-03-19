@@ -29,7 +29,11 @@ const CreateResourceForm = ({
 
   const handleSubmit = async (value: ResourceCreateClient) => {
     try {
-      const response = await createResourceMutation(value);
+      // Persist scraper `_meta` into DB `resource.metadata`.
+      const response = await createResourceMutation({
+        ...value,
+        metadata: resourceAutoFillData?._meta,
+      });
       toast.success("Resource added successfully");
       const id = response.data?.id;
       if (id) {

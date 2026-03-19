@@ -32,6 +32,10 @@ const CreatorSchema = z.object({
 
 const ResourceStatusEnum = z.enum(["approved", "rejected", "pending"]);
 
+// Scraper metadata stored in `resource.metadata` (JSONB).
+// Keep validation broad since the shape varies by provider/platform.
+const ResourceMetadataSchema = z.record(z.unknown()).optional();
+
 const SingleResourceSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -41,6 +45,7 @@ const SingleResourceSchema = z.object({
   credits: z.string().nullable().optional(),
   resourceType: z.string(),
   language: z.enum(["english", "hindi"]),
+  metadata: ResourceMetadataSchema,
   status: ResourceStatusEnum,
   upvoteCount: z.number().optional(),
   downvoteCount: z.number().optional(),
@@ -239,6 +244,7 @@ export const createResource = createRoute({
         language: z.enum(["english", "hindi"]).default("english").optional(),
         tags: z.array(z.string()).optional(),
         techStack: z.array(z.string()).optional(),
+        metadata: ResourceMetadataSchema,
       }),
       "Resource details",
     ),
@@ -282,6 +288,7 @@ export const updateResource = createRoute({
         language: z.enum(["english", "hindi"]).optional(),
         tags: z.array(z.string()).optional(),
         techStack: z.array(z.string()).optional(),
+        metadata: ResourceMetadataSchema,
       }),
       "Resource fields to update",
     ),
