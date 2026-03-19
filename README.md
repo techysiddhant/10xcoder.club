@@ -5,7 +5,7 @@
 [![Bun](https://img.shields.io/badge/Bun-1.2+-black?logo=bun&logoColor=white)](https://bun.sh)
 [![Turborepo](https://img.shields.io/badge/Turborepo-2.6+-EF4444?logo=turborepo&logoColor=white)](https://turbo.build)
 [![Next.js](https://img.shields.io/badge/Next.js-16+-000000?logo=next.js&logoColor=white)](https://nextjs.org)
-[![Elysia](https://img.shields.io/badge/Elysia-1.3+-000000?logo=elysia&logoColor=white)](https://elysiajs.com)
+[![Hono](https://img.shields.io/badge/Hono-4+-E36002?logo=hono&logoColor=white)](https://hono.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 
 **One place for developers to learn, build, and grow together.**
@@ -26,7 +26,7 @@ A community-driven platform built with modern technologies to help developers be
 - 🚀 **Turborepo** - High-performance monorepo build system with intelligent caching
 - ⚡ **Bun** - Fast JavaScript runtime and package manager
 - 🌐 **Next.js 16** - React framework for the web frontend
-- 🔥 **Elysia** - High-performance TypeScript backend framework
+- 🔥 **Hono** - High-performance TypeScript backend framework
 - 📦 **Shared Packages** - Reusable schemas, UI components, and configurations
 - 🎨 **Shadcn/UI** - Beautiful, accessible component library
 - 🔒 **Type-Safe** - End-to-end TypeScript with shared Zod schemas
@@ -45,10 +45,11 @@ A community-driven platform built with modern technologies to help developers be
 │   │   ├── env/             # Environment configuration
 │   │   └── lib/             # Utility functions
 │   │
-│   └── api/                 # Elysia backend API
-│       └── src/
-│           ├── config/      # Environment & app configuration
-│           └── db/          # Database utilities (Drizzle ORM)
+│   ├── server/              # Hono backend API (main)
+│   │   └── src/
+│   │       ├── config/      # Environment & app configuration
+│   │       ├── db/          # Database utilities (Drizzle ORM)
+│   │       └── routes/      # API routes
 │
 ├── packages/
 │   ├── schemas/             # Shared Zod schemas & TypeScript types
@@ -97,8 +98,8 @@ A community-driven platform built with modern technologies to help developers be
    Copy the example environment files and configure them:
 
    ```bash
-   # API environment
-   cp apps/api/.env.example apps/api/.env
+   # Server API environment (Hono)
+   cp apps/server/.env.example apps/server/.env
 
    # Web environment
    cp apps/web/.env.example apps/web/.env.local
@@ -108,7 +109,13 @@ A community-driven platform built with modern technologies to help developers be
 
 4. **Set up the database**
 
-   Make sure PostgreSQL is running and create a database matching your `.env` configuration.
+   The server requires Postgres + Redis. The easiest way to run them locally is:
+
+   ```bash
+   bun --cwd apps/server run dev:services
+   ```
+
+   This starts Postgres (on `localhost:5433`) and Redis (on `localhost:6379`) using `apps/server/docker-compose.dev.yml`.
 
 5. **Start development servers**
 
@@ -117,20 +124,20 @@ A community-driven platform built with modern technologies to help developers be
    ```
 
 6. **Open in browser**
-   - **Web App**: [http://localhost:3001](http://localhost:3001)
-   - **API Server**: [http://localhost:3000](http://localhost:3000)
-   - **API Docs**: [http://localhost:3000/swagger](http://localhost:3000/swagger)
+   - **Web App**: [http://localhost:3000](http://localhost:3000)
+   - **API Server (Hono)**: [http://localhost:8000](http://localhost:8000)
+   - **Health check**: [http://localhost:8000/health](http://localhost:8000/health)
 
 ---
 
 ## 🔐 Environment Variables
 
-### API (`apps/api/.env`)
+### Server API (`apps/server/.env`)
 
 | Variable            | Required | Default       | Description                                                  |
 | ------------------- | -------- | ------------- | ------------------------------------------------------------ |
 | `NODE_ENV`          | No       | `development` | Environment mode: `development`, `test`, `production`        |
-| `PORT`              | No       | `3000`        | API server port                                              |
+| `PORT`              | No       | `8000`        | API server port                                              |
 | `LOG_LEVEL`         | No       | `info`        | Logging level: `debug`, `info`, `warn`, `error`              |
 | `CORS_ORIGIN`       | No       | -             | Comma-separated allowed origins (permissive in dev if unset) |
 | `POSTGRES_USER`     | **Yes**  | -             | PostgreSQL username                                          |
@@ -143,7 +150,11 @@ A community-driven platform built with modern technologies to help developers be
 
 | Variable              | Required | Default                 | Description     |
 | --------------------- | -------- | ----------------------- | --------------- |
-| `NEXT_PUBLIC_API_URL` | No       | `http://localhost:3000` | Backend API URL |
+| `NEXT_PUBLIC_API_URL` | No       | `http://localhost:8000` | Backend API URL |
+
+Notes:
+
+- The web app uses cookie-based auth and sends credentials (`withCredentials: true`), so `CORS_ORIGIN` on the server must include the web origin (e.g. `http://localhost:3000`).
 
 ---
 
@@ -155,7 +166,7 @@ Run from the repository root:
 
 | Command                      | Description                            |
 | ---------------------------- | -------------------------------------- |
-| `bun run dev`                | Start all apps in development mode     |
+| `bun run dev`                | Start web + server in development mode |
 | `bun run build`              | Build all apps and packages            |
 | `bun run lint`               | Lint all apps and packages             |
 | `bun run typecheck`          | Run TypeScript type checking           |
@@ -319,30 +330,30 @@ Found a bug or have a feature request?
 Build the Docker image from the repository root:
 
 ```bash
-docker build -f apps/api/Dockerfile -t 10xcoder-api:latest .
+docker build -f apps/server/Dockerfile -t 10xcoder-server:latest .
 ```
 
 ### Running the Container
 
 ```bash
-docker run --rm -p 3000:3000 \
-  -e PORT=3000 \
-  -e CORS_ORIGIN=http://localhost:3001 \
+docker run --rm -p 8000:8000 \
+  -e PORT=8000 \
+  -e CORS_ORIGIN=http://localhost:3000 \
   -e POSTGRES_USER=your_user \
   -e POSTGRES_PASSWORD=your_password \
   -e POSTGRES_DB=your_database \
   -e POSTGRES_HOST=host.docker.internal \
   -e POSTGRES_PORT=5432 \
-  10xcoder-api:latest
+  10xcoder-server:latest
 ```
 
-### Production Binary Build
+### Production Build (Non-Docker)
 
-For non-Docker production deployments using Bun's compile feature:
+For non-Docker production deployments:
 
 ```bash
-bun --cwd apps/api run build:binary
-./apps/api/server
+bun --cwd apps/server run build
+bun --cwd apps/server run start
 ```
 
 ---
@@ -384,7 +395,7 @@ This project is open source. See the [LICENSE](LICENSE) file for details.
 - [Turborepo](https://turbo.build) - Monorepo build system
 - [Bun](https://bun.sh) - JavaScript runtime
 - [Next.js](https://nextjs.org) - React framework
-- [Elysia](https://elysiajs.com) - Backend framework
+- [Hono](https://hono.dev) - Backend framework
 - [Shadcn/UI](https://ui.shadcn.com) - UI components
 - [Drizzle ORM](https://orm.drizzle.team) - TypeScript ORM
 - [Zod](https://zod.dev) - Schema validation
