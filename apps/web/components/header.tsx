@@ -19,7 +19,7 @@ const Header = () => {
   return (
     <>
       {/* Beta notice: fixed at very top, solid background; responsive for mobile */}
-      <div className="fixed top-0 left-0 right-0 z-60 w-full border-b border-amber-500/20 bg-amber-50 dark:bg-amber-950/98 min-h-13 sm:min-h-12 flex items-center backdrop-blur-sm">
+      {/* <div className="fixed top-0 left-0 right-0 z-60 w-full border-b border-amber-500/20 bg-amber-50 dark:bg-amber-950/98 min-h-13 sm:min-h-12 flex items-center backdrop-blur-sm">
         <div className="container mx-auto px-3 sm:px-6 py-2  w-full">
           <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2 text-center sm:text-left w-full">
             <span className="text-xs sm:text-sm leading-snug text-amber-950 dark:text-amber-200">
@@ -40,9 +40,9 @@ const Header = () => {
             </a>
           </div>
         </div>
-      </div>
+      </div> */}
       {/* Navbar: fixed below the notice; on mobile notice stacks so use larger top to avoid overlap */}
-      <nav className="fixed top-20 sm:top-12 left-0 right-0 z-50 bg-background/95 dark:bg-background/98 backdrop-blur-md border-b border-border/50">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 dark:bg-background/98 backdrop-blur-md border-b border-border/50">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
