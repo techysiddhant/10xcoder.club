@@ -6,12 +6,14 @@
 import * as Sentry from "@sentry/nextjs";
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+const isProduction = process.env.NODE_ENV === "production";
+const sendDefaultPii = !isProduction || process.env.SENTRY_SEND_PII === "true";
 
 if (dsn) {
   Sentry.init({
     dsn,
-    tracesSampleRate: 1,
+    tracesSampleRate: isProduction ? 0.1 : 1,
     enableLogs: true,
-    sendDefaultPii: true,
+    sendDefaultPii,
   });
 }
