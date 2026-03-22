@@ -118,17 +118,76 @@ jobs:
             export IMAGE_TAG=${{ env.DEPLOY_IMAGE_TAG }}
             echo "🏷️ Deploying server image tag: ${IMAGE_TAG}"
 
+            report_disk_usage() {
+              echo "💽 Host disk usage"
+              df -h / || true
+              if [ -d /var/lib/docker ]; then
+                df -h /var/lib/docker || true
+              fi
+              if [ -d /var/lib/containerd ]; then
+                df -h /var/lib/containerd || true
+              fi
+              docker system df || true
+            }
+
+            cleanup_docker_space() {
+              echo "🧹 Cleaning Docker artifacts before pull"
+              docker container prune -f || true
+              docker image prune -f || true
+              docker builder prune -f || true
+              docker system df || true
+            }
+
+            aggressive_cleanup() {
+              echo "🧨 Running aggressive Docker cleanup for pull recovery"
+              docker container prune -f || true
+              docker image prune -af || true
+              docker builder prune -af || true
+              docker system df || true
+            }
+
+            recover_pull_space_preserving_images() {
+              echo "🩹 Freeing pull space while preserving successfully pulled images"
+              docker container prune -f || true
+              docker image prune -f || true
+              docker builder prune -f || true
+              docker system df || true
+            }
+
+            pull_with_recovery() {
+              local image_ref="$1"
+
+              echo "📦 Pulling image ${image_ref}"
+              if docker pull "$image_ref"; then
+                return 0
+              fi
+
+              echo "⚠️ Initial pull failed, attempting cleanup and one retry"
+              report_disk_usage
+              aggressive_cleanup
+              report_disk_usage
+
+              docker pull "$image_ref"
+            }
+
             echo "🔑 Login to GHCR"
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
-            echo "📦 Pulling server image ghcr.io/techysiddhant/10xcoder-server:${IMAGE_TAG}"
-            docker pull "ghcr.io/techysiddhant/10xcoder-server:${IMAGE_TAG}"
+            report_disk_usage
+            cleanup_docker_space
+            report_disk_usage
+
+            pull_with_recovery "ghcr.io/techysiddhant/10xcoder-server:${IMAGE_TAG}"
 
             echo "🌐 Ensuring shared network exists"
             docker network create app_net 2>/dev/null || true
 
             echo "🏗️ Recreating infrastructure services (apply Traefik/socket-proxy config changes)"
-            docker compose --env-file .env -f docker-compose.infra.yml pull
+            docker compose --env-file .env -f docker-compose.infra.yml pull || {
+              echo "⚠️ Infra image pull failed, retrying after targeted cleanup"
+              recover_pull_space_preserving_images
+              docker compose --env-file .env -f docker-compose.infra.yml pull
+            }
             docker compose --env-file .env -f docker-compose.infra.yml up -d --force-recreate socket-proxy traefik dozzle
             grep -Eq '^[^:[:space:]]+:\$[^[:space:]]+$' traefik/users.htpasswd
             docker exec 10xcoder_traefik sh -lc 'grep -Eq "^[^:[:space:]]+:\\$[^[:space:]]+$" /etc/traefik/users.htpasswd'
@@ -136,7 +195,11 @@ jobs:
             docker inspect --format='{{range .Config.Env}}{{println .}}{{end}}' 10xcoder_traefik | grep -E 'DOCKER_API_VERSION|DOCKER_HOST' || true
 
             echo "📥 Pulling latest application images"
-            docker compose --env-file .env pull
+            docker compose --env-file .env pull || {
+              echo "⚠️ Application image pull failed, retrying after targeted cleanup"
+              recover_pull_space_preserving_images
+              docker compose --env-file .env pull
+            }
 
             # ── Ensure DB is ready before migrations ──
             echo "🚀 Starting database and redis"
@@ -217,10 +280,12 @@ jobs:
             docker compose --env-file .env up -d --no-deps --no-recreate --scale server=1 server
 
             echo "🗑️ Cleaning old images"
-            docker image prune -f || true
+            docker image prune -af || true
+            docker builder prune -af || true
 
             echo "📊 Final container status"
             docker compose --env-file .env ps
             docker compose --env-file .env -f docker-compose.infra.yml ps
+            report_disk_usage
 
             echo "🎉 Deployment completed successfully"
