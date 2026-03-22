@@ -133,8 +133,24 @@ jobs:
             cleanup_docker_space() {
               echo "🧹 Cleaning Docker artifacts before pull"
               docker container prune -f || true
+              docker image prune -f || true
+              docker builder prune -f || true
+              docker system df || true
+            }
+
+            aggressive_cleanup() {
+              echo "🧨 Running aggressive Docker cleanup for pull recovery"
+              docker container prune -f || true
               docker image prune -af || true
               docker builder prune -af || true
+              docker system df || true
+            }
+
+            recover_pull_space_preserving_images() {
+              echo "🩹 Freeing pull space while preserving successfully pulled images"
+              docker container prune -f || true
+              docker image prune -f || true
+              docker builder prune -f || true
               docker system df || true
             }
 
@@ -148,7 +164,7 @@ jobs:
 
               echo "⚠️ Initial pull failed, attempting cleanup and one retry"
               report_disk_usage
-              cleanup_docker_space
+              aggressive_cleanup
               report_disk_usage
 
               docker pull "$image_ref"
@@ -168,8 +184,8 @@ jobs:
 
             echo "🏗️ Recreating infrastructure services (apply Traefik/socket-proxy config changes)"
             docker compose --env-file .env -f docker-compose.infra.yml pull || {
-              echo "⚠️ Infra image pull failed, retrying after cleanup"
-              cleanup_docker_space
+              echo "⚠️ Infra image pull failed, retrying after targeted cleanup"
+              recover_pull_space_preserving_images
               docker compose --env-file .env -f docker-compose.infra.yml pull
             }
             docker compose --env-file .env -f docker-compose.infra.yml up -d --force-recreate socket-proxy traefik dozzle
@@ -180,8 +196,8 @@ jobs:
 
             echo "📥 Pulling latest application images"
             docker compose --env-file .env pull || {
-              echo "⚠️ Application image pull failed, retrying after cleanup"
-              cleanup_docker_space
+              echo "⚠️ Application image pull failed, retrying after targeted cleanup"
+              recover_pull_space_preserving_images
               docker compose --env-file .env pull
             }
 
