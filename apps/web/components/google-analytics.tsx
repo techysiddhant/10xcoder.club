@@ -25,7 +25,7 @@ const GoogleAnalytics = ({ gaId }: GoogleAnalyticsProps) => {
       <Script
         id="gtag-src"
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-        strategy="lazyOnload"
+        strategy="afterInteractive"
       />
     </>
   );

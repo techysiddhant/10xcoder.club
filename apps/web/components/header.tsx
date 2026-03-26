@@ -2,7 +2,7 @@ import { Button } from "@workspace/ui/components/button";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
 import Logo from "./logo";
-import HeaderActions from "./header-actions-loader";
+import HeaderActions from "./header-actions";
 
 const Header = () => {
   return (
