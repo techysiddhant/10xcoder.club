@@ -17,13 +17,11 @@ const AuthCtaLink = ({
   className,
   children,
 }: AuthCtaLinkProps) => {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
+  const href = isPending || session ? authenticatedHref : unauthenticatedHref;
 
   return (
-    <Link
-      href={session ? authenticatedHref : unauthenticatedHref}
-      className={className}
-    >
+    <Link href={href} className={className}>
       {children}
     </Link>
   );

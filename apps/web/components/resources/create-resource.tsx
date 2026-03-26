@@ -26,7 +26,7 @@ import { Input } from "@workspace/ui/components/input";
 import { autoFillResourceDetails } from "@/lib/http";
 import CreateResourceForm from "./create-resource-form";
 import { authClient } from "@/lib/auth-client";
-import { sendGAEvent } from "@next/third-parties/google";
+import { trackEvent } from "@/lib/analytics";
 
 const CreateResource = () => {
   const { data: session, isPending } = authClient.useSession();
@@ -107,7 +107,7 @@ const CreateResource = () => {
               e.stopPropagation();
               toast.error("Sign in to submit a resource");
             }
-            sendGAEvent("event", "add_resource_click", {
+            trackEvent("add_resource_click", {
               button_name: "add_resource",
               page_location: window.location.pathname,
             });

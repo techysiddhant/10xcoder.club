@@ -3,8 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@workspace/ui/globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "react-hot-toast";
-import { GoogleAnalytics } from "@next/third-parties/google";
 import { publicEnv } from "@/env/public";
+import GoogleAnalytics from "@/components/google-analytics";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

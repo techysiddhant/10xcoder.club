@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import { AppClientProviders } from "@/components/providers/app-client-providers";
 
 const MyLayout = ({ children }: { children: ReactNode }) => {
-  return <AppClientProviders>{children}</AppClientProviders>;
+  return <>{children}</>;
 };
 
 export default MyLayout;

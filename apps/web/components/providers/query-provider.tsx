@@ -49,9 +49,7 @@ export function QueryProvider(props: { children: React.ReactNode }) {
       <ReactQueryStreamedHydration>
         {props.children}
       </ReactQueryStreamedHydration>
-      {process.env.NODE_ENV === "development" ? (
-        <ReactQueryDevtools initialIsOpen={false} />
-      ) : null}
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }
