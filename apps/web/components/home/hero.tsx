@@ -1,12 +1,10 @@
-"use client";
 import { Button } from "@workspace/ui/components/button";
 import { ArrowRight, Plus } from "lucide-react";
 import ResourcePreviewCard from "./resource-preview-card";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import AuthCtaLink from "@/components/home/auth-cta-link";
 
 const Hero = () => {
-  const { data: session } = authClient.useSession();
   return (
     <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
       {/* Background */}
@@ -15,23 +13,23 @@ const Hero = () => {
 
       <div className="container mx-auto relative z-10 px-6 py-0">
         <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
-          <div className="opacity-0 animate-fade-up">
+          <div>
             <p className="text-sm font-medium text-primary mb-4 tracking-wide uppercase">
               Free & Community-Driven
             </p>
           </div>
 
-          <h1 className="opacity-0 animate-fade-up delay-1 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6 text-foreground">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6 text-foreground">
             Learn. Build. <span className="text-gradient">Ship Faster.</span>
           </h1>
 
-          <p className="opacity-0 animate-fade-up delay-2 mb-8 max-w-2xl text-lg leading-relaxed text-foreground/75">
+          <p className="mb-8 max-w-2xl text-lg leading-relaxed text-foreground/75">
             A free, community-curated hub of high-quality learning resources and
             production-ready GitHub templates — reviewed, selected, and trusted
             by developers.
           </p>
 
-          <div className="opacity-0 animate-fade-up delay-3 flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button asChild size="lg" className="h-12 px-6 font-semibold gap-2">
               <Link href="/resources">
                 Explore Resources
@@ -44,21 +42,18 @@ const Hero = () => {
               className="h-12 px-6 font-semibold gap-2 group"
               asChild
             >
-              <Link
-                href={
-                  session
-                    ? "/resources?createResource=true"
-                    : `/auth?mode=signin&redirectUrl=${encodeURIComponent("/resources?createResource=true")}`
-                }
+              <AuthCtaLink
+                authenticatedHref="/resources?createResource=true"
+                unauthenticatedHref={`/auth?mode=signin&redirectUrl=${encodeURIComponent("/resources?createResource=true")}`}
               >
                 <Plus className="w-4 h-4" />
                 Contribute
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </AuthCtaLink>
             </Button>
           </div>
 
-          <div className="opacity-0 animate-fade-up delay-4 mt-8 flex items-center gap-6 text-sm text-foreground/70">
+          <div className="mt-8 flex items-center gap-6 text-sm text-foreground/70">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
               100% Free
@@ -71,7 +66,7 @@ const Hero = () => {
         </div>
 
         {/* Preview Cards - Below Hero */}
-        <div className="opacity-0 animate-fade-up delay-4 mt-16 lg:mt-20">
+        <div className="mt-16 lg:mt-20">
           <ResourcePreviewCard />
         </div>
       </div>
