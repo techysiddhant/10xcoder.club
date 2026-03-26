@@ -1,12 +1,10 @@
-"use client";
 import { Button } from "@workspace/ui/components/button";
 import { ArrowRight, Plus } from "lucide-react";
 import ResourcePreviewCard from "./resource-preview-card";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import AuthCtaLink from "@/components/home/auth-cta-link";
 
 const Hero = () => {
-  const { data: session } = authClient.useSession();
   return (
     <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
       {/* Background */}
@@ -44,17 +42,14 @@ const Hero = () => {
               className="h-12 px-6 font-semibold gap-2 group"
               asChild
             >
-              <Link
-                href={
-                  session
-                    ? "/resources?createResource=true"
-                    : `/auth?mode=signin&redirectUrl=${encodeURIComponent("/resources?createResource=true")}`
-                }
+              <AuthCtaLink
+                authenticatedHref="/resources?createResource=true"
+                unauthenticatedHref={`/auth?mode=signin&redirectUrl=${encodeURIComponent("/resources?createResource=true")}`}
               >
                 <Plus className="w-4 h-4" />
                 Contribute
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </AuthCtaLink>
             </Button>
           </div>
 

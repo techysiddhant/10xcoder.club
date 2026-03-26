@@ -1,11 +1,9 @@
-"use client";
-import { authClient } from "@/lib/auth-client";
 import { Button } from "@workspace/ui/components/button";
 import { ArrowRight, Plus } from "lucide-react";
+import AuthCtaLink from "@/components/home/auth-cta-link";
 import Link from "next/link";
 
 const CTA = () => {
-  const { data: session } = authClient.useSession();
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Background glow */}
@@ -42,16 +40,13 @@ const CTA = () => {
               className="h-14 px-8 text-base font-semibold gap-2"
               asChild
             >
-              <Link
-                href={
-                  session
-                    ? "/resources?createResource=true"
-                    : `/auth?mode=signin&redirectUrl=${encodeURIComponent("/resources?createResource=true")}`
-                }
+              <AuthCtaLink
+                authenticatedHref="/resources?createResource=true"
+                unauthenticatedHref={`/auth?mode=signin&redirectUrl=${encodeURIComponent("/resources?createResource=true")}`}
               >
                 <Plus className="w-4 h-4" />
                 Submit a Resource
-              </Link>
+              </AuthCtaLink>
             </Button>
           </div>
 

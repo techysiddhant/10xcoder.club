@@ -3,8 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@workspace/ui/globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "react-hot-toast";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { QueryProvider } from "@/components/providers/query-provider";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { publicEnv } from "@/env/public";
 const geistSans = Geist({
@@ -114,19 +112,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <QueryProvider>
-          <NuqsAdapter>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <Toaster position="top-right" reverseOrder={false} />
-              {children}
-            </ThemeProvider>
-          </NuqsAdapter>
-        </QueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Toaster position="top-right" reverseOrder={false} />
+          {children}
+        </ThemeProvider>
         {publicEnv.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
           <GoogleAnalytics gaId={publicEnv.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         )}
