@@ -49,6 +49,9 @@ async function fetchResourcesPage(cursor?: string) {
   const response = await fetch(url.toString(), {
     method: "GET",
     cache: "force-cache",
+    next: {
+      revalidate: 60 * 60 * 24 * 7,
+    },
     headers: {
       Accept: "application/json",
     },
