@@ -4,7 +4,6 @@ import type { GetResourcesResponse } from "@/lib/types";
 import type { MetadataRoute } from "next";
 
 const BASE = (publicEnv.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
-export const dynamic = "force-dynamic";
 /** Key pages for sitelinks: clear URLs Google can show under the main result */
 const staticPages: MetadataRoute.Sitemap = [
   {
@@ -49,7 +48,7 @@ async function fetchResourcesPage(cursor?: string) {
 
   const response = await fetch(url.toString(), {
     method: "GET",
-    cache: "no-store",
+    cache: "force-cache",
     headers: {
       Accept: "application/json",
     },
