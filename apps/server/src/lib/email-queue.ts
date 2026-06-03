@@ -1,9 +1,9 @@
 import { Queue, Worker } from "bullmq";
 import type { Job } from "bullmq";
 
-import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
 import { sendEmail } from "@/lib/autosend";
+import { redisConnectionOptions } from "./redis";
 
 // ── Types ────────────────────────────────────────
 
@@ -19,17 +19,13 @@ export interface EmailJobData {
 
 // ── Redis connection config for BullMQ ───────────
 
-const connection = {
-  host: env.REDIS_HOST,
-  port: env.REDIS_PORT,
-  password: env.REDIS_PASSWORD || undefined,
-};
+const connection = redisConnectionOptions;
 
 // ── Queue ────────────────────────────────────────
 
 const QUEUE_NAME = "email";
 
-export const emailQueue = new Queue<EmailJobData>(QUEUE_NAME, {
+export const emailQueue = new Queue<EmailJobData, void, string>(QUEUE_NAME, {
   connection,
   defaultJobOptions: {
     attempts: 3,
@@ -50,7 +46,7 @@ export const emailQueue = new Queue<EmailJobData>(QUEUE_NAME, {
 export const emailWorker = new Worker<EmailJobData>(
   QUEUE_NAME,
   async (job: Job<EmailJobData>) => {
-    const { type, to, subject, templateId, dynamicData } = job.data;
+    const { type, to } = job.data;
 
     logger.info(
       { jobId: job.id, type, to, attempt: job.attemptsMade + 1 },
