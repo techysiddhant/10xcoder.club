@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 
 # -----------------------------------------------------------------------------
 # Stage 1 — Install dependencies
@@ -22,8 +21,7 @@ COPY packages/api-types/package.json ./packages/api-types/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Install build deps for server workspace only
-RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile --filter @workspace/server
+RUN bun install --frozen-lockfile --filter @workspace/server
 
 
 # -----------------------------------------------------------------------------
@@ -44,8 +42,7 @@ COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/api-types/package.json ./packages/api-types/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 
-RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile --no-save --production --filter @workspace/server
+RUN bun install --frozen-lockfile --no-save --production --filter @workspace/server
 
 
 # -----------------------------------------------------------------------------
