@@ -17,6 +17,15 @@ try {
   throw err;
 }
 
+// Run database migrations on startup
+try {
+  const { runMigrations } = await import("@/db");
+  await runMigrations();
+} catch (err) {
+  logger.error({ err }, "Failed to run database migrations");
+  throw err;
+}
+
 // Start email worker after Redis is connected
 try {
   await import("@/lib/email-queue");

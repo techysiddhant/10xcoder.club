@@ -1,13 +1,9 @@
 import { Queue } from "bullmq";
-import { env } from "@/config/env";
 import { QUEUE_NAMES } from "@/constant";
+import { redisConnectionOptions } from "./redis";
 
 // BullMQ connection config (separate from ioredis instance)
-const connection = {
-  host: env.REDIS_HOST,
-  port: env.REDIS_PORT,
-  password: env.REDIS_PASSWORD || undefined,
-};
+const connection = redisConnectionOptions;
 
 // BullMQ Queues
 export const voteQueue = new Queue(QUEUE_NAMES.VOTE_SYNC, {

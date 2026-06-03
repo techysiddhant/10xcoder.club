@@ -7,9 +7,9 @@
  */
 
 import Redis from "ioredis";
-import { env } from "@/config/env";
 import { REDIS_KEY } from "@/constant";
 import { logger } from "@/lib/logger";
+import { redisConnectionOptions } from "./redis";
 
 const subscriberLogger = logger.child({ module: "vote-subscriber" });
 
@@ -45,9 +45,7 @@ export async function initVoteSubscriber(): Promise<void> {
 
   initPromise = new Promise<void>((resolve, reject) => {
     subscriber = new Redis({
-      host: env.REDIS_HOST,
-      port: env.REDIS_PORT,
-      password: env.REDIS_PASSWORD || undefined,
+      ...redisConnectionOptions,
       retryStrategy: (times) => {
         // Exponential backoff with max 30 seconds
         const delay = Math.min(Math.pow(2, times - 1) * 1000, 30000);
@@ -74,7 +72,7 @@ export async function initVoteSubscriber(): Promise<void> {
       for (const [clientId, enqueue] of clients.entries()) {
         try {
           enqueue(message);
-        } catch (error) {
+        } catch {
           // Client disconnected or stream closed - clean up
           subscriberLogger.debug({ clientId }, "Removing stale client");
           clients.delete(clientId);

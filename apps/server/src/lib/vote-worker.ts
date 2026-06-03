@@ -2,9 +2,9 @@ import { Worker, Job } from "bullmq";
 import { db } from "@/db";
 import { resource, userVote } from "@workspace/database";
 import { eq, and, sql } from "drizzle-orm";
-import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
 import { QUEUE_NAMES } from "@/constant";
+import { redisConnectionOptions } from "./redis";
 
 interface VoteJobData {
   resourceId: string;
@@ -15,11 +15,7 @@ interface VoteJobData {
 }
 
 // BullMQ connection config
-const connection = {
-  host: env.REDIS_HOST,
-  port: env.REDIS_PORT,
-  password: env.REDIS_PASSWORD || undefined,
-};
+const connection = redisConnectionOptions;
 
 // Create worker logger
 const workerLogger = logger.child({ worker: "vote-sync" });
