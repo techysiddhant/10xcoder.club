@@ -18,7 +18,7 @@ const EnvSchema = z
     POSTGRES_PORT: z.coerce.number().int().positive().default(5432),
 
     // Redis
-    REDIS_URL: z.string().optional(),
+    REDIS_URL: z.string().url().optional(),
     REDIS_HOST: z.string().optional(),
     REDIS_PORT: z.coerce.number().int().positive().default(6379),
     REDIS_PASSWORD: z.string().optional(),
