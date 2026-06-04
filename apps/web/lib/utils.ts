@@ -31,6 +31,8 @@ export interface ImageKitUploadParams {
   key: string;
 }
 
+const IMAGEKIT_UPLOAD_TIMEOUT_MS = 30_000;
+
 export const uploadToImageKit = async (
   file: File,
   params: ImageKitUploadParams,
@@ -50,11 +52,30 @@ export const uploadToImageKit = async (
   formData.append("token", params.token);
   formData.append("useUniqueFileName", "false");
   formData.append("folder", folder);
+  formData.append("overwriteFile", "false");
 
-  const res = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
-    method: "POST",
-    body: formData,
-  });
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => {
+    controller.abort();
+  }, IMAGEKIT_UPLOAD_TIMEOUT_MS);
+
+  let res: Response;
+
+  try {
+    res = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Upload timed out. Please try again.");
+    }
+
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     const errText = await res.text();

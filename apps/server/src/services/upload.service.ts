@@ -118,6 +118,10 @@ export async function getPresignedUploadUrl(
   const key = `${folder}/${sanitizedUserId}/${timestamp}-${sanitizedFileName}`;
 
   try {
+    // NOTE: ImageKit's authentication signature is strictly based on token and expire.
+    // It does not cryptographically bind upload parameters (folder, fileName, maxSize, allowedMimeTypes).
+    // To ensure uploaded assets are valid and authorized, server-side webhook validation
+    // or post-upload checks should be implemented before treating them as accepted.
     const authParams = imagekit.getAuthenticationParameters();
 
     const data: PresignedUrlResult = {

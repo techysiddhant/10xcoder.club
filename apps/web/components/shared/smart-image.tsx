@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties, ImgHTMLAttributes } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Image } from "@unpic/react";
 import { ImageOff } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
@@ -104,8 +104,18 @@ export function SmartImage({
   kind = "default",
   ...imgProps
 }: SmartImageProps) {
+  const {
+    onLoad: consumerOnLoad,
+    onError: consumerOnError,
+    ...restImgProps
+  } = imgProps;
   const [hasLoaded, setHasLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasLoaded(false);
+    setHasError(false);
+  }, [src]);
 
   const policy = getImagePolicy(src);
   const placeholderSrc =
@@ -152,7 +162,7 @@ export function SmartImage({
       ) : null}
 
       <Image
-        {...imgProps}
+        {...restImgProps}
         src={src}
         alt={alt}
         width={resolvedWidth}
@@ -180,11 +190,13 @@ export function SmartImage({
           (policy === "imagekit" || hasLoaded) && !hasError && "opacity-100",
           imgClassName,
         )}
-        onLoad={() => {
+        onLoad={(event) => {
           setHasLoaded(true);
+          consumerOnLoad?.(event);
         }}
-        onError={() => {
+        onError={(event) => {
           setHasError(true);
+          consumerOnError?.(event);
         }}
       />
     </div>

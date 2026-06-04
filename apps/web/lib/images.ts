@@ -35,7 +35,9 @@ function resolveImageKitAsset(src: string): ResolvedImageKitAsset | null {
     const configuredBase = getConfiguredImageKitBase();
 
     if (configuredBase && src.startsWith(`${configuredBase}/`)) {
-      const imagePath = src.slice(configuredBase.length + 1);
+      const configuredUrl = new URL(configuredBase);
+      const basePath = configuredUrl.pathname.replace(/\/$/, "");
+      const imagePath = url.pathname.slice(basePath.length + 1);
       return {
         endpoint: configuredBase,
         imagePath,
