@@ -43,12 +43,14 @@ export const createPresigned = createRoute({
   responses: {
     [HttpStatusCodes.OK]: jsonContent(
       z.object({
-        uploadUrl: z.string(),
+        signature: z.string(),
+        token: z.string(),
+        expire: z.number(),
+        publicKey: z.string(),
         key: z.string(),
-        expiresIn: z.number(),
         imageUrl: z.string().optional(),
       }),
-      "Presigned upload URL",
+      "ImageKit upload parameters",
     ),
     [HttpStatusCodes.BAD_REQUEST]: jsonContent(ErrorSchema, "Validation error"),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(ErrorSchema, "Unauthorized"),

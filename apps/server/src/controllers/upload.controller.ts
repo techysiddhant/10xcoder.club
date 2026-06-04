@@ -31,14 +31,18 @@ export const createPresigned: AppRouteHandler<CreatePresignedRoute> = async (
   }
 
   const response: {
-    uploadUrl: string;
+    signature: string;
+    token: string;
+    expire: number;
+    publicKey: string;
     key: string;
-    expiresIn: number;
     imageUrl?: string;
   } = {
-    uploadUrl: result.data.uploadUrl,
+    signature: result.data.signature,
+    token: result.data.token,
+    expire: result.data.expire,
+    publicKey: result.data.publicKey,
     key: result.data.key,
-    expiresIn: result.data.expiresIn,
   };
 
   if (result.data.imageUrl) {

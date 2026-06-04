@@ -23,7 +23,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
 import { resourceOptions, uploadImage } from "@/lib/http";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { uploadToS3 } from "@/lib/utils";
+import { uploadToImageKit } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { PrMarkdownEditor } from "../editor/pr-markdown-editor";
 
@@ -102,7 +102,7 @@ const ResourceFormCore = ({
       onSuccess: async (data, variables) => {
         const fileToUpload = variables.file;
         try {
-          await uploadToS3(fileToUpload, data.data.uploadUrl);
+          await uploadToImageKit(fileToUpload, data.data);
           form.setFieldValue("image", () => data.data.key);
         } catch {
           setImagePreview(null);

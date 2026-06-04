@@ -19,6 +19,7 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { useRouter } from "next/navigation";
 import type { ResourceListItem } from "@/lib/types";
+import { SmartImage } from "@/components/shared/smart-image";
 import Link from "next/link";
 import { VoteCounter } from "./vote-counter";
 import { VoteArrowIcon } from "./vote-arrow-icon";
@@ -91,16 +92,22 @@ const ResourceCard = ({ resource, onVote }: ResourceCardProps) => {
       {/* Image */}
       {resource.image && (
         <div className="relative overflow-hidden">
-          <img
+          <SmartImage
             src={resource.image}
             alt={resource.title}
-            className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+            width={640}
+            height={360}
+            aspectRatio="16/9"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+            kind="card"
+            className="w-full"
+            imgClassName="group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-linear-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
       )}
 
-      <CardContent className={cn("pb-4", !resource.image && "pt-4")}>
+      <CardContent className={cn("pb-2 px-2", !resource.image && "pt-0")}>
         {/* Type Badge & External Link */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
