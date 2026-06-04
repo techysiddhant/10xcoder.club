@@ -36,11 +36,6 @@ const EnvSchema = z
     // Autosend
     AUTOSEND_API_KEY: z.string().min(1),
     DOMAIN: z.string().min(1),
-
-    // Logflare (production only)
-    LOGFLARE_API_KEY: z.string().optional(),
-    LOGFLARE_SOURCE_ID: z.string().optional(),
-
     // ImageKit
     IMAGEKIT_PUBLIC_KEY: z.string().min(1),
     IMAGEKIT_PRIVATE_KEY: z.string().min(1),
