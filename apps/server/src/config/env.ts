@@ -50,6 +50,10 @@ const EnvSchema = z
 
     // Sentry (production only)
     SENTRY_DSN: z.string().url().optional(),
+
+    //Logflare
+    LOGFLARE_API_KEY: z.string().optional(),
+    LOGFLARE_SOURCE_ID: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (!data.DATABASE_URL) {
