@@ -1,9 +1,7 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-
 import { env } from "@/config/env";
 import { logger } from "@/lib/logger";
-import { s3Client, S3_BUCKET } from "@/lib/s3";
+import { imagekit } from "@/lib/imagekit";
+import { UPLOAD_FOLDERS } from "@/constant";
 
 // ── Constants ────────────────────────────────────
 
@@ -16,14 +14,14 @@ const ALLOWED_TYPES = [
 
 type AllowedType = (typeof ALLOWED_TYPES)[number];
 
-export const ALLOWED_FOLDERS = ["resources", "profiles"] as const;
+export const ALLOWED_FOLDERS = [
+  UPLOAD_FOLDERS.RESOURCES,
+  UPLOAD_FOLDERS.PROFILES,
+] as const;
 export type AllowedFolder = (typeof ALLOWED_FOLDERS)[number];
 
 /** Max file size: 2MB */
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
-
-/** Presigned URL expiry: 5 minutes */
-const PRESIGNED_URL_EXPIRY = 60 * 5;
 
 // ── Types ────────────────────────────────────────
 
@@ -35,9 +33,11 @@ export interface PresignedUrlInput {
 }
 
 export interface PresignedUrlResult {
-  uploadUrl: string;
+  signature: string;
+  token: string;
+  expire: number;
+  publicKey: string;
   key: string;
-  expiresIn: number;
   imageUrl?: string;
 }
 
@@ -92,7 +92,7 @@ export async function getPresignedUploadUrl(
     };
   }
 
-  // Generate unique S3 key: folder/userId/timestamp-sanitizedFileName
+  // Generate unique key: folder/userId/timestamp-sanitizedFileName
   const timestamp = Date.now();
   let sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
 
@@ -100,8 +100,8 @@ export async function getPresignedUploadUrl(
     sanitizedFileName = crypto.randomUUID().slice(0, 8);
   }
 
-  // Pre-validate CDN URL for profile images before hitting S3
-  if (folder === "profiles" && !env.CDN_URL) {
+  // Pre-validate CDN URL for profile images before generating signature
+  if (folder === UPLOAD_FOLDERS.PROFILES && !env.CDN_URL) {
     logger.error("CDN_URL is missing but required for profile images");
     return {
       success: false,
@@ -117,36 +117,32 @@ export async function getPresignedUploadUrl(
 
   const key = `${folder}/${sanitizedUserId}/${timestamp}-${sanitizedFileName}`;
 
-  const command = new PutObjectCommand({
-    Bucket: S3_BUCKET,
-    Key: key,
-    ContentType: fileType,
-    ContentLength: fileSize,
-  });
-
   try {
-    const uploadUrl = await getSignedUrl(s3Client, command, {
-      expiresIn: PRESIGNED_URL_EXPIRY,
-    });
+    const authParams = imagekit.getAuthenticationParameters();
 
     const data: PresignedUrlResult = {
-      uploadUrl,
+      signature: authParams.signature,
+      token: authParams.token,
+      expire: authParams.expire,
+      publicKey: env.IMAGEKIT_PUBLIC_KEY,
       key,
-      expiresIn: PRESIGNED_URL_EXPIRY,
     };
 
     // For profile images, also return the public CDN URL
-    if (folder === "profiles") {
+    if (folder === UPLOAD_FOLDERS.PROFILES) {
       const cdnBase = env.CDN_URL!.replace(/\/$/, "");
       data.imageUrl = `${cdnBase}/${key}`;
     }
 
     return { success: true, data };
   } catch (error) {
-    logger.error({ err: error }, "Failed to generate presigned URL");
+    logger.error(
+      { err: error },
+      "Failed to generate ImageKit authentication parameters",
+    );
     return {
       success: false,
-      error: "Failed to generate upload URL",
+      error: "Failed to generate upload signature",
       errorType: "INTERNAL_ERROR",
     };
   }

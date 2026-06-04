@@ -23,16 +23,43 @@ export function sanitizeRedirectUrl(url: string | null | undefined): string {
   return "/";
 }
 
-export const uploadToS3 = async (file: File, uploadUrl: string) => {
-  const res = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": file.type,
-    },
-    body: file,
+export interface ImageKitUploadParams {
+  signature: string;
+  token: string;
+  expire: number;
+  publicKey: string;
+  key: string;
+}
+
+export const uploadToImageKit = async (
+  file: File,
+  params: ImageKitUploadParams,
+) => {
+  const lastSlash = params.key.lastIndexOf("/");
+  const folder =
+    lastSlash !== -1 ? "/" + params.key.substring(0, lastSlash) : "/";
+  const fileName =
+    lastSlash !== -1 ? params.key.substring(lastSlash + 1) : params.key;
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("fileName", fileName);
+  formData.append("publicKey", params.publicKey);
+  formData.append("signature", params.signature);
+  formData.append("expire", String(params.expire));
+  formData.append("token", params.token);
+  formData.append("useUniqueFileName", "false");
+  formData.append("folder", folder);
+
+  const res = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
+    method: "POST",
+    body: formData,
   });
 
-  if (!res.ok) throw new Error("Upload failed");
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Upload failed: ${errText}`);
+  }
 };
 
 /**

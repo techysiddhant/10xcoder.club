@@ -41,11 +41,10 @@ const EnvSchema = z
     LOGFLARE_API_KEY: z.string().optional(),
     LOGFLARE_SOURCE_ID: z.string().optional(),
 
-    // AWS S3
-    AWS_REGION: z.string().min(1).default("ap-south-1"),
-    AWS_ACCESS_KEY_ID: z.string().min(1),
-    AWS_SECRET_ACCESS_KEY: z.string().min(1),
-    AWS_S3_BUCKET: z.string().min(1),
+    // ImageKit
+    IMAGEKIT_PUBLIC_KEY: z.string().min(1),
+    IMAGEKIT_PRIVATE_KEY: z.string().min(1),
+    IMAGEKIT_URL_ENDPOINT: z.string().url(),
     CDN_URL: z.string().url(),
 
     // YouTube

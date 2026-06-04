@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AspectRatio } from "@workspace/ui/components/aspect-ratio";
+import { SmartImage } from "@/components/shared/smart-image";
 import { ReadMoreDescription } from "@/components/resources/read-more-description";
 import { useVote } from "@/hooks/use-vote";
 import { VoteCounter } from "@/components/resources/vote-counter";
@@ -255,11 +256,17 @@ const ResourceDetail = ({ id }: { id: string }) => {
         <Card className="overflow-hidden border-border/50 p-0">
           {/* Image */}
           {res.image && (
-            <div className="relative w-full  aspect-video overflow-hidden bg-muted">
-              <img
+            <div className="relative w-full overflow-hidden bg-muted">
+              <SmartImage
                 src={res.image}
                 alt={res.title}
-                className="w-full  aspect-video object-cover"
+                width={1280}
+                height={720}
+                aspectRatio="16/9"
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 85vw, 1200px"
+                priority
+                kind="detail"
+                className="w-full"
               />
             </div>
           )}

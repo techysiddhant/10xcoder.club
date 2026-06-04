@@ -17,7 +17,7 @@ import {
 } from "@workspace/ui/components/card";
 import { Camera, Loader2 } from "lucide-react";
 import { uploadImage } from "@/lib/http";
-import { uploadToS3 } from "@/lib/utils";
+import { uploadToImageKit } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
 import toast from "react-hot-toast";
 
@@ -97,7 +97,7 @@ const ProfilePicture = ({ user }: { user: User }) => {
         folder: "profiles",
       });
 
-      await uploadToS3(file, data.uploadUrl);
+      await uploadToImageKit(file, data);
 
       if (data.imageUrl) {
         const { error } = await authClient.updateUser({

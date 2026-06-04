@@ -128,3 +128,10 @@ export const EMAIL_TEMPLATE_IDS = {
   RESET_PASSWORD: "A-f8710f29b19b5f71976c",
   MAGIC_LINK: "A-4198bab25ff66ca88da1",
 } as const;
+
+export const UPLOAD_FOLDERS = {
+  RESOURCES: "resources",
+  PROFILES: "profiles",
+} as const;
+
+export type UploadFolder = (typeof UPLOAD_FOLDERS)[keyof typeof UPLOAD_FOLDERS];
