@@ -107,7 +107,7 @@ const ResourceCard = ({ resource, onVote }: ResourceCardProps) => {
         </div>
       )}
 
-      <CardContent className={cn("pb-2 px-2", !resource.image && "pt-0")}>
+      <CardContent className={cn("pb-2 px-2", !resource.image && "pt-2")}>
         {/* Type Badge & External Link */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">

@@ -12,7 +12,10 @@ import type {
   CreateResourceTypeRoute,
   UpdateResourceTypeRoute,
   DeleteResourceTypeRoute,
+  GenerateDescriptionRoute,
 } from "@/routes/admin/admin.routes";
+import { scrapeUrl } from "@/services/scrape.service";
+import { generateResourceDescription } from "@/lib/gemini";
 
 import {
   getEmailJobStats,
@@ -22,6 +25,7 @@ import {
 import * as adminService from "@/services/admin.service";
 import * as resourceTypeService from "@/services/resource-type.service";
 import { logger } from "@/lib/logger";
+import { KnownUserError } from "@/lib/errors";
 
 export const getStats: AppRouteHandler<GetStatsRoute> = async (c) => {
   const stats = await getEmailJobStats();
@@ -251,6 +255,68 @@ export const deleteResourceType: AppRouteHandler<
       {
         status: "error",
         message: "Internal server error",
+      },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR,
+    ) as any;
+  }
+};
+
+export const generateDescription: AppRouteHandler<
+  GenerateDescriptionRoute
+> = async (c) => {
+  const user = c.get("user");
+  if (!user) {
+    return c.json(
+      { status: "error", message: "Unauthorized" },
+      HttpStatusCodes.UNAUTHORIZED,
+    ) as any;
+  }
+
+  const { url, title, resourceType, tags, techStack } = c.req.valid("json");
+
+  try {
+    // Attempt to scrape the URL to get the detailed content
+    let scrapedContent: string | null = null;
+    try {
+      const result = await scrapeUrl(url, user.id);
+      scrapedContent = result.description ?? null;
+    } catch (scrapeErr) {
+      logger.warn(
+        { err: scrapeErr, url },
+        "Admin Generate AI: Scraping URL failed, proceeding with raw inputs",
+      );
+    }
+
+    const description = await generateResourceDescription({
+      url,
+      title,
+      resourceType,
+      tags,
+      techStack,
+      scrapedContent,
+    });
+
+    return c.json(
+      {
+        status: "success",
+        data: {
+          description,
+        },
+      },
+      HttpStatusCodes.OK,
+    ) as any;
+  } catch (error) {
+    logger.error(
+      { err: error, url },
+      "Admin Generate AI: Failed to generate resource description",
+    );
+    return c.json(
+      {
+        status: "error",
+        message:
+          error instanceof KnownUserError
+            ? error.message
+            : "Internal server error",
       },
       HttpStatusCodes.INTERNAL_SERVER_ERROR,
     ) as any;

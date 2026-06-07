@@ -89,3 +89,16 @@ export function getStatusForErrorCode(code: ScrapeErrorCode): number {
       return 500;
   }
 }
+
+/**
+ * Error class representing an error with a message safe to display to the user
+ */
+export class KnownUserError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "KnownUserError";
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+  }
+}

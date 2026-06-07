@@ -127,3 +127,11 @@ export const updateAdminResourceStatus = ({
 
 export const deleteAdminResource = (id: string) =>
   api.delete(`/admin/resources/${id}`);
+
+export const generateResourceDescription = (resource: {
+  url: string;
+  title: string;
+  resourceType: string;
+  tags?: string[];
+  techStack?: string[];
+}) => api.post(`/admin/resources/generate-description`, resource);
