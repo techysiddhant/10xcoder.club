@@ -6,6 +6,13 @@ export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
     rules: {
       // TypeScript knows better; also React automatic runtime doesn't require `import React`
       "no-undef": "off",
