@@ -285,6 +285,41 @@ export const deleteResourceType = createRoute({
   },
 });
 
+export const generateDescription = createRoute({
+  path: "/resources/generate-description",
+  method: "post",
+  tags: ["Admin - Resources"],
+  request: {
+    body: jsonContent(
+      z.object({
+        url: z.string().url(),
+        title: z.string().trim().min(1, "Title is required"),
+        resourceType: z.string().trim().min(1, "Resource type is required"),
+        tags: z.array(z.string()).optional(),
+        techStack: z.array(z.string()).optional(),
+      }),
+      "Generate description body",
+    ),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        status: z.literal("success"),
+        data: z.object({
+          description: z.string(),
+        }),
+      }),
+      "Description generated",
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(ErrorSchema, "Unauthorized"),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(ErrorSchema, "Bad request"),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      ErrorSchema,
+      "Internal server error",
+    ),
+  },
+});
+
 export type GetStatsRoute = typeof getStats;
 export type GetFailedRoute = typeof getFailed;
 export type RetryAllRoute = typeof retryAll;
@@ -295,3 +330,4 @@ export type ListResourceTypesRoute = typeof listResourceTypes;
 export type CreateResourceTypeRoute = typeof createResourceType;
 export type UpdateResourceTypeRoute = typeof updateResourceType;
 export type DeleteResourceTypeRoute = typeof deleteResourceType;
+export type GenerateDescriptionRoute = typeof generateDescription;

@@ -253,7 +253,12 @@ const ResourceDetail = ({ id }: { id: string }) => {
         )}
 
         {/* Main Content Card */}
-        <Card className="overflow-hidden border-border/50 p-0">
+        <Card
+          className={cn(
+            "overflow-hidden border-border/50 p-0",
+            !res.image && "pt-4",
+          )}
+        >
           {/* Image */}
           {res.image && (
             <div className="relative w-full overflow-hidden bg-muted">

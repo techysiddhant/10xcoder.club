@@ -19,6 +19,7 @@ const adminRouter = router
   .openapi(routes.listResourceTypes, handlers.listResourceTypes)
   .openapi(routes.createResourceType, handlers.createResourceType)
   .openapi(routes.updateResourceType, handlers.updateResourceType)
-  .openapi(routes.deleteResourceType, handlers.deleteResourceType);
+  .openapi(routes.deleteResourceType, handlers.deleteResourceType)
+  .openapi(routes.generateDescription, handlers.generateDescription);
 
 export default adminRouter;

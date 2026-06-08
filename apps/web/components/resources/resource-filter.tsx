@@ -4,14 +4,20 @@ import { useQuery } from "@tanstack/react-query";
 import { Input } from "@workspace/ui/components/input";
 import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { resourceOptions } from "@/lib/http";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "@workspace/ui/components/combobox";
 
 interface ResourceFilterProps {
   searchQuery: string;
@@ -37,6 +43,9 @@ const ResourceFilter = ({
   onClearAll,
 }: ResourceFilterProps) => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const typeAnchor = useComboboxAnchor();
+  const techAnchor = useComboboxAnchor();
+  const tagsAnchor = useComboboxAnchor();
 
   const { data: optionsData } = useQuery({
     queryKey: ["resourceOptions"],
@@ -71,6 +80,12 @@ const ResourceFilter = ({
       (optionsData?.tags ?? []).map((t) => ({ value: t.name, label: t.name })),
     [optionsData],
   );
+
+  const typeItems = useMemo(
+    () => resourceTypes.map((t) => t.value),
+    [resourceTypes],
+  );
+  const tagItems = useMemo(() => tagOptions.map((t) => t.value), [tagOptions]);
 
   const hasActiveFilters =
     selectedTypes.length > 0 ||
@@ -150,96 +165,172 @@ const ResourceFilter = ({
       </div>
 
       {/* Desktop Filters */}
-      <div className={cn("flex-wrap gap-2", "hidden md:flex")}>
+      <div className={cn("flex-wrap gap-3 items-center", "hidden md:flex")}>
         {/* Type Filter */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              Type
-              {selectedTypes.length > 0 && (
-                <Badge variant="secondary" className="ml-1 px-1.5">
-                  {selectedTypes.length}
-                </Badge>
-              )}
-              <ChevronDown className="w-3 h-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            {resourceTypes.map((type) => (
-              <DropdownMenuCheckboxItem
-                key={type.value}
-                checked={selectedTypes.includes(type.value)}
-                onCheckedChange={() => toggleType(type.value)}
-              >
-                {type.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex flex-col gap-1.5 min-w-[200px] max-w-[280px]">
+          <Combobox
+            multiple
+            autoHighlight
+            items={typeItems}
+            value={selectedTypes}
+            onValueChange={onTypesChange}
+          >
+            <ComboboxChips
+              ref={typeAnchor}
+              className="w-full bg-input/30 border-border"
+            >
+              <ComboboxValue>
+                {(values) => (
+                  <>
+                    {values.slice(0, 1).map((value: string) => {
+                      const label =
+                        resourceTypes.find((t) => t.value === value)?.label ??
+                        value;
+                      return <ComboboxChip key={value}>{label}</ComboboxChip>;
+                    })}
+                    {values.length > 1 && (
+                      <Badge
+                        variant="secondary"
+                        className="h-5 rounded-md px-1.5 text-[10px] font-medium bg-muted-foreground/10 text-muted-foreground hover:bg-muted-foreground/10 whitespace-nowrap"
+                      >
+                        +{values.length - 1}
+                      </Badge>
+                    )}
+                    <ComboboxChipsInput
+                      aria-label="Filter by type"
+                      placeholder={
+                        values.length === 0 ? "Filter by type..." : ""
+                      }
+                    />
+                  </>
+                )}
+              </ComboboxValue>
+            </ComboboxChips>
+            <ComboboxContent
+              anchor={typeAnchor}
+              className="w-[var(--anchor-width)]"
+            >
+              <ComboboxEmpty>No type found.</ComboboxEmpty>
+              <ComboboxList>
+                {(item: string) => {
+                  const label =
+                    resourceTypes.find((t) => t.value === item)?.label ?? item;
+                  return (
+                    <ComboboxItem key={item} value={item}>
+                      {label}
+                    </ComboboxItem>
+                  );
+                }}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+        </div>
 
         {/* Tech Stack Filter */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              Tech Stack
-              {selectedTechStack.length > 0 && (
-                <Badge variant="secondary" className="ml-1 px-1.5">
-                  {selectedTechStack.length}
-                </Badge>
-              )}
-              <ChevronDown className="w-3 h-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            className="w-48 max-h-64 overflow-y-auto"
+        <div className="flex flex-col gap-1.5 min-w-[240px] max-w-[320px]">
+          <Combobox
+            multiple
+            autoHighlight
+            items={techStacks}
+            value={selectedTechStack}
+            onValueChange={onTechStackChange}
           >
-            {techStacks.map((tech) => (
-              <DropdownMenuCheckboxItem
-                key={tech}
-                checked={selectedTechStack.includes(tech)}
-                onCheckedChange={() => toggleTechStack(tech)}
-              >
-                {tech}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <ComboboxChips
+              ref={techAnchor}
+              className="w-full bg-input/30 border-border"
+            >
+              <ComboboxValue>
+                {(values) => (
+                  <>
+                    {values.slice(0, 1).map((value: string) => (
+                      <ComboboxChip key={value}>{value}</ComboboxChip>
+                    ))}
+                    {values.length > 1 && (
+                      <Badge
+                        variant="secondary"
+                        className="h-5 rounded-md px-1.5 text-[10px] font-medium bg-muted-foreground/10 text-muted-foreground hover:bg-muted-foreground/10 whitespace-nowrap"
+                      >
+                        +{values.length - 1}
+                      </Badge>
+                    )}
+                    <ComboboxChipsInput
+                      aria-label="Filter by tech stack"
+                      placeholder={
+                        values.length === 0 ? "Filter by tech..." : ""
+                      }
+                    />
+                  </>
+                )}
+              </ComboboxValue>
+            </ComboboxChips>
+            <ComboboxContent
+              anchor={techAnchor}
+              className="w-[var(--anchor-width)]"
+            >
+              <ComboboxEmpty>No tech stack found.</ComboboxEmpty>
+              <ComboboxList>
+                {(item: string) => (
+                  <ComboboxItem key={item} value={item}>
+                    {item}
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+        </div>
 
         {/* Tags Filter */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              Tags
-              {selectedTags.length > 0 && (
-                <Badge variant="secondary" className="ml-1 px-1.5">
-                  {selectedTags.length}
-                </Badge>
-              )}
-              <ChevronDown className="w-3 h-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            className="w-48 max-h-64 overflow-y-auto"
+        <div className="flex flex-col gap-1.5 min-w-[240px] max-w-[320px]">
+          <Combobox
+            multiple
+            autoHighlight
+            items={tagItems}
+            value={selectedTags}
+            onValueChange={onTagsChange}
           >
-            {tagOptions.map((opt) => (
-              <DropdownMenuCheckboxItem
-                key={opt.value}
-                checked={selectedTags.includes(opt.value)}
-                onCheckedChange={() => {
-                  if (selectedTags.includes(opt.value)) {
-                    onTagsChange(selectedTags.filter((t) => t !== opt.value));
-                  } else {
-                    onTagsChange([...selectedTags, opt.value]);
-                  }
-                }}
-              >
-                {opt.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <ComboboxChips
+              ref={tagsAnchor}
+              className="w-full bg-input/30 border-border"
+            >
+              <ComboboxValue>
+                {(values) => (
+                  <>
+                    {values.slice(0, 1).map((value: string) => (
+                      <ComboboxChip key={value}>{value}</ComboboxChip>
+                    ))}
+                    {values.length > 1 && (
+                      <Badge
+                        variant="secondary"
+                        className="h-5 rounded-md px-1.5 text-[10px] font-medium bg-muted-foreground/10 text-muted-foreground hover:bg-muted-foreground/10 whitespace-nowrap"
+                      >
+                        +{values.length - 1}
+                      </Badge>
+                    )}
+                    <ComboboxChipsInput
+                      aria-label="Filter by tags"
+                      placeholder={
+                        values.length === 0 ? "Filter by tags..." : ""
+                      }
+                    />
+                  </>
+                )}
+              </ComboboxValue>
+            </ComboboxChips>
+            <ComboboxContent
+              anchor={tagsAnchor}
+              className="w-[var(--anchor-width)]"
+            >
+              <ComboboxEmpty>No tags found.</ComboboxEmpty>
+              <ComboboxList>
+                {(item: string) => (
+                  <ComboboxItem key={item} value={item}>
+                    {item}
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+        </div>
 
         {/* Clear All */}
         {hasActiveFilters && (

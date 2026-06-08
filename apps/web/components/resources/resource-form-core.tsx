@@ -18,14 +18,20 @@ import {
   SelectContent,
   SelectItem,
 } from "@workspace/ui/components/select";
-import { ImagePlus, Loader2, Trash, X } from "lucide-react";
+import { ImagePlus, Loader2, Sparkles, Trash, X } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
-import { resourceOptions, uploadImage } from "@/lib/http";
+import {
+  resourceOptions,
+  uploadImage,
+  generateResourceDescription,
+} from "@/lib/http";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { uploadToImageKit } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { PrMarkdownEditor } from "../editor/pr-markdown-editor";
+import { Button } from "@workspace/ui/components/button";
+import { authClient } from "@/lib/auth-client";
 
 export type ResourceFormValues = ResourceCreateClient;
 
@@ -125,7 +131,68 @@ const ResourceFormCore = ({
       },
     });
 
-  const isPending = isUploadImageLoading || isSubmitting;
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const { data: session } = authClient.useSession();
+  const isAdmin = session?.user?.role?.toUpperCase() === "ADMIN";
+
+  const handleGenerateWithAI = async () => {
+    // Do not start AI generation while a form save is in-flight
+    if (isSubmitting) return;
+
+    const url = form.state.values.url;
+    const title = form.state.values.title;
+    const resourceType = form.state.values.resourceType;
+    const tags = form.state.values.tags;
+    const techStack = form.state.values.techStack;
+
+    if (!url || !title) {
+      toast.error("Please enter a URL and Title first.");
+      return;
+    }
+
+    if (!resourceType) {
+      toast.error("Please select a Resource Type first.");
+      return;
+    }
+
+    setIsGeneratingAI(true);
+    const generateToastId = toast.loading(
+      "Generating description with Gemini AI...",
+    );
+
+    try {
+      const response = await generateResourceDescription({
+        url,
+        title,
+        resourceType,
+        tags,
+        techStack,
+      });
+
+      if (
+        response.data?.status === "success" &&
+        response.data?.data?.description
+      ) {
+        form.setFieldValue("description", () => response.data.data.description);
+        toast.success("Description generated successfully!", {
+          id: generateToastId,
+        });
+      } else {
+        toast.error("Failed to generate description.", { id: generateToastId });
+      }
+    } catch (error) {
+      console.error("Failed to generate with AI:", error);
+      toast.error(
+        (error as any)?.response?.data?.message ??
+          "Failed to generate description. Please try again.",
+        { id: generateToastId },
+      );
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
+  const isPending = isUploadImageLoading || isSubmitting || isGeneratingAI;
 
   useEffect(() => {
     onPendingChange?.(isPending);
@@ -314,10 +381,39 @@ const ResourceFormCore = ({
               <Field
                 data-invalid={showDescriptionError || descriptionOverLimit}
               >
-                <FieldLabel htmlFor="description-editor">
-                  Description
-                </FieldLabel>
-                <div className="w-full min-h-[300px] overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <FieldLabel htmlFor="description-editor">
+                    Description
+                  </FieldLabel>
+                  {isAdmin && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGenerateWithAI}
+                      disabled={
+                        isSubmitting ||
+                        isGeneratingAI ||
+                        !form.state.values.url ||
+                        !form.state.values.title
+                      }
+                      className="gap-1.5 h-8 px-2.5 text-xs border-primary/20 hover:border-primary/50 text-primary hover:text-primary transition-all duration-200"
+                    >
+                      {isGeneratingAI ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3 text-primary animate-pulse" />
+                          Generate with AI
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+                <div className="w-full min-h-[300px] overflow-hidden mt-1.5">
                   <PrMarkdownEditor
                     value={field.state.value ?? ""}
                     onChange={(content) => field.handleChange(content)}
