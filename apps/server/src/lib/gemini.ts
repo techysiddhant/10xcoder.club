@@ -197,11 +197,12 @@ Output ONLY the markdown content.`;
     });
 
     const generatedText = response.text;
-    if (!generatedText) {
+    const trimmed = generatedText?.trim();
+    if (!trimmed) {
       throw new Error("No text generated from Gemini");
     }
 
-    return generatedText.trim();
+    return trimmed;
   } catch (error) {
     const originalMessage =
       error instanceof Error ? error.message : String(error);

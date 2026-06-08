@@ -261,6 +261,16 @@ export const deleteResourceType: AppRouteHandler<
   }
 };
 
+/** Strip query-string so tokens/emails are never written to logs. */
+function redactUrl(raw: string): string {
+  try {
+    const u = new URL(raw);
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return "[invalid url]";
+  }
+}
+
 export const generateDescription: AppRouteHandler<
   GenerateDescriptionRoute
 > = async (c) => {
@@ -281,8 +291,9 @@ export const generateDescription: AppRouteHandler<
       const result = await scrapeUrl(url, user.id);
       scrapedContent = result.description ?? null;
     } catch (scrapeErr) {
+      const redactedUrl = redactUrl(url);
       logger.warn(
-        { err: scrapeErr, url },
+        { err: scrapeErr, url: redactedUrl },
         "Admin Generate AI: Scraping URL failed, proceeding with raw inputs",
       );
     }
@@ -306,8 +317,9 @@ export const generateDescription: AppRouteHandler<
       HttpStatusCodes.OK,
     ) as any;
   } catch (error) {
+    const redactedUrl = redactUrl(url);
     logger.error(
-      { err: error, url },
+      { err: error, url: redactedUrl },
       "Admin Generate AI: Failed to generate resource description",
     );
     return c.json(

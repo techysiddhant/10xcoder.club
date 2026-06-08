@@ -197,6 +197,7 @@ const ResourceFilter = ({
                       </Badge>
                     )}
                     <ComboboxChipsInput
+                      aria-label="Filter by type"
                       placeholder={
                         values.length === 0 ? "Filter by type..." : ""
                       }
@@ -253,6 +254,7 @@ const ResourceFilter = ({
                       </Badge>
                     )}
                     <ComboboxChipsInput
+                      aria-label="Filter by tech stack"
                       placeholder={
                         values.length === 0 ? "Filter by tech..." : ""
                       }
@@ -305,6 +307,7 @@ const ResourceFilter = ({
                       </Badge>
                     )}
                     <ComboboxChipsInput
+                      aria-label="Filter by tags"
                       placeholder={
                         values.length === 0 ? "Filter by tags..." : ""
                       }

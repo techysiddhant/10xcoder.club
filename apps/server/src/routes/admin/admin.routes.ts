@@ -293,8 +293,8 @@ export const generateDescription = createRoute({
     body: jsonContent(
       z.object({
         url: z.string().url(),
-        title: z.string(),
-        resourceType: z.string(),
+        title: z.string().trim().min(1, "Title is required"),
+        resourceType: z.string().trim().min(1, "Resource type is required"),
         tags: z.array(z.string()).optional(),
         techStack: z.array(z.string()).optional(),
       }),
@@ -311,6 +311,7 @@ export const generateDescription = createRoute({
       }),
       "Description generated",
     ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(ErrorSchema, "Unauthorized"),
     [HttpStatusCodes.BAD_REQUEST]: jsonContent(ErrorSchema, "Bad request"),
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
       ErrorSchema,

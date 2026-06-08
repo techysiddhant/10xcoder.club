@@ -136,6 +136,9 @@ const ResourceFormCore = ({
   const isAdmin = session?.user?.role?.toUpperCase() === "ADMIN";
 
   const handleGenerateWithAI = async () => {
+    // Do not start AI generation while a form save is in-flight
+    if (isSubmitting) return;
+
     const url = form.state.values.url;
     const title = form.state.values.title;
     const resourceType = form.state.values.resourceType;
@@ -389,6 +392,7 @@ const ResourceFormCore = ({
                       size="sm"
                       onClick={handleGenerateWithAI}
                       disabled={
+                        isSubmitting ||
                         isGeneratingAI ||
                         !form.state.values.url ||
                         !form.state.values.title
