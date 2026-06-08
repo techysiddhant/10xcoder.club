@@ -206,10 +206,7 @@ const ResourceFilter = ({
                 )}
               </ComboboxValue>
             </ComboboxChips>
-            <ComboboxContent
-              anchor={typeAnchor}
-              className="w-[var(--anchor-width)]"
-            >
+            <ComboboxContent anchor={typeAnchor} className="w-(--anchor-width)">
               <ComboboxEmpty>No type found.</ComboboxEmpty>
               <ComboboxList>
                 {(item: string) => {
@@ -263,10 +260,7 @@ const ResourceFilter = ({
                 )}
               </ComboboxValue>
             </ComboboxChips>
-            <ComboboxContent
-              anchor={techAnchor}
-              className="w-[var(--anchor-width)]"
-            >
+            <ComboboxContent anchor={techAnchor} className="w-(--anchor-width)">
               <ComboboxEmpty>No tech stack found.</ComboboxEmpty>
               <ComboboxList>
                 {(item: string) => (
@@ -316,10 +310,7 @@ const ResourceFilter = ({
                 )}
               </ComboboxValue>
             </ComboboxChips>
-            <ComboboxContent
-              anchor={tagsAnchor}
-              className="w-[var(--anchor-width)]"
-            >
+            <ComboboxContent anchor={tagsAnchor} className="w-(--anchor-width)">
               <ComboboxEmpty>No tags found.</ComboboxEmpty>
               <ComboboxList>
                 {(item: string) => (
